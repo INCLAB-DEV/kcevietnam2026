@@ -1,0 +1,2230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NABI 유저 시나리오 v2</title>
+<style>
+  :root {
+    --bg-primary: #fdfcfb;
+    --bg-secondary: #f5f3f0;
+    --bg-elevated: #ffffff;
+    --border-default: #e5e2de;
+    --text-primary: #08090a;
+    --text-secondary: #4a4a4a;
+    --text-tertiary: #777169;
+    --accent-primary: #2563eb;
+    --accent-subtle: #eff6ff;
+    --status-success: #16a34a;
+    --status-warning: #ea580c;
+    --font-stack: -apple-system, 'Pretendard', sans-serif;
+    --sidebar-width: 260px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-stack);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ========== SIDEBAR ========== */
+  .sidebar {
+    width: var(--sidebar-width);
+    background: var(--bg-elevated);
+    border-right: 1px solid var(--border-default);
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    overflow-y: auto;
+    z-index: 100;
+    flex-shrink: 0;
+  }
+  .sidebar-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border-default);
+  }
+  .sidebar-logo {
+    font-size: 20px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .sidebar-logo-icon {
+    width: 32px; height: 32px;
+    background: var(--accent-primary);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px; font-weight: 700;
+  }
+  .sidebar-sub {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  .sidebar-group {
+    padding: 16px 0 8px;
+  }
+  .sidebar-group-label {
+    padding: 0 20px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sidebar-group-icon {
+    font-size: 14px;
+  }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+  }
+  .sidebar-item:hover {
+    background: var(--bg-secondary);
+  }
+  .sidebar-item.active {
+    background: var(--accent-subtle);
+    color: var(--accent-primary);
+    font-weight: 600;
+    border-left-color: var(--accent-primary);
+  }
+  .sidebar-item-badge {
+    margin-left: auto;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .badge-pre { background: #dbeafe; color: #1d4ed8; }
+  .badge-onsite { background: #dcfce7; color: #16a34a; }
+  .badge-all { background: #fef3c7; color: #92400e; }
+
+  .sidebar-divider {
+    height: 1px;
+    background: var(--border-default);
+    margin: 4px 20px;
+  }
+
+  /* ========== MAIN ========== */
+  .main {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    padding: 40px;
+  }
+
+  /* ========== SCENARIO ========== */
+  .scenario {
+    display: none;
+  }
+  .scenario.active {
+    display: block;
+  }
+
+  .scenario-card {
+    background: var(--bg-elevated);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border-default);
+  }
+
+  .scenario-title {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+  .scenario-subtitle {
+    font-size: 14px;
+    color: var(--text-tertiary);
+    margin-bottom: 24px;
+  }
+
+  /* Persona */
+  .persona {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+  .persona-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    font-size: 14px;
+  }
+  .persona-row + .persona-row { margin-top: 8px; }
+  .persona-item {
+    display: flex;
+    gap: 6px;
+  }
+  .persona-label { color: var(--text-tertiary); font-weight: 500; }
+  .persona-value { font-weight: 600; }
+
+  /* Flow table */
+  .flow-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+  .flow-table th {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 2px solid var(--border-default);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .flow-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-default);
+    vertical-align: top;
+  }
+  .flow-table tr:hover td { background: var(--bg-secondary); }
+  .flow-step {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px;
+    background: var(--accent-subtle);
+    color: var(--accent-primary);
+    border-radius: 50%;
+    font-size: 12px; font-weight: 700;
+  }
+  .flow-screen {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'SF Mono', monospace;
+    color: var(--text-secondary);
+  }
+
+  /* Key points */
+  .key-points {
+    background: var(--accent-subtle);
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+    padding: 16px 20px;
+  }
+  .key-points-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--accent-primary);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .key-points ul {
+    list-style: none;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .key-points li {
+    font-size: 14px; padding-left: 20px; position: relative;
+  }
+  .key-points li::before {
+    content: '\2192'; position: absolute; left: 0;
+    color: var(--accent-primary); font-weight: 700;
+  }
+
+  /* Phase divider */
+  .phase-divider {
+    font-size: 16px; font-weight: 700;
+    margin: 28px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-default);
+    color: var(--text-secondary);
+  }
+
+  /* Summary */
+  .summary-table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  .summary-table th {
+    padding: 10px 8px; background: var(--bg-secondary);
+    border: 1px solid var(--border-default); font-weight: 600; text-align: center;
+  }
+  .summary-table td {
+    padding: 8px; border: 1px solid var(--border-default);
+    text-align: center; vertical-align: top;
+  }
+  .summary-table td:first-child { font-weight: 600; text-align: left; }
+
+  .todo-list {
+    list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 16px;
+  }
+  .todo-list li {
+    font-size: 14px; padding: 10px 14px;
+    background: var(--bg-elevated); border: 1px solid var(--border-default);
+    border-radius: 8px; display: flex; align-items: center; gap: 10px;
+  }
+  .todo-check {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border-default); border-radius: 4px; flex-shrink: 0;
+  }
+
+  /* ========== CASE TABS (유형별 탭 전환) ========== */
+  .case-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border-default);
+    margin-bottom: 20px;
+  }
+  .case-tab {
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border: none;
+    background: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    font-family: var(--font-stack);
+    transition: all 0.2s;
+  }
+  .case-tab:hover { color: var(--text-primary); }
+  .case-tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+  .case-content { display: none; }
+  .case-content.active { display: block; }
+
+  /* ========== PP TABS (Pain Point 등) ========== */
+  .pp-tabs { display:flex; gap:0; border-bottom:2px solid var(--border-default); margin-bottom:20px; }
+  .pp-tab { padding:10px 18px; font-size:13px; font-weight:600; color:var(--text-tertiary); cursor:pointer; border:none; background:none; border-bottom:3px solid transparent; margin-bottom:-2px; font-family:var(--font-stack); transition:all 0.2s; }
+  .pp-tab:hover { color:var(--text-primary); }
+  .pp-tab.active { color:var(--accent-primary); border-bottom-color:var(--accent-primary); }
+  .pp-content { display:none; }
+  .pp-content.active { display:block; }
+  .pp-table { width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed; }
+  .pp-table th { padding:10px 8px; background:var(--bg-secondary); border:1px solid var(--border-default); font-weight:600; text-align:center; font-size:12px; }
+  .pp-table td { padding:10px 8px; border:1px solid var(--border-default); vertical-align:top; text-align:left; line-height:1.5; }
+  .pp-table td:first-child { font-weight:600; text-align:center; width:90px; }
+  .pp-pain { color:#dc2626; font-size:12px; font-weight:600; margin-bottom:6px; }
+  .pp-value { display:inline-block; font-size:10px; padding:2px 6px; border-radius:8px; font-weight:600; background:var(--accent-subtle); color:var(--accent-primary); margin-bottom:4px; }
+  .pp-solution { font-size:11px; color:var(--text-secondary); }
+  .pp-intensity { display:inline-block; font-size:10px; padding:1px 5px; border-radius:3px; font-weight:700; }
+  .pp-h { background:#fee2e2; color:#dc2626; }
+  .pp-m { background:#fef3c7; color:#d97706; }
+  .pp-l { background:#dcfce7; color:#16a34a; }
+  .pp-empty { color:var(--text-tertiary); text-align:center !important; font-style:italic; }
+
+  /* ========== META TABLE (가설/목적 등) ========== */
+  .meta-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+  .meta-table th {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 2px solid var(--border-default);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: 100px;
+  }
+  .meta-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-default);
+    vertical-align: top;
+  }
+  .meta-table td:first-child {
+    font-weight: 700;
+    color: var(--accent-primary);
+    width: 100px;
+    white-space: nowrap;
+  }
+
+  /* ========== PAGE LIST TABLE ========== */
+  .page-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  .page-list-table th {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--border-default);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .page-list-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-default);
+    vertical-align: top;
+  }
+  .page-list-table tr:hover td { background: var(--bg-secondary); }
+
+  /* 플로우별 Page List (기능ID 포함) */
+  .page-list-table.cols-9f col.c-pid   { width: 6%; }
+  .page-list-table.cols-9f col.c-fid   { width: 8%; }
+  .page-list-table.cols-9f col.c-name  { width: 11%; }
+  .page-list-table.cols-9f col.c-route { width: 10%; }
+  .page-list-table.cols-9f col.c-auth  { width: 10%; }
+  .page-list-table.cols-9f col.c-stat  { width: 7%; }
+  .page-list-table.cols-9f col.c-proto { width: 7%; }
+  .page-list-table.cols-9f col.c-feat  { /* auto — remainder */ }
+  .page-list-table.cols-9f col.c-rev   { width: 13%; white-space: nowrap; }
+
+  /* 전체 조망 Page List (기능ID 없음) */
+  .page-list-table.cols-9p col.c-pid   { width: 6%; }
+  .page-list-table.cols-9p col.c-name  { width: 11%; }
+  .page-list-table.cols-9p col.c-route { width: 12%; }
+  .page-list-table.cols-9p col.c-type  { width: 5%; }
+  .page-list-table.cols-9p col.c-auth  { width: 10%; }
+  .page-list-table.cols-9p col.c-stat  { width: 7%; }
+  .page-list-table.cols-9p col.c-proto { width: 7%; }
+  .page-list-table.cols-9p col.c-feat  { /* auto — remainder */ }
+  .page-list-table.cols-9p col.c-rev   { width: 13%; white-space: nowrap; }
+
+  /* 연관 테이블 */
+  .related-tables { margin-bottom: 24px; }
+  .related-tables .rt-list {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;
+  }
+  .related-tables .rt-chip {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 12px; font-weight: 500; font-family: 'SF Mono', 'Menlo', monospace;
+    background: var(--accent-subtle); color: var(--accent-primary);
+    border: 1px solid #dbeafe;
+  }
+
+  /* 접근권한 뱃지 */
+  .auth-badge {
+    display: inline-block; padding: 1px 6px; border-radius: 8px;
+    font-size: 10px; font-weight: 600; margin: 1px 2px;
+  }
+  .auth-all    { background: #f3f4f6; color: #374151; }
+  .auth-buyer  { background: #dbeafe; color: #1d4ed8; }
+  .auth-exhib  { background: #fef3c7; color: #92400e; }
+  .auth-visit  { background: #d1fae5; color: #065f46; }
+  .auth-org    { background: #ede9fe; color: #5b21b6; }
+
+  /* DB 스키마 */
+  .schema-header {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 4px; padding: 16px 0 8px;
+    border-bottom: 2px solid var(--accent-primary);
+  }
+  .schema-header h3 {
+    font-size: 14px; font-weight: 700; margin: 0;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    color: var(--accent-primary);
+  }
+  .schema-header span { font-size: 12px; color: var(--text-tertiary); }
+  .schema-col-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 28px; }
+  .schema-col-table col.sc-col  { width: 14%; }
+  .schema-col-table col.sc-type { width: 12%; }
+  .schema-col-table col.sc-key  { width: 10%; }
+  .schema-col-table col.sc-desc { /* auto — remainder */ }
+  .schema-col-table col.sc-rel  { width: 18%; }
+  .schema-col-table col.sc-rev  { width: 14%; white-space: nowrap; }
+  .schema-col-table th {
+    text-align: left; padding: 6px 8px;
+    border-bottom: 1px solid var(--border-default);
+    font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .schema-col-table td {
+    padding: 5px 8px; border-bottom: 1px solid #f0eeeb;
+    vertical-align: top; font-size: 12px;
+  }
+  .schema-col-table tr:hover td { background: var(--bg-secondary); }
+  .schema-col-table code {
+    font-size: 11px; background: var(--bg-secondary);
+    padding: 1px 5px; border-radius: 3px;
+  }
+  .key-pk { display: inline-block; padding: 1px 5px; border-radius: 6px; font-size: 9px; font-weight: 700; background: #fee2e2; color: #dc2626; }
+  .key-fk { display: inline-block; padding: 1px 5px; border-radius: 6px; font-size: 9px; font-weight: 700; background: #dbeafe; color: #2563eb; }
+  .key-uq { display: inline-block; padding: 1px 5px; border-radius: 6px; font-size: 9px; font-weight: 700; background: #fef3c7; color: #92400e; }
+  .key-idx { display: inline-block; padding: 1px 5px; border-radius: 6px; font-size: 9px; font-weight: 700; background: #f3f4f6; color: #6b7280; }
+  .col-nullable { color: var(--text-tertiary); font-style: italic; }
+  .col-enum { font-size: 11px; color: #6b21a8; font-family: 'SF Mono', 'Menlo', monospace; }
+  .status-confirmed {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 600;
+    background: #dcfce7; color: #16a34a;
+  }
+  .status-draft {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 600;
+    background: #fef3c7; color: #92400e;
+  }
+  .status-deprecated {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 600;
+    background: #f3f4f6; color: #6b7280;
+    text-decoration: line-through;
+  }
+  .proto-link {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--accent-primary);
+    color: white;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  .proto-link:hover { opacity: 0.85; }
+  .proto-none {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  /* Section label inside scenario-card */
+  .section-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin: 28px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-default);
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  /* ── 발표용 시나리오 (데모 큐카드) ── */
+  .demo-act-tag { display:inline-block; font-size:12px; font-weight:800; letter-spacing:.06em; color:var(--accent-primary); margin-bottom:6px; }
+  .demo-cta { display:inline-flex; align-items:center; gap:6px; margin:6px 0 4px; padding:12px 22px; background:var(--accent-primary); color:#fff; border-radius:8px; font-size:15px; font-weight:700; text-decoration:none; transition:opacity .15s; }
+  .demo-cta:hover { opacity:.88; }
+  .demo-emphasis { margin:16px 0; padding:14px 16px; background:var(--accent-subtle); border-left:3px solid var(--accent-primary); border-radius:6px; font-size:15px; font-weight:600; color:var(--text-secondary); }
+  .demo-emphasis .lead { color:var(--accent-primary); font-weight:800; }
+  .demo-script { margin:12px 0; padding:16px 18px; background:var(--bg-secondary); border-radius:8px; font-size:15px; line-height:1.75; color:var(--text-secondary); }
+  .demo-script strong { color:var(--text-primary); font-weight:700; }
+  .demo-steps { list-style:none; counter-reset:ds; margin:8px 0; padding:0; }
+  .demo-steps li { counter-increment:ds; position:relative; padding:7px 0 7px 30px; font-size:14px; color:var(--text-secondary); }
+  .demo-steps li::before { content:counter(ds); position:absolute; left:0; top:6px; width:20px; height:20px; background:var(--text-primary); color:#fff; border-radius:50%; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .demo-steps li strong { color:var(--text-primary); }
+  .demo-cta-row { display:flex; flex-wrap:wrap; gap:10px; margin-top:20px; }
+  .demo-cta.ghost { background:transparent; color:var(--accent-primary); border:1.5px solid var(--accent-primary); }
+  .demo-cta.ghost:hover { background:var(--accent-subtle); opacity:1; }
+  .demo-cta.disabled { background:var(--bg-secondary); color:var(--text-tertiary); pointer-events:none; }
+  .demo-divider { border:none; border-top:1px solid var(--border-default); margin:32px 0; }
+
+  /* 모바일 상단바 + 드로어 (데스크톱에선 숨김) */
+  .mobile-topbar { display: none; }
+  .nav-scrim { display: none; }
+
+  @media (max-width: 768px) {
+    .mobile-topbar {
+      display: flex; align-items: center; gap: 12px;
+      position: fixed; top: 0; left: 0; right: 0; height: 56px;
+      padding: 0 14px; background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border-default); z-index: 120;
+    }
+    .mobile-nav-btn {
+      font-size: 22px; line-height: 1; background: none; border: none;
+      cursor: pointer; padding: 4px 8px; color: var(--text-primary);
+    }
+    .mobile-topbar-logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 16px; }
+    /* 사이드바 = 좌측 드로어 (기본 숨김, nav-open 시 슬라이드인) */
+    .sidebar {
+      width: 280px; position: fixed; top: 0; bottom: 0; left: 0;
+      transform: translateX(-100%); transition: transform 0.28s cubic-bezier(0.32,0.72,0,1);
+      z-index: 200; overflow-y: auto;
+    }
+    body.nav-open .sidebar { transform: translateX(0); }
+    .nav-scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.42); z-index: 150; }
+    body.nav-open .nav-scrim { display: block; }
+    .main { margin-left: 0; padding: 76px 16px 32px; }
+    .persona-row { flex-direction: column; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- === 모바일 상단바 (≤768px) === -->
+<header class="mobile-topbar">
+  <button class="mobile-nav-btn" onclick="toggleNav()" aria-label="메뉴">&#9776;</button>
+  <div class="mobile-topbar-logo"><div class="sidebar-logo-icon">N</div> NABI 기획</div>
+</header>
+<div class="nav-scrim" onclick="toggleNav(false)"></div>
+
+<!-- === SIDEBAR === -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">N</div>
+      NABI 기획
+    </div>
+    <div class="sidebar-sub">v2 · 2026-05-25 기획 반영</div>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-label"><span class="sidebar-group-icon">&#128196;</span> 주요기능</div>
+    <div class="sidebar-item active" onclick="show('pf-apply', this)">비즈매칭 신청<span class="sidebar-item-badge badge-pre">사전</span></div>
+    <div class="sidebar-item" onclick="show('pf-discover', this)">기업 탐색<span class="sidebar-item-badge badge-all">상시</span></div>
+    <!-- <div class="sidebar-item" onclick="show('pf-search-chat', this)">참여자 탐색: 채팅<span class="sidebar-item-badge badge-onsite">현장</span></div> -->
+    <div class="sidebar-item" onclick="show('pf-meeting', this)">미팅 신청<span class="sidebar-item-badge badge-all">공통</span></div>
+    <div class="sidebar-item" onclick="show('pf-my-meeting', this)">내 미팅<span class="sidebar-item-badge badge-all">공통</span></div>
+    <div class="sidebar-item" onclick="show('pf-organizer', this)">운영사 대시보드<span class="sidebar-item-badge badge-all">운영사</span></div>
+  </div>
+
+  <div class="sidebar-divider"></div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-label"><span class="sidebar-group-icon">&#127908;</span> 발표 시나리오</div>
+    <div class="sidebar-item" onclick="show('us-exhibitor', this)">① 참가사 (한지민)</div>
+    <div class="sidebar-item" onclick="show('us-buyer', this)">② 바이어 (강시우 대위)</div>
+    <div class="sidebar-item" onclick="show('us-visitor', this)">③ 일반 참관객 (David Chen)</div>
+    <div class="sidebar-item" onclick="show('us-organizer', this)">④ 운영사 (박수진)</div>
+  </div>
+
+  <div class="sidebar-divider"></div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-label"><span class="sidebar-group-icon">&#128506;</span> 전체 조망</div>
+    <div class="sidebar-item" onclick="show('pagelist', this)">Page List</div>
+    <div class="sidebar-item" onclick="show('dbschema', this)">DB 스키마</div>
+    <div class="sidebar-item" onclick="show('journey', this)">유저 저니 맵</div>
+    <div class="sidebar-item" onclick="show('summary', this)">비교 요약</div>
+    <div class="sidebar-item" onclick="show('todo', this)">미해결 항목</div>
+  </div>
+</div>
+
+<!-- ========== MAIN ========== -->
+<div class="main">
+
+  <!-- ============================================================
+       1. 비즈매칭 신청
+       ============================================================ -->
+  <div class="scenario active" id="sc-pf-apply">
+    <div class="scenario-card">
+      <div class="scenario-title">비즈매칭 신청</div>
+      <div class="scenario-subtitle">사전 &middot; 비즈매칭 신청기간 (8/26~9/11) &middot; 1 Action 1 Page &middot; 5단계 프로필 작성</div>
+
+      <div class="section-label">목적 / 가설</div>
+      <table class="meta-table">
+        <tbody>
+          <tr><td>목적</td><td>비즈매칭 신청기간(8/26~9/11) 동안 참가사/바이어의 정보를 최대한 수집하여 AI 매칭 정확도를 높인다</td></tr>
+          <tr><td style="white-space:nowrap;">H1 수집</td><td>스텝 인디케이터 + 매 단계 입력 이유 설명으로 바이어/참가사 모두 높은 프로필 완성율을 달성할 수 있다</td></tr>
+          <tr><td style="white-space:nowrap;">H2 품질</td><td>참가사에게 auto-fill(엑셀/크롤링 기반 사전 입력)을 제공하면, 수동 입력 대비 데이터 품질(키워드 정합도, 필드 밀도, 표현 표준화)이 높아진다</td></tr>
+          <tr><td style="white-space:nowrap;">H3 성과</td><td>프로필 데이터 품질이 높을수록(필드 입력율 + 키워드 정합도) AI 매칭 적합도 점수와 미팅 성사율이 올라간다</td></tr>
+        </tbody>
+      </table>
+
+      <details style="margin-bottom:20px;">
+        <summary class="section-label" style="cursor:pointer; user-select:none;">관리지표 (3계층) &mdash; 클릭하여 펼치기</summary>
+
+        <div style="font-size:12px; font-weight:600; color:var(--text-tertiary); margin:12px 0 6px; text-transform:uppercase; letter-spacing:0.5px;">선행 &mdash; 입력 행동 (H1 검증)</div>
+        <table class="meta-table">
+          <tbody>
+            <tr><td style="white-space:nowrap;">프로필 완성율</td><td>바이어 / 참가사 각각. 단계 기반 (5단계 중 몇 단계 완료)</td></tr>
+            <tr><td style="white-space:nowrap;">신청 전환율</td><td>링크 클릭 &rarr; 1단계 진입 &rarr; 프로필 완성. 퍼널 전환율</td></tr>
+            <tr><td style="white-space:nowrap;">평균 완성 시간</td><td>바이어 / 참가사 각각. 1단계 진입 &rarr; 5단계 완료까지 소요 시간</td></tr>
+            <tr><td style="white-space:nowrap;">단계별 이탈율</td><td>어느 단계에서 이탈하는지. 바이어/참가사 분리</td></tr>
+          </tbody>
+        </table>
+
+        <div style="font-size:12px; font-weight:600; color:var(--text-tertiary); margin:12px 0 6px; text-transform:uppercase; letter-spacing:0.5px;">중간 &mdash; 데이터 품질 (H2 검증)</div>
+        <table class="meta-table">
+          <tbody>
+            <tr><td style="white-space:nowrap;">필드별 입력율</td><td>각 필드를 실제 채운 비율. 필수/선택 구분. 바이어/참가사 비교</td></tr>
+            <tr><td style="white-space:nowrap;">키워드 정합도</td><td>입력 키워드 중 사전 정의 키워드에 매칭되는 비율. auto-fill vs 수동 비교</td></tr>
+            <tr><td style="white-space:nowrap;">AI 키워드 채택율</td><td>AI가 추출 제안한 키워드를 사용자가 수락한 비율</td></tr>
+            <tr><td style="white-space:nowrap;">auto-fill 채택율</td><td>참가사가 auto-fill을 수정 없이 수락 / 부분 수정 / 전체 재작성한 비율</td></tr>
+            <tr><td style="white-space:nowrap;">필드 밀도</td><td>텍스트 필드 평균 글자 수, 키워드 수. auto-fill vs 수동 비교</td></tr>
+          </tbody>
+        </table>
+
+        <div style="font-size:12px; font-weight:600; color:var(--text-tertiary); margin:12px 0 6px; text-transform:uppercase; letter-spacing:0.5px;">후행 &mdash; 매칭 성과 (H3 검증)</div>
+        <table class="meta-table">
+          <tbody>
+            <tr><td style="white-space:nowrap;">필드별 매칭 기여도</td><td>어떤 필드가 채워진 프로필이 높은 매칭 적합도를 받는지. 필드 유무별 매칭 점수 분포</td></tr>
+            <tr><td style="white-space:nowrap;">auto-fill &rarr; 매칭 정확도</td><td>auto-fill 프로필 vs 수동 입력 프로필의 평균 매칭 적합도 점수 비교</td></tr>
+            <tr><td style="white-space:nowrap;">프로필 품질 &rarr; 미팅 전환</td><td>프로필 완성도/품질 등급별 미팅 신청 전환율, 수락율</td></tr>
+          </tbody>
+        </table>
+      </details>
+
+      <div class="section-label">연관 테이블</div>
+      <div class="related-tables">
+        <div class="rt-list">
+          <span class="rt-chip">organizations</span>
+          <span class="rt-chip">members</span>
+          <span class="rt-chip">event_participants</span>
+          <span class="rt-chip">keywords</span>
+          <span class="rt-chip">org_keywords</span>
+          <span class="rt-chip">buyer_needs</span>
+          <span class="rt-chip">terms_agreements</span>
+        </div>
+      </div>
+
+      <div class="section-label">Page List</div>
+      <table class="page-list-table cols-9f">
+        <colgroup><col class="c-pid"><col class="c-fid"><col class="c-name"><col class="c-route"><col class="c-auth"><col class="c-stat"><col class="c-proto"><col class="c-feat"><col class="c-rev"></colgroup>
+        <thead><tr><th>Page ID</th><th>기능 ID</th><th>페이지명</th><th>라우트</th><th>접근권한</th><th>상태</th><th>프로토타입</th><th>주요기능</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td>AU-001</td><td>F-AU-001</td><td>통합 로그인</td><td><span class="flow-screen">/login</span></td><td><span class="auth-badge auth-all">전체</span></td><td><span class="status-confirmed">confirmed</span></td><td><span class="proto-none">없음</span></td><td>이메일 입력 &rarr; DB 역할 판별 &rarr; 역할별 자동 분기</td><td>2026-06-03 <code>b1c64bc</code></td></tr>
+          <tr><td>BM-001</td><td>F-BM-001</td><td>바이어 프로필 작성</td><td><span class="flow-screen">/apply</span></td><td><span class="auth-badge auth-buyer">Buyer</span></td><td><span class="status-draft">draft</span></td><td><a href="prototype-apply.html" target="_blank" class="proto-link">확인하기</a></td><td>5단계 폼(기본정보&rarr;관심분야&rarr;상세니즈&rarr;예산/도입시기&rarr;완료)</td><td>2026-06-03 <code>ff6b707</code></td></tr>
+          <tr><td>BM-002</td><td>F-BM-002</td><td>참가사 프로필 작성</td><td><span class="flow-screen">/exhibitor/apply</span></td><td><span class="auth-badge auth-exhib">Exhibitor</span></td><td><span class="status-draft">draft</span></td><td><a href="prototype-apply-seller.html" target="_blank" class="proto-link">확인하기</a></td><td>5단계 폼(기본정보&rarr;전시품목&rarr;회사소개+강점&rarr;타겟바이어&rarr;완료)</td><td>2026-06-04 <code>4ecb543</code></td></tr>
+          <tr><td>BM-004</td><td>F-BM-004</td><td>내 프로필 (바이어)</td><td><span class="flow-screen">/profile</span></td><td><span class="auth-badge auth-buyer">Buyer</span></td><td><span class="status-draft">draft</span></td><td><a href="prototype-profile.html" target="_blank" class="proto-link">확인하기</a></td><td>프로필 조회 + 현황 허브 + 수정 &rarr; /apply?step=N&amp;from=profile</td><td>2026-06-04 <code>4ecb543</code></td></tr>
+          <tr><td>BM-005</td><td>F-BM-005</td><td>내 프로필 (참가사)</td><td><span class="flow-screen">/exhibitor/profile</span></td><td><span class="auth-badge auth-exhib">Exhibitor</span></td><td><span class="status-draft">draft</span></td><td><a href="prototype-profile.html?role=seller" target="_blank" class="proto-link">확인하기</a></td><td>프로필 조회 + 현황 허브 + 수정 &rarr; /exhibitor/apply?step=N&amp;from=profile</td><td>2026-06-04 <code>4ecb543</code></td></tr>
+        </tbody>
+      </table>
+
+      <!-- 공통 설계 원칙 (내부 참조용)
+      UX 원칙: 1 Action 1 Page. 한 화면에서 하나의 작업만 수행
+      진행률 표시: 상단 스텝 인디케이터 (5단계) + 그래프 채움 인터랙션. % 바 없음
+      입력 동기부여: 모든 필드의 플레이스홀더에 "이 정보가 매칭에 어떻게 도움이 되는지" 설명
+      저장 정책: 단계별 자동저장. 이탈 후 재진입 시 마지막 완료 단계 다음부터 이어서
+      재진입: 미완성 → 이어서 작성 / 완성 후 → 전체 요약 화면 + 항목별 수정
+      프로필 단위: Organization당 1개. 다른 Member 진입 시 기존 프로필 조회/수정 가능
+      라우트: 바이어 /apply, 참가사 /exhibitor/apply (역할별 네임스페이스 분리)
+      수정 동선: 내 프로필에서 "수정" → /apply?step=N&from=profile → 저장 후 /profile로 복귀
+      기간 정책: 8/26 전 → 카운트다운 / 8/26~9/11 → 정상 운영 / 9/11 후 → 완전 readonly (수정 버튼 숨김, /apply 접근 시 /profile로 리다이렉트)
+      프리필 정보: 기본정보는 readonly, 수정 불가. 확인 용도
+      -->
+
+      <div class="section-label">단계별 행동</div>
+
+      <div class="case-tabs" id="apply-tabs">
+        <button class="case-tab active" onclick="showCase('apply', 'buyer', this)">바이어 (BM-001)</button>
+        <button class="case-tab" onclick="showCase('apply', 'exhibitor', this)">참가사 (BM-002)</button>
+      </div>
+
+      <div class="case-content active" id="apply-buyer">
+        <table class="flow-table">
+          <thead><tr><th>단계</th><th>Action</th><th>필드</th><th>시스템 반응</th></tr></thead>
+          <tbody>
+            <tr><td><span class="flow-step">1</span></td><td>기본정보 확인</td><td>이름, 소속, 직위 (readonly)</td><td>개인화 링크 기반 DB 조회 프리필. "정보가 맞는지 확인해주세요"</td></tr>
+            <tr><td><span class="flow-step">2</span></td><td>관심 분야 선택</td><td>키워드 칩 (최소 1개 필수)</td><td>방산 분야 + 기술/소재 칩. 카테고리 체계는 CTO 협의 후 확정</td></tr>
+            <tr><td><span class="flow-step">3</span></td><td>상세 니즈 입력</td><td>제품/기술 유형, 운용 환경/용도, 요구 스펙/조건 (텍스트), 도입 단계 (단일선택), 기관 유형 (직접선택+커스텀) + 국적 (드롭다운)</td><td>선택이지만 강력 넛지. 텍스트 필드 채우면 하단에 AI 키워드 추가 제안 노출. 사전 정의 키워드에 부합하는 것만 제안, 추가 여부는 사용자 선택</td></tr>
+            <tr><td><span class="flow-step">4</span></td><td>예산 / 도입시기</td><td>예산 범위 (range slider, 원화 최소/최대), 도입 시기 (단일선택), 현재 도입 현황 (자유 텍스트, 꼬리질문)</td><td>전부 선택. 예산/도입시기 입력 시 하단에 꼬리질문 펼쳐짐</td></tr>
+            <tr><td><span class="flow-step">5</span></td><td>완료</td><td>최종 확인 + 제출</td><td>"비즈매칭 신청기간 종료 후 매칭 결과를 알려드릴게요"</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:8px; padding:8px 12px; background:var(--bg-secondary); border-radius:var(--radius-sm); font-size:13px;">
+          <strong>넛지 전략:</strong> 자기이익 기반. 매 필드 플레이스홀더에 입력 이유 설명.<br>
+          예: "현재 사용 중인 장비를 알려주시면, 업그레이드에 적합한 기업을 우선 매칭해드려요"
+        </div>
+      </div>
+
+      <div class="case-content" id="apply-exhibitor">
+        <table class="flow-table">
+          <thead><tr><th>단계</th><th>Action</th><th>필드</th><th>시스템 반응</th></tr></thead>
+          <tbody>
+            <tr><td><span class="flow-step">1</span></td><td>기본정보 확인</td><td>회사명, 부스번호, 담당자 (readonly)</td><td>엑셀 기반 프리필. "정보가 맞는지 확인해주세요"</td></tr>
+            <tr><td><span class="flow-step">2</span></td><td>전시 품목</td><td>전시할 제품/서비스 설명 (텍스트)</td><td>핵심 필드. "전시 품목을 상세히 적을수록 관심 있는 바이어와 정확히 매칭됩니다"</td></tr>
+            <tr><td><span class="flow-step">3</span></td><td>회사 소개 + 강점</td><td>회사 설명, 차별점/강점 (텍스트)</td><td>텍스트 필드 채우면 하단에 AI 키워드 추가 제안 노출 (바이어와 동일 패턴)</td></tr>
+            <tr><td><span class="flow-step">4</span></td><td>타겟 바이어</td><td>만나고 싶은 바이어 유형/조건 (텍스트)</td><td>매칭 엔진 활용. "원하는 바이어 유형을 적으면 AI가 우선 매칭합니다"</td></tr>
+            <tr><td><span class="flow-step">5</span></td><td>완료</td><td>최종 확인 + 제출</td><td>"비즈매칭 신청기간 종료 후 매칭 결과를 알려드릴게요"</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:8px; padding:8px 12px; background:var(--bg-secondary); border-radius:var(--radius-sm); font-size:13px;">
+          <strong>넛지 전략:</strong> 경쟁심리 기반. "프로필을 채울수록 바이어 매칭률이 올라갑니다"
+        </div>
+      </div>
+
+      <div class="key-points">
+        <div class="key-points-title">핵심 포인트</div>
+        <ul>
+          <li>개인화 링크 = 인증 완료. 별도 로그인/역할 선택/기업 인증 불필요</li>
+          <li>바이어/참가사 모두 5단계, 1 Action 1 Page 원칙</li>
+          <li>스텝 인디케이터 + 상단 그래프 채움 인터랙션으로 진행률 표시 (% 바 없음)</li>
+          <li>3단계에서 텍스트 입력 시 AI 키워드 추가 제안이 인라인 노출 (별도 단계 아님)</li>
+          <li>AI 제안 키워드는 사전 정의 키워드 체계에 부합해야 함, 추가 여부는 사용자 선택</li>
+          <li>매칭 결과는 신청기간 종료 후 &mdash; 즉시 나오지 않음</li>
+          <li>Organization당 1개 프로필. 다른 Member 진입 시 기존 프로필 조회/수정 가능</li>
+          <li>바이어 하위 유형(자발적/초청)은 데이터로 구분, 사용자 경험은 동일</li>
+          <li>키워드 카테고리 체계 및 매칭 로직은 CTO 협의 필요 (CONTEXT.md flagged)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       2. 기업 탐색
+       ============================================================ -->
+  <div class="scenario" id="sc-pf-discover">
+    <div class="scenario-card">
+      <div class="scenario-title">기업 탐색</div>
+      <div class="scenario-subtitle">상시 · 3탭: AI 추천(기본) &middot; 전체 기업 &middot; 관심기업 · DV-001</div>
+
+      <div class="section-label">가설 / 목적 / 관리지표</div>
+      <table class="meta-table">
+        <tbody>
+          <tr><td>가설</td><td>AI 추천을 기본 탭으로 먼저 보여주면, 직접 검색 대비 미팅 신청 전환율이 높을 것이다</td></tr>
+          <tr><td>목적</td><td>기업 발견(discovery)의 단일 허브. AI 매칭 제안 확인 + 직접 검색/필터 + 관심기업 관리</td></tr>
+          <!-- 참고: ADR-0002 (매칭 단위=Organization), ADR-0003 (카드 기본, 채팅 목표), CONTEXT.md -->
+          <tr><td>관리지표</td><td>AI 추천: 스와이프 완주율, 미팅 신청 전환율, 관심기업 등록율 / 전체 기업: 검색&rarr;상세보기 전환율, 필터 사용율 / 관심기업: 관심&rarr;미팅 신청 전환율</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-label">연관 테이블</div>
+      <div class="related-tables">
+        <div class="rt-list">
+          <span class="rt-chip">organizations</span>
+          <span class="rt-chip">event_participants</span>
+          <span class="rt-chip">org_keywords</span>
+          <span class="rt-chip">buyer_needs</span>
+          <span class="rt-chip">schedule_table</span>
+        </div>
+      </div>
+
+      <div class="section-label">Page List</div>
+      <table class="page-list-table cols-9f">
+        <colgroup><col class="c-pid"><col class="c-fid"><col class="c-name"><col class="c-route"><col class="c-auth"><col class="c-stat"><col class="c-proto"><col class="c-feat"><col class="c-rev"></colgroup>
+        <thead><tr><th>Page ID</th><th>기능 ID</th><th>페이지명</th><th>라우트</th><th>접근권한</th><th>상태</th><th>프로토타입</th><th>주요기능</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td>DV-001</td><td>F-DV-001</td><td>기업 탐색</td><td><span class="flow-screen">/discover</span></td><td><span class="auth-badge auth-buyer">Buyer</span> <span class="auth-badge auth-exhib">Exhibitor</span> <span class="auth-badge auth-visit">Visitor</span></td><td><span class="status-draft">draft</span></td><td><a href="prototype-discover.html" target="_blank" class="proto-link">확인하기</a></td><td>3탭(AI 추천 스와이프 &middot; 전체 기업 검색/필터 &middot; 관심기업). 카드 액션 4종</td><td>2026-06-04 <code>d8a2184</code></td></tr>
+          <tr><td>DV-002</td><td>F-DV-001</td><td>기업 상세</td><td><span class="flow-screen">/discover/:organizationId</span></td><td><span class="auth-badge auth-buyer">Buyer</span> <span class="auth-badge auth-exhib">Exhibitor</span> <span class="auth-badge auth-visit">Visitor</span></td><td><span class="status-draft">draft</span></td><td><a href="prototype-company-detail.html" target="_blank" class="proto-link">확인하기</a></td><td>프로필 상세 + AI 추천 이유 + 미팅 신청 CTA. DV-001에서 진입</td><td>2026-06-04 <code>d8a2184</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-label">탭 구조</div>
+      <table class="flow-table">
+        <thead><tr><th>탭</th><th>기본?</th><th>UI 패턴</th><th>설명</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:600;">AI 추천</td><td>기본 탭</td><td>스와이프 (한 장씩)</td><td>AI 매칭 제안. 적합도 높은 순. NABI 차별점</td></tr>
+          <tr><td style="font-weight:600;">전체 기업</td><td></td><td>리스트 + 검색/필터</td><td>키워드 검색 + 카테고리 필터. Open Matching</td></tr>
+          <tr><td style="font-weight:600;">관심기업</td><td></td><td>리스트</td><td>AI 추천/전체 기업 양쪽에서 저장한 기업 모아보기</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-label">단계별 행동</div>
+
+      <div class="case-tabs" id="discover-tabs">
+        <button class="case-tab active" onclick="showCase('discover', 'ai', this)">AI 추천 탭</button>
+        <button class="case-tab" onclick="showCase('discover', 'all', this)">전체 기업 탭</button>
+        <button class="case-tab" onclick="showCase('discover', 'visitor', this)">Visitor</button>
+      </div>
+
+      <div class="case-content active" id="discover-ai">
+        <p style="font-size:13px; color:var(--text-tertiary); margin-bottom:12px;">바이어/참가사 완전 대칭.</p>
+        <table class="flow-table">
+          <thead><tr><th>단계</th><th>행동</th><th>화면</th><th>시스템 반응</th></tr></thead>
+          <tbody>
+            <tr><td><span class="flow-step">1</span></td><td>이메일 &rarr; 내 미팅(MY-001) &rarr; "기업 탐색" 버튼 클릭</td><td><span class="flow-screen">DV-001 AI 추천</span></td><td>스와이프 UI. 적합도 % + 추천 이유 + 상대방 키워드/니즈 요약. 발견(discovery) 중심</td></tr>
+            <tr><td><span class="flow-step">2</span></td><td>카드별 4가지 액션 중 선택</td><td><span class="flow-screen">DV-001 AI 추천</span></td><td>&① 미팅 신청 &rarr; MT-001 모달 &② 관심기업 등록 &③ 관심없음(카드 숨김) &④ 상세보기 &rarr; DV-002</td></tr>
+            <tr><td><span class="flow-step">3</span></td><td>전체 기업 탭으로 전환 &rarr; 직접 검색</td><td><span class="flow-screen">DV-001 전체 기업</span></td><td>Open Matching: AI 제안 외 직접 탐색</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="case-content" id="discover-all">
+        <p style="font-size:13px; color:var(--text-tertiary); margin-bottom:12px;">바이어/참가사/Visitor 전원 동일.</p>
+        <table class="flow-table">
+          <thead><tr><th>단계</th><th>행동</th><th>화면</th><th>시스템 반응</th></tr></thead>
+          <tbody>
+            <tr><td><span class="flow-step">1</span></td><td>전체 기업 탭 진입</td><td><span class="flow-screen">DV-001 전체 기업</span></td><td>검색 + 카테고리 필터 + 참여자 카드 리스트</td></tr>
+            <tr><td><span class="flow-step">2</span></td><td>필터/검색으로 상대방 탐색</td><td><span class="flow-screen">DV-001 전체 기업</span></td><td>카드: 기업명, 키워드 태그, 한줄 소개, 부스 위치</td></tr>
+            <tr><td><span class="flow-step">3</span></td><td>상세보기</td><td><span class="flow-screen">DV-002</span></td><td>상세 정보, 전시 품목/관심 분야, 위치. 전문용어 설명 병기</td></tr>
+            <tr><td><span class="flow-step">4</span></td><td>미팅 신청 또는 관심기업 등록</td><td><span class="flow-screen">MT-001 / DV-001</span></td><td>&rarr; <a href="#" onclick="show('pf-meeting'); return false;" style="color:var(--accent-primary);">미팅 신청 (공통)</a> 또는 관심기업 탭에 추가</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="case-content" id="discover-visitor">
+        <table class="flow-table">
+          <thead><tr><th>항목</th><th>내용</th></tr></thead>
+          <tbody>
+            <tr><td style="font-weight:600;">전체 기업 탭</td><td>Visitor 상태에서도 탐색 가능 (프로필 불필요)</td></tr>
+            <tr><td style="font-weight:600;">AI 추천 탭</td><td>BM-001 프로필 작성 완료(On-site Buyer 전환) 후 활성화</td></tr>
+            <tr><td style="font-weight:600;">미팅 신청</td><td>BM-001 완료 필수 게이트. On-site Buyer 전환 후 동일 플로우</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="key-points">
+        <div class="key-points-title">핵심 포인트</div>
+        <ul>
+          <li><strong>기업 탐색 = 단일 허브</strong> &mdash; AI 추천 + 전체 기업 + 관심기업을 하나의 페이지에 통합</li>
+          <li><strong>AI 추천이 기본 탭</strong> &mdash; NABI의 차별점. 진입 시 AI 추천부터 보여줌</li>
+          <li>핵심 역할은 <strong>발견(discovery)</strong> &mdash; 수락/거절은 내 미팅(MY-001/002) 페이지의 역할</li>
+          <li>바이어/참가사 완전 대칭 &mdash; 양쪽 모두 동일한 탐색 경험</li>
+          <li>스와이프 UI (AI 추천 탭): 한 번에 한 장씩 카드 표시 (데이팅 앱 패턴)</li>
+          <li>카드 액션 4가지: 미팅 신청 / 관심기업 등록 / 관심없음 / 상세보기</li>
+          <li>Visitor는 전체 기업 탭만 이용 가능. BM-001 완료(On-site Buyer 전환) 후 AI 추천 탭 + 미팅 신청 활성화</li>
+          <li>카드 모드에서는 채팅(NABI) 동선 없음 &mdash; ADR-0003 (상호 배타)</li>
+          <li>매칭 근거 투명: 적합도 % + 추천 이유 + 키워드 매칭</li>
+          <li>모든 결과는 Schedule Table에 기록</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       4. 참여자 탐색: 채팅
+       ============================================================ -->
+  <!--
+  <div class="scenario" id="sc-pf-search-chat">
+    <div class="scenario-card">
+      <div class="scenario-title">참여자 탐색: 채팅</div>
+      <div class="scenario-subtitle">현장 · 플랜 A (목표) · AI 대화 &rarr; 추천 &rarr; 에이전트 &rarr; 미팅</div>
+
+      <div class="section-label">가설 / 목적 / 관리지표</div>
+      <table class="meta-table">
+        <tbody>
+          <tr><td>가설</td><td>대화 2턴으로 니즈를 파악하면 카드 필터보다 정확한 추천이 가능할 것이다</td></tr>
+          <tr><td>목적</td><td>NABI와 대화로 니즈 파악 &rarr; AI 추천 &rarr; 에이전트 대화 &rarr; 미팅. 플랜 A (목표)</td></tr>
+          <tr><td>관리지표</td><td>니즈 파악까지 평균 턴 수, 추천&rarr;에이전트 대화 전환율, 에이전트 대화&rarr;미팅 신청 전환율, 추천 정확도 (사후 평가)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-label">연관 테이블</div>
+      <div class="related-tables">
+        <div class="rt-list">
+          <span class="rt-chip">conversations</span>
+          <span class="rt-chip">agent_profiles</span>
+          <span class="rt-chip">agent_knowledge</span>
+          <span class="rt-chip">buyer_needs</span>
+          <span class="rt-chip">organizations</span>
+        </div>
+      </div>
+
+      <div class="section-label">Page List</div>
+      <table class="page-list-table cols-9f">
+        <colgroup><col class="c-pid"><col class="c-fid"><col class="c-name"><col class="c-route"><col class="c-auth"><col class="c-stat"><col class="c-proto"><col class="c-feat"><col class="c-rev"></colgroup>
+        <thead><tr><th>Page ID</th><th>기능 ID</th><th>페이지명</th><th>라우트</th><th>접근권한</th><th>상태</th><th>프로토타입</th><th>주요기능</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td>MN-001</td><td>F-MN-001</td><td>NABI 대화 (메인)</td><td><span class="flow-screen">/chat</span></td><td><span class="auth-badge auth-buyer">Buyer</span> <span class="auth-badge auth-visit">Visitor</span></td><td><span class="status-confirmed">confirmed</span></td><td><span class="proto-none">없음</span></td><td>니즈 파악 대화 &rarr; 추천 카드 인라인 삽입 &rarr; 에이전트 대화 연결</td><td>2026-06-03 <code>b1c64bc</code></td></tr>
+          <tr><td>AG-001</td><td>F-AG-001</td><td>기업 에이전트 채팅</td><td><span class="flow-screen">/agent/:companyId</span></td><td><span class="auth-badge auth-buyer">Buyer</span> <span class="auth-badge auth-exhib">Exhibitor</span> <span class="auth-badge auth-visit">Visitor</span></td><td><span class="status-confirmed">confirmed</span></td><td><span class="proto-none">없음</span></td><td>NABI 맥락 자동 전달. 3모드(자율/컨펌/직접). 미팅 CTA</td><td>2026-06-03 <code>b1c64bc</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-label">단계별 행동</div>
+      <p style="font-size:13px; color:var(--text-tertiary); margin-bottom:12px;">유형별 차이 없음. 채팅 품질이 검증되면 카드를 대체 (피처 플래그 전환).</p>
+      <table class="flow-table">
+        <thead><tr><th>단계</th><th>행동</th><th>화면</th><th>시스템 반응</th></tr></thead>
+        <tbody>
+          <tr><td><span class="flow-step">1</span></td><td>앱 접속 &rarr; NABI 대화</td><td><span class="flow-screen">MN-001</span></td><td>"어떤 제품이나 기술에 관심이 있으신가요?" + 퀵태그</td></tr>
+          <tr><td><span class="flow-step">2</span></td><td>자유 입력 또는 퀵태그 선택</td><td><span class="flow-screen">MN-001</span></td><td>NABI 구체화 질문 (1~2턴). 전문용어 설명 병기</td></tr>
+          <tr><td><span class="flow-step">3</span></td><td>니즈 확정</td><td><span class="flow-screen">MN-001</span></td><td>추천 카드 3~5개 대화 안에 인라인 삽입</td></tr>
+          <tr><td><span class="flow-step">4</span></td><td>추천 카드 "대화하기 >"</td><td><span class="flow-screen">AG-001</span></td><td>기업 에이전트와 대화. 바이어 맥락 자동 전달</td></tr>
+          <tr><td><span class="flow-step">5</span></td><td>"미팅 잡기" CTA &rarr; 미팅 신청 플로우</td><td><span class="flow-screen">장소 선택</span></td><td>&rarr; 미팅 신청 (공통)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="key-points">
+        <div class="key-points-title">핵심 포인트</div>
+        <ul>
+          <li>카드 기반과 완전히 독립 &mdash; 공존 불가 (ADR-0003)</li>
+          <li>카드 기본 구현, 채팅은 품질 검증 후 전환</li>
+          <li>NABI 대화 2턴 &rarr; 즉시 추천 (인라인 카드)</li>
+          <li>에이전트가 바이어 맥락을 이미 알고 있음 (NABI&rarr;에이전트 맥락 전달)</li>
+          <li>전문용어 설명은 시스템 프롬프트 레벨에서 자연스럽게 병기</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  -->
+
+  <!-- ============================================================
+       5. 미팅 신청
+       ============================================================ -->
+  <div class="scenario" id="sc-pf-meeting">
+    <div class="scenario-card">
+      <div class="scenario-title">미팅 신청</div>
+      <div class="scenario-subtitle">공통 · 모달 3탭(장소&rarr;시간&rarr;확인+메시지) · 신청 &rarr; 대기 &rarr; 확인 &rarr; 취소 &rarr; 진행 &rarr; 리뷰</div>
+
+      <div class="section-label">가설 / 목적 / 관리지표</div>
+      <table class="meta-table">
+        <tbody>
+          <tr><td>가설</td><td>3탭 이내(장소&rarr;시간&rarr;확인+메시지)로 완료되면 미팅 신청 이탈율이 10% 이하일 것이다</td></tr>
+          <tr><td>목적</td><td>상대방에게 미팅을 신청하는 모달. 장소 + 시간 + AI 메시지를 선택하고 전송</td></tr>
+          <!-- 참고: CONTEXT.md (Meeting Venue, Schedule Table), F-MT-001.md (PRD) -->
+          <tr><td>관리지표</td><td>미팅 신청 완료율, 수락율, 거절율, 역제안율, 취소율, 평균 응답 시간(신청&rarr;수락/거절), noshow율</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-label">연관 테이블</div>
+      <div class="related-tables">
+        <div class="rt-list">
+          <span class="rt-chip">schedule_table</span>
+          <span class="rt-chip">meeting_slots</span>
+          <span class="rt-chip">organizations</span>
+        </div>
+      </div>
+
+      <div class="section-label">Page List</div>
+      <table class="page-list-table cols-9f">
+        <colgroup><col class="c-pid"><col class="c-fid"><col class="c-name"><col class="c-route"><col class="c-auth"><col class="c-stat"><col class="c-proto"><col class="c-feat"><col class="c-rev"></colgroup>
+        <thead><tr><th>Page ID</th><th>기능 ID</th><th>페이지명</th><th>라우트</th><th>접근권한</th><th>상태</th><th>프로토타입</th><th>주요기능</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td>MT-001</td><td>F-MT-001</td><td>미팅 신청</td><td><span class="flow-screen">/meeting/request</span></td><td><span class="auth-badge auth-buyer">Buyer</span> <span class="auth-badge auth-exhib">Exhibitor</span></td><td><span class="status-draft">draft</span></td><td><a href="prototype-meeting.html" target="_blank" class="proto-link">확인하기</a></td><td>모달 3탭: 장소 선택 &rarr; 연속 슬롯(양쪽 빈 교집합) &rarr; 확인+AI 메시지. 같은 상대 동시 1건</td><td>2026-06-04 <code>d8a2184</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-label">단계별 행동</div>
+
+      <div class="phase-divider">1. 신청 (모달 3탭)</div>
+      <p style="font-size:13px; color:var(--text-tertiary); margin:4px 0 8px;">진입: DV-001 AI추천 카드 / DV-001 전체기업 상세보기 / AG-001 에이전트 대화 &mdash; 모든 진입점에서 동일 모달. Visitor는 BM-001 완료(On-site Buyer 전환) 필수.</p>
+      <table class="flow-table">
+        <thead><tr><th>탭</th><th>행동</th><th>화면</th><th>시스템 반응</th></tr></thead>
+        <tbody>
+          <tr><td><span class="flow-step">1-1</span></td><td>시간 선택</td><td><span class="flow-screen">MT-001 탭1</span></td><td>날짜(9/16~19) + 30분 슬롯 연속 선택. 양쪽 빈 슬롯 교집합만 활성화. 0개 시 "겹치는 빈 시간이 없습니다. 관심기업으로 등록하시겠습니까?" fallback</td></tr>
+          <tr><td><span class="flow-step">1-2</span></td><td>장소 선택</td><td><span class="flow-screen">MT-001 탭2</span></td><td>선택한 시간에 이용 가능한 장소: 부스 / 매칭존 테이블 / 비즈니스 룸</td></tr>
+          <tr><td><span class="flow-step">1-3</span></td><td>확인 + 메시지 &rarr; 전송</td><td><span class="flow-screen">MT-001 탭3</span></td><td>일시/장소 요약 + AI 초안 메시지(프로필 기반, 선택 수정) &rarr; 전송. Schedule Table (status: proposed). 같은 상대에게 동시 활성 미팅 1건만</td></tr>
+        </tbody>
+      </table>
+
+      <div class="phase-divider">2. 대기</div>
+      <table class="flow-table">
+        <thead><tr><th>단계</th><th>행동</th><th>화면</th><th>시스템 반응</th></tr></thead>
+        <tbody>
+          <tr><td><span class="flow-step">2-1</span></td><td>내 미팅에서 상태 확인</td><td><span class="flow-screen">MY-001</span></td><td>"대기 중" 뱃지. 장소/시간 표시. 상대방에게 이메일 알림 발송됨</td></tr>
+          <tr><td><span class="flow-step">2-2</span></td><td>기업 탐색에서 추가 탐색</td><td><span class="flow-screen">DV-001</span></td><td>예약 슬롯 자동 비활성화. 같은 상대에게는 동시 1건만 (다른 상대에게는 추가 가능)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="phase-divider">3. 응답 (상대방 MY-001에서)</div>
+      <table class="flow-table">
+        <thead><tr><th>단계</th><th>행동</th><th>화면</th><th>시스템 반응</th></tr></thead>
+        <tbody>
+          <tr><td><span class="flow-step">3-1</span></td><td>수락</td><td><span class="flow-screen">MY-001</span></td><td>Schedule Table (status: accepted). 신청자에게 "미팅이 확정되었습니다" 이메일</td></tr>
+          <tr><td><span class="flow-step">3-2</span></td><td>거절 (시간 불가 외)</td><td><span class="flow-screen">MY-001</span></td><td>사유 키워드 선택(관심 분야 불일치/기타) + 자유 입력. 신청자에게 거절 이메일</td></tr>
+          <tr><td><span class="flow-step">3-3</span></td><td>거절 (시간 불가) &rarr; 역제안</td><td><span class="flow-screen">MY-001</span></td><td>"시간 불가" 선택 &rarr; 대안 시간 슬롯 화면(신청자 빈 슬롯 표시) &rarr; 역제안 전송. Schedule Table (status: counter_proposed). 신청자에게 "대안 시간이 제안되었습니다" 이메일</td></tr>
+        </tbody>
+      </table>
+
+      <div class="phase-divider">4. 취소 (수락 후)</div>
+      <table class="flow-table">
+        <thead><tr><th>단계</th><th>행동</th><th>화면</th><th>시스템 반응</th></tr></thead>
+        <tbody>
+          <tr><td><span class="flow-step">4-1</span></td><td>양쪽 어느 쪽이든 "취소" 선택</td><td><span class="flow-screen">MY-001</span></td><td>경고: "특별한 사유 없이 취소하면 AI 매칭 추천에서 우선순위가 낮아질 수 있습니다"</td></tr>
+          <tr><td><span class="flow-step">4-2</span></td><td>사유 입력 &rarr; 확인</td><td><span class="flow-screen">MY-001</span></td><td>사유 키워드 + 자유 입력. 슬롯 자동 해제. 상대방에게 취소 이메일. Schedule Table (status: cancelled)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="phase-divider">5. 진행 + 리뷰</div>
+      <table class="flow-table">
+        <thead><tr><th>단계</th><th>행동</th><th>화면</th><th>시스템 반응</th></tr></thead>
+        <tbody>
+          <tr><td><span class="flow-step">5-1</span></td><td>미팅 당일 장소/시간 재확인</td><td><span class="flow-screen">MY-001</span></td><td>리마인더 이메일 (당일 오전)</td></tr>
+          <tr><td><span class="flow-step">5-2</span></td><td>미팅 참석 (오프라인)</td><td>-</td><td>Schedule Table (status: completed)</td></tr>
+          <tr><td><span class="flow-step">5-3</span></td><td>미팅 리뷰 작성</td><td><span class="flow-screen">리뷰 폼</span></td><td>슬롯 종료 후 이메일로 리뷰 링크. "미팅이 진행되었나요?" + 리뷰. noshow 판정 포함. 넛지: "리뷰를 남기면 후속 미팅 연결에 활용됩니다"</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-label">이메일 알림 (7종)</div>
+      <table class="flow-table">
+        <thead><tr><th>#</th><th>이벤트</th><th>수신자</th><th>내용</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>미팅 신청</td><td>상대방</td><td>"새 미팅 요청이 있습니다" + MY-001 딥링크</td></tr>
+          <tr><td>2</td><td>수락</td><td>신청자</td><td>"미팅이 확정되었습니다" + 장소/시간</td></tr>
+          <tr><td>3</td><td>거절</td><td>신청자</td><td>"미팅이 거절되었습니다" + 사유 키워드</td></tr>
+          <tr><td>4</td><td>역제안</td><td>신청자</td><td>"대안 시간이 제안되었습니다" + MY-001 딥링크</td></tr>
+          <tr><td>5</td><td>취소</td><td>상대방</td><td>"미팅이 취소되었습니다" + 사유</td></tr>
+          <tr><td>6</td><td>리마인더</td><td>양쪽</td><td>미팅 당일 오전. 장소/시간 재확인</td></tr>
+          <tr><td>7</td><td>리뷰 요청</td><td>양쪽</td><td>슬롯 종료 후. 리뷰 폼 링크</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-label">상태 흐름</div>
+      <p style="font-size:13px; color:var(--text-secondary); margin:4px 0 12px; font-family:monospace;">
+        proposed &rarr; accepted / rejected / counter_proposed / cancelled &rarr; completed / noshow
+      </p>
+
+      <div class="key-points">
+        <div class="key-points-title">핵심 포인트</div>
+        <ul>
+          <li>바이어 / 참가사 &mdash; 완전히 동일한 플로우. Visitor는 BM-001 완료(On-site Buyer 전환) 후 동일</li>
+          <li>미팅 상태 흐름: proposed &rarr; accepted / rejected / counter_proposed / cancelled &rarr; completed / noshow</li>
+          <li>거절 시 사유 입력 (키워드 선택 + 자유 입력). "시간 불가" 시 역제안(counter_proposed) 플로우</li>
+          <li>역제안/재신청 횟수 제한 없음 &mdash; 빈 슬롯 교집합 제공으로 핑퐁 방지</li>
+          <li>같은 상대에게 동시 활성 미팅 1건만. completed 후 추가 가능</li>
+          <li>취소: 양쪽 가능, 사유 입력, 경고 넛지. 슬롯 자동 해제</li>
+          <li>알림: 이메일 7종 (신청/수락/거절/역제안/취소/리마인더/리뷰요청). 수락/거절은 MY-001 웹에서</li>
+          <li>Forced Matching: Organizer 배정 &rarr; accepted 직접 삽입, 거절 불가</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       6. 내 미팅
+       ============================================================ -->
+  <div class="scenario" id="sc-pf-my-meeting">
+    <div class="scenario-card">
+      <div class="scenario-title">내 미팅</div>
+      <div class="scenario-subtitle">공통 · 미팅 현황 조회/관리 · MY-001 / MY-002</div>
+
+      <div class="section-label">가설 / 목적 / 관리지표</div>
+      <table class="meta-table">
+        <tbody>
+          <tr><td>가설</td><td>미팅 상태를 한 화면에서 확인할 수 있으면 노쇼율이 줄어들 것이다</td></tr>
+          <tr><td>목적</td><td>내가 신청/수신한 미팅의 상태 확인, 수락/거절, 결과 조회를 하나의 화면에서 관리</td></tr>
+          <tr><td>참고</td><td>CONTEXT.md (Schedule Table) · <a href="prototype-my-meetings.html" target="_blank">MY-001 프로토타입</a></td></tr>
+          <tr><td>관리지표</td><td>미팅 확인율 (확정 후 재접속), 노쇼율, 미팅 결과 확인율, 후속 미팅 전환율</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-label">연관 테이블</div>
+      <div class="related-tables">
+        <div class="rt-list">
+          <span class="rt-chip">schedule_table</span>
+          <span class="rt-chip">meetings</span>
+          <span class="rt-chip">organizations</span>
+          <span class="rt-chip">members</span>
+        </div>
+      </div>
+
+      <div class="section-label">Page List</div>
+      <table class="page-list-table cols-9f">
+        <colgroup><col class="c-pid"><col class="c-fid"><col class="c-name"><col class="c-route"><col class="c-auth"><col class="c-stat"><col class="c-proto"><col class="c-feat"><col class="c-rev"></colgroup>
+        <thead><tr><th>Page ID</th><th>기능 ID</th><th>페이지명</th><th>라우트</th><th>접근권한</th><th>상태</th><th>프로토타입</th><th>주요기능</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td>MY-001</td><td>F-MY-001</td><td>내 미팅</td><td><span class="flow-screen">/meetings</span></td><td><span class="auth-badge auth-buyer">Buyer</span> <span class="auth-badge auth-exhib">Exhibitor</span> <span class="auth-badge auth-visit">Visitor</span></td><td><span class="status-confirmed">confirmed</span></td><td><a href="prototype-my-meetings.html" target="_blank" class="proto-link">확인하기</a></td><td>전원 랜딩. 미팅 현황 조회/관리 + 수락/거절 + 기업 탐색 진입</td><td>2026-06-04 <code>562999c</code></td></tr>
+          <tr><td>MY-002</td><td>F-MY-002</td><td>미팅 리뷰</td><td><span class="flow-screen">/meetings/:meetingId</span></td><td><span class="auth-badge auth-buyer">Buyer</span> <span class="auth-badge auth-exhib">Exhibitor</span> <span class="auth-badge auth-visit">Visitor</span></td><td><span class="status-confirmed">confirmed</span></td><td><a href="prototype-meeting-review.html" target="_blank" class="proto-link">확인하기</a></td><td>미팅 후 AI 요약. 핵심 논의사항 + 후속 조치</td><td>2026-06-06</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-label">단계별 행동</div>
+
+      <div class="case-tabs" id="mymeeting-tabs">
+        <button class="case-tab active" onclick="showCase('mymeeting', 'common', this)">공통</button>
+        <button class="case-tab" onclick="showCase('mymeeting', 'landing', this)">유형별 랜딩 차이</button>
+      </div>
+
+      <div class="case-content active" id="mymeeting-common">
+        <table class="flow-table">
+          <thead><tr><th>단계</th><th>행동</th><th>화면</th><th>시스템 반응</th></tr></thead>
+          <tbody>
+            <tr><td><span class="flow-step">1</span></td><td>내 미팅 접속</td><td><span class="flow-screen">MY-001</span></td><td>미팅 리스트: 상대방, 장소, 시간, 상태 뱃지</td></tr>
+            <tr><td><span class="flow-step">2</span></td><td>대기 중 &rarr; 대기 상태 확인</td><td><span class="flow-screen">MY-001</span></td><td>"대기 중" 뱃지</td></tr>
+            <tr><td><span class="flow-step">3</span></td><td>확정 &rarr; 상세 확인 (장소/참석자)</td><td><span class="flow-screen">MY-001</span></td><td>"확정" 뱃지 + 장소 안내</td></tr>
+            <tr><td><span class="flow-step">4</span></td><td>수신된 미팅 요청 &rarr; 수락/거절</td><td><span class="flow-screen">MY-001</span></td><td>상대방이 보낸 요청 카드. 수락 &rarr; Schedule Table 확정</td></tr>
+            <tr><td><span class="flow-step">5</span></td><td>완료된 미팅 &rarr; AI 결과 요약</td><td><span class="flow-screen">MY-002</span></td><td>핵심 논의사항, 후속 조치. 이메일로도 전달</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="case-content" id="mymeeting-landing">
+        <table class="flow-table">
+          <thead><tr><th>항목</th><th>바이어/On-site Buyer</th><th>참가사</th></tr></thead>
+          <tbody>
+            <tr><td style="font-weight:600;">랜딩</td><td><strong>내 미팅</strong> &rarr; 기업 탐색 버튼</td><td><strong>내 미팅이 랜딩</strong> (미팅 관리가 핵심)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="key-points">
+        <div class="key-points-title">핵심 포인트</div>
+        <ul>
+          <li>모든 유형 동일 화면 &mdash; 신청한 미팅 + 수신한 미팅 요청 모두 표시</li>
+          <li>Schedule Table의 개인 뷰</li>
+          <li>상태 뱃지: 대기 중 / 확정 / 거절됨 / 완료 / 노쇼</li>
+          <li>참가사 랜딩 = 내 미팅 (미팅 관리가 핵심 업무)</li>
+          <li>전원 랜딩 = 내 미팅 &rarr; 기업 탐색 버튼으로 이동</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       7. 참가사 대시보드
+       ============================================================ -->
+
+  <div class="scenario" id="sc-pf-exhibitor">
+    <div class="scenario-card">
+      <div class="scenario-title">7. 참가사 대시보드 <span class="status-deprecated" style="font-size:12px; vertical-align:middle;">구조 변경</span></div>
+      <div class="scenario-subtitle">EX-000~005 &rarr; 공통 페이지(MY-001/002)로 통합. 참가사 프로필은 BM-002/005로 이동.</div>
+
+      <div class="related-tables" style="margin-bottom:16px;">
+        <span class="rt-chip">schedule_table</span>
+      </div>
+
+      <h3 style="margin-top:0;">Page List (변경 후)</h3>
+      <table class="flow-table">
+        <thead><tr><th>Page ID</th><th>기능 ID</th><th>페이지명</th><th>라우트</th><th>상태</th><th>비고</th></tr></thead>
+        <tbody>
+          <tr><td>EX-000</td><td>F-EX-000</td><td>참가기관 홈</td><td><span class="flow-screen">/exhibitor</span></td><td><span class="status-deprecated">deprecated</span></td><td>BM-005(내 프로필 참가사)로 대체</td></tr>
+          <tr><td>EX-001</td><td>F-EX-001</td><td>에이전트 설정</td><td><span class="flow-screen">/exhibitor/agent</span></td><td><span class="status-draft">deferred</span></td><td>미구현. 1차 릴리스 범위 밖</td></tr>
+          <tr><td>EX-002</td><td>F-EX-002</td><td>바이어 브리핑 목록</td><td><span class="flow-screen">/exhibitor/briefings</span></td><td><span class="status-deprecated">deprecated</span></td><td>MY-001 미팅 카드(한줄 요약) + MY-002 미팅 상세(브리핑 섹션)에 흡수</td></tr>
+          <tr><td>EX-003</td><td>F-EX-003</td><td>미팅 요청 목록</td><td><span class="flow-screen">/exhibitor/meetings</span></td><td><span class="status-deprecated">deprecated</span></td><td>MY-001(내 미팅)으로 통합. 역할별 뷰 분기</td></tr>
+          <tr><td>EX-004</td><td>F-EX-004</td><td>대화 리스트 + 개입</td><td><span class="flow-screen">/exhibitor/conversations</span></td><td><span class="status-draft">deferred</span></td><td>미구현. 1차 릴리스 범위 밖</td></tr>
+          <tr><td>EX-005</td><td>F-EX-005</td><td>미팅 리뷰</td><td><span class="flow-screen">/exhibitor/meetings/:id</span></td><td><span class="status-deprecated">deprecated</span></td><td>MY-002(미팅 리뷰)로 통합</td></tr>
+        </tbody>
+      </table>
+
+      <h3>통합 방향</h3>
+
+      <div class="key-points">
+        <div class="key-points-title">변경 사항</div>
+        <ul>
+          <li><strong>EX-000 &rarr; BM-005:</strong> 참가사 랜딩은 MY-001(내 미팅). 프로필 + 현황 허브는 /exhibitor/profile(BM-005)이 담당</li>
+          <li><strong>EX-002 &rarr; MY-001/002:</strong> 바이어 브리핑은 미팅 카드에 한줄 요약 + 미팅 상세(MY-002)에 "미팅 전 바이어 니즈" 섹션으로 흡수</li>
+          <li><strong>EX-003 &rarr; MY-001:</strong> 미팅 요청 수락/거절은 내 미팅(MY-001)에서 역할별 뷰로 처리. 바이어 유형 뱃지 유지</li>
+          <li><strong>EX-005 &rarr; MY-002:</strong> 미팅 결과 AI 요약은 바이어/참가사 동일 페이지(MY-002)</li>
+          <li><strong>EX-001, EX-004:</strong> 에이전트 설정 및 대화 개입은 1차 릴리스 범위 밖. 이번에는 NABI 팀이 직접 세팅</li>
+          <li>약관 동의: 참가기관 최초 로그인 시 데이터 활용 동의 필수 (동의 전 서비스 이용 불가)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       8. 운영사 대시보드
+       ============================================================ -->
+
+  <div class="scenario" id="sc-pf-organizer">
+    <div class="scenario-card">
+      <div class="scenario-title">8. 운영사 대시보드</div>
+      <div class="scenario-subtitle">이벤트 관리 + 매칭 현황 + 참가사/바이어 관리 + 실시간 모니터링 + 강제 매칭</div>
+
+      <div class="related-tables" style="margin-bottom:16px;">
+        <span class="rt-chip">events</span>
+        <span class="rt-chip">event_participants</span>
+        <span class="rt-chip">organizations</span>
+        <span class="rt-chip">schedule_table</span>
+        <span class="rt-chip">conversations</span>
+      </div>
+
+      <h3 style="margin-top:0;">Page List</h3>
+      <table class="flow-table">
+        <thead><tr><th>Page ID</th><th>기능 ID</th><th>페이지명</th><th>라우트</th><th>상태</th><th>주요기능</th></tr></thead>
+        <tbody>
+          <tr><td>OP-001</td><td>F-OP-001</td><td>매칭 현황 대시보드</td><td><span class="flow-screen">/organizer</span></td><td><span class="status-confirmed">confirmed</span></td><td>매칭 수 &middot; 미팅 성사율 &middot; 노쇼율 &middot; 슬롯 사용률. 운영사 랜딩 (구 PC-000/001 통합)</td></tr>
+          <tr><td>OP-002</td><td>F-OP-002</td><td>참가기업/바이어 목록 관리</td><td><span class="flow-screen">/organizer/members</span></td><td><span class="status-confirmed">confirmed</span></td><td>탭(참가기업/바이어). 프로필 조회/수정 + 매칭 설정 + AI 매칭 추천 (구 PC-002/003 통합)</td></tr>
+          <tr><td>OP-005</td><td>F-OP-005</td><td>강제 매칭 배정</td><td><span class="flow-screen">/organizer/forced-matching</span></td><td><span class="status-confirmed">confirmed</span></td><td>전체 포화배정(반복 가능) + Forced 수동 지정. 수락 규칙은 받는 쪽 유형별(ADR-0005)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>단계별 행동</h3>
+
+      <h4 style="margin-bottom:8px;">OP-001 매칭 현황 대시보드 (랜딩)</h4>
+      <table class="flow-table">
+        <thead><tr><th>단계</th><th>행동</th><th>화면</th><th>시스템 반응</th></tr></thead>
+        <tbody>
+          <tr><td><span class="flow-step">1</span></td><td>이메일 + 인증코드 로그인</td><td><span class="flow-screen">OP-001</span></td><td>매칭 현황 대시보드 직접 진입 (단일 이벤트이므로 이벤트 선택 없음)</td></tr>
+          <tr><td><span class="flow-step">2</span></td><td>매칭 현황 확인</td><td><span class="flow-screen">OP-001</span></td><td>총 매칭 수, 미팅 성사율, 노쇼율, 슬롯 사용률, 프로필 완성률, 신청자 수 집계</td></tr>
+          <tr><td><span class="flow-step">3</span></td><td>전시 당일: 실시간 현황</td><td><span class="flow-screen">OP-001</span></td><td>진행 중 미팅, 노쇼 건수, Hosted Buyer 의무 미팅 달성 현황</td></tr>
+        </tbody>
+      </table>
+
+      <h4 style="margin-bottom:8px;">OP-002 참가기업/바이어 목록 관리</h4>
+      <table class="flow-table">
+        <thead><tr><th>단계</th><th>행동</th><th>화면</th><th>시스템 반응</th></tr></thead>
+        <tbody>
+          <tr><td><span class="flow-step">1</span></td><td>참가기업/바이어 탭 전환</td><td><span class="flow-screen">OP-002</span></td><td>참가기업 탭 / 바이어 탭으로 목록 분리 조회</td></tr>
+          <tr><td><span class="flow-step">2</span></td><td>기업 상세 확인</td><td><span class="flow-screen">OP-002</span></td><td>프로필 전체 정보, 매칭 현황(신청/수락/거절), 스케줄 현황</td></tr>
+          <tr><td><span class="flow-step">3</span></td><td>프로필 수정 / 비활성화</td><td><span class="flow-screen">OP-002</span></td><td>오류 수정, 참가자 비활성화/삭제</td></tr>
+          <tr><td><span class="flow-step">4</span></td><td>매칭 설정</td><td><span class="flow-screen">OP-002</span></td><td>개별 우선 배정 지정 + 스케줄 설정 (슬롯 시간, 최대 미팅 수, 휴식)</td></tr>
+          <tr><td><span class="flow-step">5</span></td><td>AI 매칭 추천</td><td><span class="flow-screen">OP-002</span></td><td>기업 상세에서 매칭율 높은 기업 리스트 / 전체 포화배정 실행(반복 가능, Draft &rarr; 검토 &rarr; 확정)</td></tr>
+          <tr><td><span class="flow-step">6</span></td><td>CSV/Excel 내보내기</td><td><span class="flow-screen">OP-002</span></td><td>참가자 목록 + 매칭 현황 데이터 다운로드</td></tr>
+        </tbody>
+      </table>
+
+      <h4 style="margin-bottom:8px;">OP-005 강제 매칭 배정</h4>
+      <table class="flow-table">
+        <thead><tr><th>단계</th><th>행동</th><th>화면</th><th>시스템 반응</th></tr></thead>
+        <tbody>
+          <tr><td><span class="flow-step">1</span></td><td>빈 슬롯 / 매칭 미달 기업 확인</td><td><span class="flow-screen">OP-005</span></td><td>매칭되지 않은 참가사/바이어 목록 + 빈 슬롯 현황</td></tr>
+          <tr><td><span class="flow-step">2</span></td><td>바이어 선택 &rarr; 상대 참가사 선택</td><td><span class="flow-screen">OP-005</span></td><td>AI 추천 목록 표시 + 직접 검색 가능</td></tr>
+          <tr><td><span class="flow-step">3</span></td><td>빈 슬롯 교집합에서 슬롯 선택</td><td><span class="flow-screen">OP-005</span></td><td>양쪽 빈 시간대 매칭하여 가용 슬롯 표시</td></tr>
+          <tr><td><span class="flow-step">4</span></td><td>배정 실행 &rarr; 확정</td><td><span class="flow-screen">OP-005</span></td><td>받는 쪽 유형이 수락 규칙 자동 결정(초청=즉시확정/일반·Exhibitor=수락대기). 양쪽에게 알림 이메일 발송, Schedule Table에 기록</td></tr>
+        </tbody>
+      </table>
+
+      <div class="key-points">
+        <div class="key-points-title">핵심 포인트</div>
+        <ul>
+          <li>운영사 전용 페이지(/organizer) &mdash; 공통 페이지와 완전 분리. 3개 페이지 (OP-001/002/005)</li>
+          <li>최고관리자(master) / 제한관리자(sub, KOTRA 등) 2단계 권한. sub 범위는 실무회의 후 확정</li>
+          <li>강제 매칭(Forced): 받는 쪽 유형이 수락 규칙을 자동 결정 &mdash; 초청 바이어=즉시 확정 / 일반 바이어·Exhibitor=수락대기. 운영사가 직접 고르지 않음</li>
+          <li>AI 매칭: 단일 기업 보충(기업 상세) + 전체 포화배정(반복 실행 가능, Draft &rarr; 검토 &rarr; 확정)</li>
+          <li>OP-001 대시보드는 읽기 전용. 운영사 알림 없음 (직접 확인 방식)</li>
+          <li>Supabase RLS: 이벤트별 데이터 격리 (event_participants.organizer_id 기반)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       유저 시나리오
+       ============================================================ -->
+
+  <!-- US: 바이어 -->
+  <div class="scenario" id="sc-us-buyer">
+    <div class="scenario-card">
+      <div class="demo-act-tag">ACT 2 · 바이어 탐색·미팅 신청</div>
+      <div class="scenario-title">강시우 대위 (한화시스템) — AI가 딱 맞는 기업을 찾아준다</div>
+      <div class="scenario-subtitle">★ AI 추천 · 즐겨찾기 · 미팅 신청</div>
+
+      <div class="section-label">핵심 차별점</div>
+      <div class="demo-emphasis">AI가 적합도 순으로 기업을 추천하는데, <span class="lead">단순 키워드 매칭이 아니라 왜 맞는지 이유까지</span> 보여줍니다. 대기업뿐 아니라 밀폐공간 점검 같은 특수 영역의 니치 전문기업까지 찾아냅니다. 바이어는 관심 기업을 즐겨찾기로 모아 비교하고, 마음에 들면 <strong style="color:var(--text-primary)">장소와 시간만 골라 미팅을 신청합니다.</strong></div>
+
+      <div class="section-label">시연 요약</div>
+      <ol class="demo-steps">
+        <li>AI 추천 탭 — 스와이프로 비교(한화에어로 94% → LIG넥스원 89% → 에어빌리티 85%) + <strong>추천 이유</strong> 확인</li>
+        <li>관심 기업 <strong>★ 즐겨찾기</strong> → 관심기업 탭에서 모아보기</li>
+        <li>에어빌리티 상세보기 → <strong>미팅 신청</strong>(부스 C-312, 시간 선택)</li>
+      </ol>
+      <div class="demo-cta-row">
+        <a class="demo-cta" href="prototype-discover.html" target="_blank">▶ 기업 탐색</a>
+        <a class="demo-cta ghost" href="prototype-company-detail.html" target="_blank">기업 상세</a>
+        <a class="demo-cta ghost" href="prototype-meeting.html" target="_blank">미팅 신청</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- US: 참가사 (발표용 시나리오) -->
+  <div class="scenario" id="sc-us-exhibitor">
+    <div class="scenario-card">
+      <div class="demo-act-tag">ACT 1 · 참가사 온보딩</div>
+      <div class="scenario-title">한지민 (에어빌리티) — 등록만 하면 AI가 채운다</div>
+      <div class="scenario-subtitle">★ AI를 통한 데이터 프리필</div>
+
+      <div class="section-label">핵심 차별점</div>
+      <div class="demo-emphasis">회사명만 넣으면 <span class="lead">AI가 회사 자료를 분석</span>해 회사소개·전시 품목·매칭 키워드를 자동으로 작성합니다. 사업자번호를 입력하면 기업 정보는 DART에서 자동으로 가져옵니다. 참가사는 확인하고 다듬기만 하면 됩니다. <strong style="color:var(--text-primary)">수고는 줄고, 매칭에 쓰일 데이터는 늘어납니다.</strong> 완성도 바가 추가 입력을 유도하기 때문에, 정보가 쌓일수록 매칭은 더 정확해집니다.</div>
+
+      <div class="section-label">시연 요약</div>
+      <ol class="demo-steps">
+        <li>1단계 기본정보 — 회사명(에어빌리티)·담당자(한지민) <strong>프리필</strong> 확인</li>
+        <li>"입력 도우미" → 회사 자료 업로드 → 내용 분석 → <strong>전시 품목 자동 추출</strong></li>
+        <li>사업자번호 → <strong>DART 자동 조회</strong> · 완성도 바 상승</li>
+      </ol>
+      <div class="demo-cta-row"><a class="demo-cta" href="prototype-apply-seller.html" target="_blank">▶ 참가사 정보수집 화면</a></div>
+
+      <hr class="demo-divider">
+
+      <div class="demo-act-tag">ACT 3 · 참가사 미팅 수락</div>
+      <div class="scenario-title">바이어 요청을 수락 — 거래가 성사된다</div>
+      <div class="scenario-subtitle">★ 신청 → 수락 → 확정, 세일즈 한 건 완결</div>
+
+      <div class="section-label">핵심 차별점</div>
+      <div class="demo-emphasis">바이어와 <span class="lead">완전히 같은 화면</span>을 참가사도 사용합니다. 방금 한화시스템 바이어가 보낸 미팅 요청이 들어와 있고, 누가 신청했는지 확인한 뒤 한 번에 수락하거나 거절합니다. <strong style="color:var(--text-primary)">신청 → 수락 → 확정으로 거래 한 건이 성사됩니다.</strong> 양쪽이 서로를 알고 만나는, 한 건의 세일즈 기회입니다.</div>
+
+      <div class="section-label">시연 요약</div>
+      <ol class="demo-steps">
+        <li>역할 토글을 <strong>참가사</strong>로 전환 (우측 하단 바)</li>
+        <li>들어온 <strong>미팅 요청(한화시스템 바이어)</strong> 확인</li>
+        <li><strong>수락</strong> → 미팅 확정 (또는 거절)</li>
+      </ol>
+      <div class="demo-cta-row"><a class="demo-cta" href="prototype-my-meetings.html" target="_blank">▶ 내 미팅 (참가사 뷰)</a></div>
+    </div>
+  </div>
+
+  <!-- US: 일반 참관객 -->
+  <div class="scenario" id="sc-us-visitor">
+    <div class="scenario-card">
+      <div class="demo-act-tag">ACT 4 · 숨은 바이어 발굴</div>
+      <div class="scenario-title">David Chen (싱가포르 조달관) — 숨은 바이어를 세일즈 기회로</div>
+      <div class="scenario-subtitle">★ 일반 참관객 → 바이어 전환</div>
+
+      <div class="section-label">핵심 차별점</div>
+      <div class="demo-emphasis">전시장에는 등록하지 않은 일반 참관객이 훨씬 많고, <span class="lead">그 안에 진짜 바이어가 숨어 있습니다.</span> NABI는 QR로 들어온 참관객도 미팅을 신청하는 순간, 간단한 프로필 작성만으로 바이어로 전환시킵니다. 해외 참관객의 언어는 AI가 자동으로 대응합니다. <strong style="color:var(--text-primary)">그냥 지나갔을 사람을 세일즈 기회로 바꾸는 것입니다.</strong></div>
+
+      <div class="section-label">시연 요약</div>
+      <ol class="demo-steps">
+        <li>전체 기업 탭에서 <strong>로그인 없이</strong> 탐색</li>
+        <li>"미팅 신청" → <strong>바이어 프로필 5단계</strong>(관심분야→상세니즈→예산→완료) 작성</li>
+        <li>완료 화면 <strong>"기업 탐색하러 가기"</strong> → 기업 탐색으로 자동 연결 (바이어 전환 + AI 추천)</li>
+      </ol>
+      <div class="demo-cta-row">
+        <a class="demo-cta" href="prototype-discover.html" target="_blank">▶ 기업 탐색 (첫 화면)</a>
+        <a class="demo-cta ghost" href="prototype-apply.html?role=visitor" target="_blank">바이어 프로필 작성 (visitor·확인단계 생략)</a>
+        <a class="demo-cta ghost" href="prototype-meeting.html" target="_blank">미팅 신청</a>
+      </div>
+      <p style="font-size:12px;color:var(--text-tertiary);margin-top:10px;">* QR 진입·Visitor 전용 화면은 9월 실전 구현 — 발표에선 전체 기업 탭 + 바이어 폼으로 개념 설명.</p>
+    </div>
+  </div>
+
+  <!-- US: 운영사 -->
+  <div class="scenario" id="sc-us-organizer">
+    <div class="scenario-card">
+      <div class="demo-act-tag">ACT 5 · 운영사 대시보드</div>
+      <div class="scenario-title">박수진 (운영사무국) — 실시간으로 기회를 채운다</div>
+      <div class="scenario-subtitle">★ 실시간 모니터링 · 미팅 부족 기업에 기회 부여</div>
+
+      <div class="section-label">핵심 차별점</div>
+      <div class="demo-emphasis">운영하는 입장에서 가장 중요한 것은 <span class="lead">모든 참가사가 성과를 가져가는 것</span>입니다. NABI는 매칭 수·미팅 성사율·노쇼율을 실시간으로 집계하고, 미팅이 적은 참가사에게는 AI가 적합한 바이어를 우선 추천해 기회를 채워줍니다. 노쇼가 생기면 즉석에서 재매칭합니다. <strong style="color:var(--text-primary)">이 모든 것이 숫자로 남아, AI 매칭의 효과를 데이터로 증명합니다.</strong></div>
+
+      <div class="section-label">시연 요약</div>
+      <ol class="demo-steps">
+        <li>실시간 집계 — <strong>매칭 수 · 미팅 성사율 · 노쇼율</strong></li>
+        <li><strong>미팅 부족 참가사</strong> 식별 → AI 추천/강제 매칭으로 기회 재배분</li>
+        <li>성과 리포트 — <strong>데이터로 효과 입증</strong></li>
+      </ol>
+      <div class="demo-cta-row"><span class="demo-cta disabled">▶ 운영사 대시보드 (준비 중 · 별도 세션)</span></div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       전체 조망
+       ============================================================ -->
+
+  <!-- 유저 저니 맵 -->
+  <div class="scenario" id="sc-journey">
+    <div class="scenario-card">
+      <div class="scenario-title">전체 유저 저니 맵</div>
+      <div class="scenario-subtitle">5단계 x 4유형 &mdash; 각 단계에서 누가 무엇을 하는가</div>
+
+      <div style="overflow-x:auto; margin-bottom:32px;">
+        <table class="summary-table" style="width:100%; table-layout:fixed;">
+          <thead>
+            <tr>
+              <th style="width:100px;"></th>
+              <th>1. 사전 준비<br><span style="font-size:10px; font-weight:400; color:var(--text-tertiary);">~8/25</span></th>
+              <th style="background:#f0f4ff;">2. 비즈매칭 신청<br><span style="font-size:10px; font-weight:400; color:var(--text-tertiary);">8/26~9/11</span></th>
+              <th>3. 매칭<br><span style="font-size:10px; font-weight:400; color:var(--text-tertiary);">9/11 이후</span></th>
+              <th style="background:#f0fff4;">4. 전시회 당일<br><span style="font-size:10px; font-weight:400; color:var(--text-tertiary);">9월</span></th>
+              <th>5. 사후<br><span style="font-size:10px; font-weight:400; color:var(--text-tertiary);">전시 종료 후</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:700; text-align:left;">&#128269; 바이어</td>
+              <td style="color:var(--text-tertiary);">-</td>
+              <td style="text-align:left; background:#f8faff;">개인화 링크 진입<br>관심 키워드 선택<br>상세 니즈 입력<br>AI 키워드 확인/보정<br>프로필 보강</td>
+              <td style="text-align:left;">AI 매칭 결과 수신<br>수락/거절<br>미팅 장소+시간 선택<br>Open Matching 신청</td>
+              <td style="text-align:left; background:#f8fff8;">기업 탐색 (전체 기업/채팅)<br>상세보기 확인<br>추가 미팅 신청<br>미팅 참석</td>
+              <td style="text-align:left;">미팅 결과 확인<br>추가 미팅 독려 수신<br>후속 연결</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700; text-align:left;">&#127981; 참가사</td>
+              <td style="color:var(--text-tertiary);">-</td>
+              <td style="text-align:left; background:#f8faff;">개인화 링크 진입<br>프리필 정보 확인<br>전시품목/회사소개 입력<br>AI 키워드 확인/보정<br>프로필 보강</td>
+              <td style="text-align:left;">기업 탐색 AI 추천 스와이프<br>미팅 신청 / 관심기업 등록<br>장소+시간 선택<br>전체 기업 탭 Open Matching</td>
+              <td style="text-align:left; background:#f8fff8;">기업 탐색 (전체 기업)<br>상세보기 확인<br>추가 미팅 신청<br>미팅 참석<br>바이어 브리핑 확인</td>
+              <td style="text-align:left;">미팅 결과 확인<br>바이어 후속 연결</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700; text-align:left;">&#128100; 일반 참관객</td>
+              <td style="color:var(--text-tertiary);">-</td>
+              <td style="color:var(--text-tertiary); background:#f8faff;">-</td>
+              <td style="color:var(--text-tertiary);">-</td>
+              <td style="text-align:left; background:#f8fff8;">QR 진입 (Visitor)<br><strong>기업 탐색</strong> (전체 기업 탭 검색)<br>상세보기 확인<br><br>미팅 신청 시 &rarr;<br><strong>BM-001 프로필 작성</strong><br>(On-site Buyer 전환)<br><strong>AI 추천 탭</strong> 활성화<br>스와이프 + 미팅 신청</td>
+              <td style="text-align:left;">이메일로 결과 수신</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700; text-align:left;">&#127919; 운영사</td>
+              <td style="text-align:left;">참가사/바이어 목록 등록<br>개인화 링크 발송 준비<br>미팅 장소/슬롯 설정</td>
+              <td style="text-align:left; background:#f8faff;">링크 일괄 발송<br>신청 현황 모니터링<br>프로필 완성율 추적<br>미완료자 리마인더</td>
+              <td style="text-align:left;">AI 매칭 실행 트리거<br>매칭 현황 모니터링<br>강제 매칭(Forced) 배정</td>
+              <td style="text-align:left; background:#f8fff8;">실시간 대시보드 확인<br>강제 매칭 배정<br>노쇼 &rarr; 슬롯 재배정<br>활성도 집계</td>
+              <td style="text-align:left;">성과 리포트<br>데이터 분석<br>산출물 관리</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-title">Pain Point &middot; 핵심 가치 &middot; 해결 방법</div>
+      <div class="scenario-subtitle">유저 저니 맵과 동일한 구조 (행=유형, 열=단계). 탭으로 관점 전환.</div>
+
+      <div class="pp-tabs">
+        <button class="pp-tab active" onclick="showPP('pain')">Pain Point</button>
+        <button class="pp-tab" onclick="showPP('value')">핵심 가치</button>
+        <button class="pp-tab" onclick="showPP('solution')">해결 방법</button>
+      </div>
+
+      <!-- Pain Point 탭 -->
+      <div class="pp-content active" id="pp-pain">
+        <table class="pp-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>1. 사전 준비<br><span style="font-size:10px; font-weight:400;">~8/25</span></th>
+              <th style="background:#eef2ff;">2. 비즈매칭 신청<br><span style="font-size:10px; font-weight:400;">8/26~9/11</span></th>
+              <th>3. 매칭<br><span style="font-size:10px; font-weight:400;">9/11 이후</span></th>
+              <th style="background:#eefff4;">4. 전시회 당일<br><span style="font-size:10px; font-weight:400;">9월</span></th>
+              <th>5. 사후</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>&#128269; 바이어</td>
+              <td class="pp-empty">-</td>
+              <td style="background:#fef8f8;">뭘 적어야 할지 모름. 전문용어 어렵고 폼 작성 귀찮음 <span class="pp-intensity pp-h">높음</span></td>
+              <td style="background:#fef8f8;">추천 기업이 나한테 맞는지 판단 어려움. 정보 부족 <span class="pp-intensity pp-h">높음</span></td>
+              <td>103개 중 뭘 봐야 할지 모름 <span class="pp-intensity pp-m">중간</span><br><br>미팅 잡기 번거로움 <span class="pp-intensity pp-m">중간</span></td>
+              <td>미팅 내용 기억 못함. 후속 연결 끊김 <span class="pp-intensity pp-l">낮음</span></td>
+            </tr>
+            <tr>
+              <td>&#127981; 참가사</td>
+              <td class="pp-empty">-</td>
+              <td style="background:#fef8f8;">프로필 작성 귀찮음. 전략 정보 공개 꺼림 <span class="pp-intensity pp-h">높음</span><br><br>넣어도 바이어 오는지 모름. 동기 부족 <span class="pp-intensity pp-h">높음</span></td>
+              <td>바이어 구매 의사 판단 어려움 <span class="pp-intensity pp-m">중간</span></td>
+              <td>바이어 뭘 원하는지 모른 채 미팅 <span class="pp-intensity pp-m">중간</span><br><br>우리한테 맞는 바이어를 능동적으로 찾고 싶다 <span class="pp-intensity pp-h">높음</span></td>
+              <td>미팅 결과 정리 안 됨. 후속 누락 <span class="pp-intensity pp-l">낮음</span></td>
+            </tr>
+            <tr>
+              <td>&#128100; 일반<br>참관객</td>
+              <td class="pp-empty">-</td>
+              <td class="pp-empty">-</td>
+              <td class="pp-empty">-</td>
+              <td style="background:#fef8f8;">어디부터 봐야 할지 모름 <span class="pp-intensity pp-h">높음</span><br><br>전문용어 이해 불가 <span class="pp-intensity pp-m">중간</span><br><br>미팅 신청 시 개인정보 부담 <span class="pp-intensity pp-m">중간</span><br><br>나한테 맞는 기업을 직접 찾기 어려움 <span class="pp-intensity pp-h">높음</span></td>
+              <td>결과 수신 방법 없음 <span class="pp-intensity pp-l">낮음</span></td>
+            </tr>
+            <tr>
+              <td>&#127919; 운영사</td>
+              <td style="background:#fef8f8;">목록 수작업 관리. 링크 발송 번거로움 <span class="pp-intensity pp-h">높음</span></td>
+              <td style="background:#fef8f8;">프로필 안 채움. 독려 수단 없음 <span class="pp-intensity pp-h">높음</span></td>
+              <td style="background:#fef8f8;">수동 매칭 공정성 시비. 빈 슬롯 채우기 어려움 <span class="pp-intensity pp-h">높음</span></td>
+              <td>노쇼, 현장 변수 대응 어려움. 현황 파악 불가 <span class="pp-intensity pp-m">중간</span></td>
+              <td>성과 숫자 입증 어려움. 보고서 수작업 <span class="pp-intensity pp-l">낮음</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 핵심 가치 탭 -->
+      <div class="pp-content" id="pp-value">
+        <table class="pp-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>1. 사전 준비</th>
+              <th style="background:#eef2ff;">2. 비즈매칭 신청</th>
+              <th>3. 매칭</th>
+              <th style="background:#eefff4;">4. 전시회 당일</th>
+              <th>5. 사후</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>&#128269; 바이어</td>
+              <td class="pp-empty">-</td>
+              <td><span class="pp-value">입력 허들 최소화</span><br>최소 노력으로 최대 정보 수집</td>
+              <td><span class="pp-value">매칭 신뢰도</span><br>왜 이 기업이 추천됐는지 납득</td>
+              <td><span class="pp-value">탐색 효율</span><br>제한 시간에 최적 기업 발견<br><br><span class="pp-value">미팅 간소화</span><br>3탭 내 미팅 완료</td>
+              <td><span class="pp-value">관계 지속</span><br>전시 이후에도 연결 유지</td>
+            </tr>
+            <tr>
+              <td>&#127981; 참가사</td>
+              <td class="pp-empty">-</td>
+              <td><span class="pp-value">최소 노력 프로필</span><br>프리필 + 다듬기만<br><br><span class="pp-value">가시적 보상</span><br>입력 &rarr; 매칭률 &uarr; 체감</td>
+              <td><span class="pp-value">바이어 인텔리전스</span><br>바이어 니즈 사전 파악<br><br><span class="pp-value">능동적 바이어 발굴</span><br>AI 제안 + 직접 탐색으로 적합 바이어 선제 확보</td>
+              <td><span class="pp-value">사전 브리핑</span><br>미팅 전 바이어 정보 완비<br><br><span class="pp-value">참여자 탐색</span><br>관심 바이어를 능동적으로 찾고 미팅 신청</td>
+              <td><span class="pp-value">후속 관리</span><br>결과 정리 + 연결 지속</td>
+            </tr>
+            <tr>
+              <td>&#128100; 일반<br>참관객</td>
+              <td class="pp-empty">-</td>
+              <td class="pp-empty">-</td>
+              <td class="pp-empty">-</td>
+              <td><span class="pp-value">즉시 탐색</span><br>로그인 없이 바로 시작<br><br><span class="pp-value">전문성 접근성</span><br>비전문가도 이해 가능<br><br><span class="pp-value">최소 마찰 미팅</span><br>필수 3개만 입력<br><br><span class="pp-value">AI 맞춤 추천</span><br>정보 입력 시 매칭 제안 수신</td>
+              <td><span class="pp-value">결과 전달</span><br>이메일로 수신</td>
+            </tr>
+            <tr>
+              <td>&#127919; 운영사</td>
+              <td><span class="pp-value">운영 자동화</span><br>목록&rarr;링크 발송 원클릭</td>
+              <td><span class="pp-value">참여율 가시성</span><br>실시간 신청 현황 파악</td>
+              <td><span class="pp-value">AI+수동 보완</span><br>AI 우선, 강제는 최후 수단</td>
+              <td><span class="pp-value">실시간 상황 인식</span><br>현장 활성도 한눈에</td>
+              <td><span class="pp-value">성과 입증</span><br>데이터 기반 KPI</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 해결 방법 탭 -->
+      <div class="pp-content" id="pp-solution">
+        <table class="pp-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>1. 사전 준비</th>
+              <th style="background:#eef2ff;">2. 비즈매칭 신청</th>
+              <th>3. 매칭</th>
+              <th style="background:#eefff4;">4. 전시회 당일</th>
+              <th>5. 사후</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>&#128269; 바이어</td>
+              <td class="pp-empty">-</td>
+              <td class="pp-solution">키워드 칩 선택<br>AI 키워드 추출+확인<br>완성도 바+넛지<br>전문용어 설명</td>
+              <td class="pp-solution">적합도 %+추천 이유<br>키워드 매칭 근거 표시<br>수락/거절 자유</td>
+              <td class="pp-solution">카드: 필터+검색+상세<br>채팅: 2턴&rarr;추천 3곳<br>상세&rarr;미팅 신청&rarr;장소+슬롯<br>예약 슬롯 자동 비활성화</td>
+              <td class="pp-solution">미팅 결과 AI 요약<br>후속 미팅 독려 알림<br>대화 이력 보존</td>
+            </tr>
+            <tr>
+              <td>&#127981; 참가사</td>
+              <td class="pp-empty">-</td>
+              <td class="pp-solution">엑셀 기반 프리필<br>빈 필드 하이라이트<br>경쟁심리 넛지<br>AI 키워드 추출</td>
+              <td class="pp-solution">바이어 니즈 요약 제공<br>매칭 유형 표시 (AI/Open)<br>바이어에게 미팅 신청 (Open Matching)<br>수락/거절+장소+시간 선택</td>
+              <td class="pp-solution">미팅 카드에 바이어 니즈 요약<br>미팅 상세에 브리핑 섹션<br>참여자 탐색 + 미팅 신청<br>관심 분야별 바이어 필터</td>
+              <td class="pp-solution">미팅 결과 AI 요약<br>후속 연결 지속</td>
+            </tr>
+            <tr>
+              <td>&#128100; 일반<br>참관객</td>
+              <td class="pp-empty">-</td>
+              <td class="pp-empty">-</td>
+              <td class="pp-empty">-</td>
+              <td class="pp-solution">QR 즉시 진입 (Visitor)<br>기업 탐색: 전체 기업 탭 검색+필터<br>부스 위치 표시<br>전문용어 설명 병기<br><br>미팅 신청 시 &rarr;<br>BM-001 프로필 작성 (5단계)<br>On-site Buyer 전환<br>AI 추천 탭 활성화<br>스와이프 + 미팅 신청</td>
+              <td class="pp-solution">이메일로 결과 전달</td>
+            </tr>
+            <tr>
+              <td>&#127919; 운영사</td>
+              <td class="pp-solution">엑셀/CSV 업로드<br>개인화 링크 자동 생성<br>일괄 발송+상태 트래킹</td>
+              <td class="pp-solution">대시보드: 완성율, 미완료 목록<br>리마인더 발송</td>
+              <td class="pp-solution">AI 매칭 실행&rarr;알림<br>강제 매칭 배정<br>매칭률 대시보드</td>
+              <td class="pp-solution">실시간 대시보드<br>Schedule Table 상태<br>노쇼 시 슬롯 재배정</td>
+              <td class="pp-solution">성과 리포트 자동 생성<br>매칭률, 성사율 KPI</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-title">단계별 핵심 액션 정의</div>
+      <div class="scenario-subtitle">각 단계에서 반드시 수행되어야 하는 액션</div>
+
+      <div class="phase-divider">1단계: 사전 준비 (~8/25)</div>
+      <table class="flow-table">
+        <thead><tr><th>유형</th><th>핵심 액션</th><th>성공 조건</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:600;">운영사</td><td>참가사/바이어 이메일 목록 등록 + 개인화 링크 생성</td><td>전체 대상자에게 링크 발송 준비 완료</td></tr>
+          <tr><td style="font-weight:600;">운영사</td><td>미팅 장소(부스/매칭존/비즈룸) 및 슬롯 설정</td><td>Schedule Table에 가용 슬롯 등록</td></tr>
+        </tbody>
+      </table>
+
+      <div class="phase-divider">2단계: 비즈매칭 신청 (8/26~9/11)</div>
+      <table class="flow-table">
+        <thead><tr><th>유형</th><th>핵심 액션</th><th>성공 조건</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:600;">바이어</td><td>개인화 링크 &rarr; 키워드 선택 &rarr; 니즈 입력 &rarr; AI 추출 확인</td><td>프로필 완성도 70% 이상</td></tr>
+          <tr><td style="font-weight:600;">참가사</td><td>개인화 링크 &rarr; 프리필 확인 &rarr; 전시품목/소개 입력 &rarr; 키워드 확인</td><td>프로필 완성도 70% 이상</td></tr>
+          <tr><td style="font-weight:600;">운영사</td><td>링크 발송 + 신청 현황 모니터링 + 미완료자 리마인더</td><td>신청률 80% 이상</td></tr>
+        </tbody>
+      </table>
+
+      <div class="phase-divider">3단계: 매칭 (9/11 이후)</div>
+      <table class="flow-table">
+        <thead><tr><th>유형</th><th>핵심 액션</th><th>성공 조건</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:600;">바이어</td><td>기업 탐색 AI 추천 스와이프 &rarr; 미팅 신청 &rarr; 장소+시간 선택</td><td>최소 1건 미팅 신청</td></tr>
+          <tr><td style="font-weight:600;">참가사</td><td>기업 탐색 AI 추천 스와이프 &rarr; 미팅 신청 + 전체 기업 탭 Open Matching</td><td>최소 1건 미팅 신청</td></tr>
+          <tr><td style="font-weight:600;">운영사</td><td>AI 매칭 실행 + 빈 슬롯 강제 매칭 + 매칭률 확인</td><td>목표 매칭률 달성</td></tr>
+        </tbody>
+      </table>
+
+      <div class="phase-divider">4단계: 전시회 당일 (9월)</div>
+      <table class="flow-table">
+        <thead><tr><th>유형</th><th>핵심 액션</th><th>성공 조건</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:600;">바이어</td><td>기업 탐색(전체 기업/채팅) &rarr; 상세보기 &rarr; 추가 미팅 신청 &rarr; 미팅 참석</td><td>사전 매칭 미팅 참석 + 추가 미팅</td></tr>
+          <tr><td style="font-weight:600;">참가사</td><td>기업 탐색(전체 기업) &rarr; 추가 미팅 신청 + 미팅 참석 + 브리핑 확인</td><td>미팅 참석률 + 능동 미팅 신청</td></tr>
+          <tr><td style="font-weight:600;">일반 참관객</td><td>QR 진입 &rarr; 기업 탐색(전체 기업) &rarr; 상세보기 &rarr; BM-001 프로필 작성(On-site Buyer 전환) &rarr; 미팅 신청</td><td>On-site Buyer 전환율 + 미팅 신청 전환율</td></tr>
+          <tr><td style="font-weight:600;">운영사</td><td>대시보드 모니터링 + 노쇼 대응 + 강제 매칭 + 활성도 집계</td><td>노쇼율 최소화, 슬롯 활용률</td></tr>
+        </tbody>
+      </table>
+
+      <div class="phase-divider">5단계: 사후 (전시 종료 후)</div>
+      <table class="flow-table">
+        <thead><tr><th>유형</th><th>핵심 액션</th><th>성공 조건</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:600;">바이어</td><td>미팅 결과 확인 + 후속 연결</td><td>후속 미팅/거래 전환</td></tr>
+          <tr><td style="font-weight:600;">참가사</td><td>미팅 결과 확인 + 바이어 후속 연결</td><td>후속 미팅/거래 전환</td></tr>
+          <tr><td style="font-weight:600;">일반 참관객 (On-site Buyer)</td><td>미팅 리뷰 작성 + 이메일로 결과 수신</td><td>후속 미팅/거래 전환</td></tr>
+          <tr><td style="font-weight:600;">운영사</td><td>성과 리포트 + 데이터 분석 + 산출물 관리</td><td>KPI 달성 보고</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-title">시나리오 커버리지 분석</div>
+      <div class="scenario-subtitle">현재 시나리오가 전체 저니를 충분히 커버하는가?</div>
+
+      <div style="overflow-x:auto; margin-bottom:24px;">
+        <table class="summary-table" style="min-width:700px;">
+          <thead>
+            <tr>
+              <th>단계</th>
+              <th>바이어</th>
+              <th>참가사</th>
+              <th>일반 참관객</th>
+              <th>운영사</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1. 사전 준비</td>
+              <td style="color:var(--text-tertiary);">-</td>
+              <td style="color:var(--text-tertiary);">-</td>
+              <td style="color:var(--text-tertiary);">-</td>
+              <td style="color:#ea580c; font-weight:600;">&#9888; 누락</td>
+            </tr>
+            <tr>
+              <td>2. 비즈매칭 신청</td>
+              <td style="color:#16a34a; font-weight:600;">&#10003; S1</td>
+              <td style="color:#16a34a; font-weight:600;">&#10003; S2</td>
+              <td style="color:var(--text-tertiary);">-</td>
+              <td style="color:#16a34a; font-weight:600;">&#10003; S7-사전</td>
+            </tr>
+            <tr>
+              <td>3. 매칭</td>
+              <td style="color:#16a34a; font-weight:600;">&#10003; S3-바이어</td>
+              <td style="color:#16a34a; font-weight:600;">&#10003; S3-참가사 (능동적 미팅 신청 포함)</td>
+              <td style="color:var(--text-tertiary);">-</td>
+              <td style="color:#ea580c; font-weight:600;">&#9888; 부분 누락</td>
+            </tr>
+            <tr>
+              <td>4. 전시회 당일</td>
+              <td style="color:#16a34a; font-weight:600;">&#10003; S4, S5</td>
+              <td style="color:#16a34a; font-weight:600;">&#10003; S4-참가사</td>
+              <td style="color:#16a34a; font-weight:600;">&#10003; S6</td>
+              <td style="color:#16a34a; font-weight:600;">&#10003; S7-현장</td>
+            </tr>
+            <tr>
+              <td>5. 사후</td>
+              <td style="color:#ea580c; font-weight:600;">&#9888; 누락</td>
+              <td style="color:#ea580c; font-weight:600;">&#9888; 누락</td>
+              <td style="color:#ea580c; font-weight:600;">&#9888; 누락</td>
+              <td style="color:#ea580c; font-weight:600;">&#9888; 누락</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="key-points" style="background:#fff8f5; border-color:#fed7aa; margin-bottom:20px;">
+        <div class="key-points-title" style="color:#ea580c;">누락된 시나리오</div>
+        <ul>
+          <li style="color:var(--text-primary);"><strong>1단계 &mdash; 운영사 사전 준비:</strong> 이메일 목록을 어떻게 등록하고, 개인화 링크를 어떻게 생성/발송하는지 구체 플로우 없음. 미팅 장소/슬롯 초기 세팅 플로우도 없음.</li>
+          <li style="color:var(--text-primary);"><strong>3단계 &mdash; 운영사 매칭 실행:</strong> <span style="color:#16a34a;">&#10003; 해결</span> &mdash; OP-002(AI 매칭 추천, 전체 비즈매칭 실행) + OP-005(강제 매칭 배정) PRD 작성 완료.</li>
+          <li style="color:var(--text-primary);"><strong>4단계 &mdash; 참가사 현장:</strong> <span style="color:#16a34a;">&#10003; 해결</span> &mdash; S4-참가사(참여자 탐색 카드 기반) 시나리오 추가 완료. 추가 매칭 수락은 MY-001(내 미팅)에서 역할별 뷰로, 바이어 브리핑은 MY-001 미팅 카드 + MY-002 상세에서 확인.</li>
+          <li style="color:var(--text-primary);"><strong>5단계 &mdash; 사후 전체:</strong> 미팅 리뷰, 후속 연결, 성과 리포트 등 전시 종료 후 플로우가 전혀 없음.</li>
+        </ul>
+      </div>
+
+      <div class="key-points">
+        <div class="key-points-title">권장 우선순위</div>
+        <ul>
+          <li><strong><span style="color:#16a34a;">&#10003; 완료:</span></strong> 참가사 현장 시나리오 (4단계) &mdash; S4-참가사 참여자 탐색 시나리오 추가</li>
+          <li><strong>지금 추가:</strong> 운영사 사전 준비 (1단계) &mdash; 링크 발송이 서비스 시작점</li>
+          <li><strong>다음 세션:</strong> 운영사 매칭 실행 (3단계) &mdash; 강제 매칭 상세 플로우</li>
+          <li><strong>후순위:</strong> 사후 단계 (5단계) &mdash; 전시 종료 후이므로 프로덕션 이후 설계 가능</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 비교 요약 -->
+  <div class="scenario" id="sc-summary">
+    <div class="scenario-card">
+      <div class="scenario-title">시나리오 비교 요약</div>
+      <div style="overflow-x:auto;">
+        <table class="summary-table">
+          <thead>
+            <tr><th></th><th>바이어 신청</th><th>참가사 신청</th><th>매칭 결과</th><th>현장 카드</th><th>현장 채팅</th><th>일반 참관객</th><th>운영사</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>시점</td><td>사전</td><td>사전</td><td>사전&rarr;현장</td><td>현장</td><td>현장</td><td>현장</td><td>전체</td></tr>
+            <tr><td>인증</td><td>개인화 링크</td><td>개인화 링크</td><td>개인화 링크</td><td>로그인</td><td>로그인</td><td>QR</td><td>별도</td></tr>
+            <tr><td>핵심 액션</td><td>키워드+니즈</td><td>프리필+보강+타겟</td><td>매칭 확인+미팅 신청 (양쪽 대칭)</td><td>탐색+상세+미팅 (양쪽 대칭)</td><td>대화+추천+미팅</td><td>탐색+게스트폼+매칭 제안</td><td>모니터링+배정</td></tr>
+            <tr><td>매칭 유형</td><td>-</td><td>-</td><td>AI/Open</td><td>Open/On-site</td><td>AI/Open</td><td>On-site</td><td>Forced</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page List -->
+  <div class="scenario" id="sc-pagelist">
+    <div class="scenario-card">
+      <div class="scenario-title">Page List</div>
+      <div class="scenario-subtitle">전체 27개 페이지 &middot; confirmed 12 &middot; draft 8 &middot; deprecated 5 &middot; deferred 2</div>
+
+      <div class="section-label">1. 비즈매칭 신청</div>
+      <table class="page-list-table cols-9p">
+        <colgroup><col class="c-pid"><col class="c-name"><col class="c-route"><col class="c-type"><col class="c-auth"><col class="c-stat"><col class="c-proto"><col class="c-feat"><col class="c-rev"></colgroup>
+        <thead><tr><th>Page ID</th><th>페이지명</th><th>라우트</th><th>유형</th><th>접근권한</th><th>상태</th><th>프로토타입</th><th>주요기능</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td>AU-001</td><td>통합 로그인</td><td><span class="flow-screen">/login</span></td><td>페이지</td><td><span class="auth-badge auth-all">전체</span></td><td><span class="status-confirmed">confirmed</span></td><td><span class="proto-none">없음</span></td><td>이메일 입력 &rarr; DB 역할 판별 &rarr; 역할별 자동 분기</td><td>2026-06-03 <code>b1c64bc</code></td></tr>
+          <tr><td>BM-001</td><td>바이어 프로필 작성</td><td><span class="flow-screen">/apply</span></td><td>페이지</td><td><span class="auth-badge auth-buyer">Buyer</span></td><td><span class="status-draft">draft</span></td><td><a href="prototype-apply.html" target="_blank" class="proto-link">확인하기</a></td><td>5단계 폼(기본정보&rarr;관심분야&rarr;상세니즈&rarr;예산/도입시기&rarr;완료)</td><td>2026-06-03 <code>ff6b707</code></td></tr>
+          <tr><td>BM-002</td><td>참가사 프로필 작성</td><td><span class="flow-screen">/exhibitor/apply</span></td><td>페이지</td><td><span class="auth-badge auth-exhib">Exhibitor</span></td><td><span class="status-draft">draft</span></td><td><a href="prototype-apply-seller.html" target="_blank" class="proto-link">확인하기</a></td><td>5단계 폼(기본정보&rarr;전시품목&rarr;회사소개+강점&rarr;타겟바이어&rarr;완료)</td><td>2026-06-04 <code>4ecb543</code></td></tr>
+          <tr><td>BM-004</td><td>내 프로필 (바이어)</td><td><span class="flow-screen">/profile</span></td><td>페이지</td><td><span class="auth-badge auth-buyer">Buyer</span></td><td><span class="status-draft">draft</span></td><td><a href="prototype-profile.html" target="_blank" class="proto-link">확인하기</a></td><td>프로필 조회 + 현황 허브 + 수정 &rarr; /apply?step=N&amp;from=profile</td><td>2026-06-04 <code>4ecb543</code></td></tr>
+          <tr><td>BM-005</td><td>내 프로필 (참가사)</td><td><span class="flow-screen">/exhibitor/profile</span></td><td>페이지</td><td><span class="auth-badge auth-exhib">Exhibitor</span></td><td><span class="status-draft">draft</span></td><td><a href="prototype-profile.html?role=seller" target="_blank" class="proto-link">확인하기</a></td><td>프로필 조회 + 현황 허브 + 수정 &rarr; /exhibitor/apply?step=N&amp;from=profile</td><td>2026-06-04 <code>4ecb543</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-label">2. 기업 탐색</div>
+      <table class="page-list-table cols-9p">
+        <colgroup><col class="c-pid"><col class="c-name"><col class="c-route"><col class="c-type"><col class="c-auth"><col class="c-stat"><col class="c-proto"><col class="c-feat"><col class="c-rev"></colgroup>
+        <thead><tr><th>Page ID</th><th>페이지명</th><th>라우트</th><th>유형</th><th>접근권한</th><th>상태</th><th>프로토타입</th><th>주요기능</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td>DV-001</td><td>기업 탐색</td><td><span class="flow-screen">/discover</span></td><td>페이지</td><td><span class="auth-badge auth-buyer">Buyer</span> <span class="auth-badge auth-exhib">Exhibitor</span> <span class="auth-badge auth-visit">Visitor</span></td><td><span class="status-draft">draft</span></td><td><a href="prototype-discover.html" target="_blank" class="proto-link">확인하기</a></td><td>3탭(AI 추천 스와이프 &middot; 전체 기업 검색/필터 &middot; 관심기업). 카드 액션 4종</td><td>2026-06-04 <code>d8a2184</code></td></tr>
+          <tr><td>DV-002</td><td>기업 상세</td><td><span class="flow-screen">/discover/:organizationId</span></td><td>페이지</td><td><span class="auth-badge auth-buyer">Buyer</span> <span class="auth-badge auth-exhib">Exhibitor</span> <span class="auth-badge auth-visit">Visitor</span></td><td><span class="status-draft">draft</span></td><td><a href="prototype-company-detail.html" target="_blank" class="proto-link">확인하기</a></td><td>프로필 상세 + AI 추천 이유 + 미팅 신청 CTA. DV-001에서 진입</td><td>2026-06-04 <code>d8a2184</code></td></tr>
+          <tr><td>BM-003</td><td>매칭 제안</td><td><span class="flow-screen">/matches</span></td><td>페이지</td><td>-</td><td><span class="status-deprecated">deprecated</span></td><td><span class="proto-none">없음</span></td><td>DV-001 AI 추천 탭으로 통합됨</td><td>2026-06-04 <code>3b88ac9</code></td></tr>
+        </tbody>
+      </table>
+
+      <!-- 참여자 탐색: 채팅 — 1차 릴리스 범위 밖, 구현 보류
+      <div class="section-label">4. 참여자 탐색: 채팅</div>
+      <table class="page-list-table cols-9p">
+        <colgroup><col class="c-pid"><col class="c-name"><col class="c-route"><col class="c-type"><col class="c-auth"><col class="c-stat"><col class="c-proto"><col class="c-feat"><col class="c-rev"></colgroup>
+        <thead><tr><th>Page ID</th><th>페이지명</th><th>라우트</th><th>유형</th><th>접근권한</th><th>상태</th><th>프로토타입</th><th>주요기능</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td>OB-001</td><td>NABI 소개</td><td><span class="flow-screen">/</span></td><td>페이지</td><td><span class="auth-badge auth-all">전체</span></td><td><span class="status-confirmed">confirmed</span></td><td><span class="proto-none">없음</span></td><td>브랜드 소개 + 기능 안내. 재방문 시 스킵</td><td>2026-06-03 <code>b1c64bc</code></td></tr>
+          <tr><td>MN-001</td><td>NABI 대화 (메인)</td><td><span class="flow-screen">/chat</span></td><td>페이지</td><td><span class="auth-badge auth-buyer">Buyer</span> <span class="auth-badge auth-visit">Visitor</span></td><td><span class="status-confirmed">confirmed</span></td><td><span class="proto-none">없음</span></td><td>니즈 파악 대화 &rarr; 추천 카드 인라인 삽입 &rarr; 에이전트 대화 연결</td><td>2026-06-03 <code>b1c64bc</code></td></tr>
+          <tr><td>AG-001</td><td>기업 에이전트 채팅</td><td><span class="flow-screen">/agent/:companyId</span></td><td>페이지</td><td><span class="auth-badge auth-buyer">Buyer</span> <span class="auth-badge auth-exhib">Exhibitor</span> <span class="auth-badge auth-visit">Visitor</span></td><td><span class="status-confirmed">confirmed</span></td><td><span class="proto-none">없음</span></td><td>NABI 맥락 자동 전달. 3모드(자율/컨펌/직접). 미팅 CTA</td><td>2026-06-03 <code>b1c64bc</code></td></tr>
+          <tr><td>AG-LIST</td><td>내 대화 리스트</td><td><span class="flow-screen">/conversations</span></td><td>페이지</td><td><span class="auth-badge auth-buyer">Buyer</span> <span class="auth-badge auth-exhib">Exhibitor</span> <span class="auth-badge auth-visit">Visitor</span></td><td><span class="status-confirmed">confirmed</span></td><td><span class="proto-none">없음</span></td><td>에이전트 대화 이력 목록 조회</td><td>2026-06-03 <code>b1c64bc</code></td></tr>
+        </tbody>
+      </table>
+      -->
+
+      <div class="section-label">5. 미팅 신청</div>
+      <table class="page-list-table cols-9p">
+        <colgroup><col class="c-pid"><col class="c-name"><col class="c-route"><col class="c-type"><col class="c-auth"><col class="c-stat"><col class="c-proto"><col class="c-feat"><col class="c-rev"></colgroup>
+        <thead><tr><th>Page ID</th><th>페이지명</th><th>라우트</th><th>유형</th><th>접근권한</th><th>상태</th><th>프로토타입</th><th>주요기능</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td>MT-001</td><td>미팅 신청</td><td><span class="flow-screen">/meeting/request</span></td><td>모달</td><td><span class="auth-badge auth-buyer">Buyer</span> <span class="auth-badge auth-exhib">Exhibitor</span> <span class="auth-badge auth-visit">Visitor</span></td><td><span class="status-draft">draft</span></td><td><a href="prototype-meeting.html" target="_blank" class="proto-link">확인하기</a></td><td>장소 선택(부스/매칭존/비즈니스룸) + 연속 슬롯 선택. DV-002 내 모달</td><td>2026-06-04 <code>d8a2184</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-label">6. 내 미팅</div>
+      <table class="page-list-table cols-9p">
+        <colgroup><col class="c-pid"><col class="c-name"><col class="c-route"><col class="c-type"><col class="c-auth"><col class="c-stat"><col class="c-proto"><col class="c-feat"><col class="c-rev"></colgroup>
+        <thead><tr><th>Page ID</th><th>페이지명</th><th>라우트</th><th>유형</th><th>접근권한</th><th>상태</th><th>프로토타입</th><th>주요기능</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td>MY-001</td><td>내 미팅</td><td><span class="flow-screen">/meetings</span></td><td>페이지</td><td><span class="auth-badge auth-buyer">Buyer</span> <span class="auth-badge auth-exhib">Exhibitor</span> <span class="auth-badge auth-visit">Visitor</span></td><td><span class="status-confirmed">confirmed</span></td><td><a href="prototype-my-meetings.html" target="_blank" class="proto-link">확인하기</a></td><td>전원 랜딩. 미팅 현황 조회/관리 + 수락/거절 + 기업 탐색 진입</td><td>2026-06-04 <code>562999c</code></td></tr>
+          <tr><td>MY-002</td><td>미팅 리뷰</td><td><span class="flow-screen">/meetings/:meetingId</span></td><td>페이지</td><td><span class="auth-badge auth-buyer">Buyer</span> <span class="auth-badge auth-exhib">Exhibitor</span> <span class="auth-badge auth-visit">Visitor</span></td><td><span class="status-confirmed">confirmed</span></td><td><a href="prototype-meeting-review.html" target="_blank" class="proto-link">확인하기</a></td><td>미팅 후 AI 요약. 핵심 논의사항 + 후속 조치</td><td>2026-06-06</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-label">운영사 전용</div>
+      <table class="page-list-table cols-9p">
+        <colgroup><col class="c-pid"><col class="c-name"><col class="c-route"><col class="c-type"><col class="c-auth"><col class="c-stat"><col class="c-proto"><col class="c-feat"><col class="c-rev"></colgroup>
+        <thead><tr><th>Page ID</th><th>페이지명</th><th>라우트</th><th>유형</th><th>접근권한</th><th>상태</th><th>프로토타입</th><th>주요기능</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td>OP-001</td><td>매칭 현황 대시보드</td><td><span class="flow-screen">/organizer</span></td><td>페이지</td><td><span class="auth-badge auth-org">Organizer</span></td><td><span class="status-confirmed">confirmed</span></td><td><span class="proto-none">없음</span></td><td>매칭 수 &middot; 미팅 성사율 &middot; 노쇼율 &middot; 슬롯 사용률. 운영사 랜딩 (구 PC-000/001 통합)</td><td>2026-06-04</td></tr>
+          <tr><td>OP-002</td><td>참가기업/바이어 목록 관리</td><td><span class="flow-screen">/organizer/members</span></td><td>페이지</td><td><span class="auth-badge auth-org">Organizer</span></td><td><span class="status-confirmed">confirmed</span></td><td><span class="proto-none">없음</span></td><td>탭(참가기업/바이어). 프로필 조회/수정 + 매칭 설정 + AI 매칭 추천 (구 PC-002/003 통합)</td><td>2026-06-04</td></tr>
+          <tr><td>OP-005</td><td>강제 매칭 배정</td><td><span class="flow-screen">/organizer/forced-matching</span></td><td>페이지</td><td><span class="auth-badge auth-org">Organizer</span></td><td><span class="status-confirmed">confirmed</span></td><td><span class="proto-none">없음</span></td><td>전체 포화배정(반복 가능) + Forced 수동 지정. 수락 규칙은 받는 쪽 유형별(ADR-0005)</td><td>2026-06-04</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DB 스키마 -->
+  <div class="scenario" id="sc-dbschema">
+    <div class="scenario-card">
+      <div class="scenario-title">DB 스키마</div>
+      <div class="scenario-subtitle">Supabase PostgreSQL &middot; 멀티 이벤트 구조 &middot; 15개 테이블</div>
+
+      <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:20px; padding:10px 14px; background:var(--bg-secondary); border-radius:8px; font-size:12px;">
+        <span><span class="key-pk">PK</span> Primary Key — 테이블 고유 식별자</span>
+        <span><span class="key-fk">FK</span> Foreign Key — 다른 테이블 참조</span>
+        <span><span class="key-uq">UQ</span> Unique — 중복 불가 제약</span>
+        <span><span class="key-idx">IDX</span> Index — 조회 성능 인덱스</span>
+      </div>
+
+      <div class="case-tabs" id="schema-tabs">
+        <button class="case-tab active" onclick="showCase('schema', 'user', this)">사용자 / 인증</button>
+        <button class="case-tab" onclick="showCase('schema', 'event', this)">이벤트 / 참여</button>
+        <button class="case-tab" onclick="showCase('schema', 'agent', this)">에이전트 / 대화</button>
+        <button class="case-tab" onclick="showCase('schema', 'match', this)">매칭 / 키워드</button>
+        <button class="case-tab" onclick="showCase('schema', 'meeting', this)">미팅 / 스케줄</button>
+        <button class="case-tab" onclick="showCase('schema', 'etc', this)">기타</button>
+      </div>
+
+      <div class="case-content active" id="schema-user">
+
+      <div class="schema-header"><h3>organizations</h3><span>모든 기업 마스터 (103개 + 확장). 매칭 단위 = Organization (ADR-0002)</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>기업 고유 ID</td><td></td><td>2026-05-20 <code>a421b56</code></td></tr>
+          <tr><td><code>name</code></td><td>text</td><td></td><td>기업명 (한글)</td><td></td><td></td></tr>
+          <tr><td><code>name_en</code></td><td>text</td><td></td><td>기업명 (영문) <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+          <tr><td><code>business_number</code></td><td>varchar(12)</td><td><span class="key-uq">UQ</span></td><td>사업자등록번호 (국내). 해외 기업은 null</td><td></td><td></td></tr>
+          <tr><td><code>description</code></td><td>text</td><td></td><td>회사 소개</td><td></td><td></td></tr>
+          <tr><td><code>description_en</code></td><td>text</td><td></td><td>회사 소개 (영문) <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+          <tr><td><code>website</code></td><td>text</td><td></td><td>홈페이지 URL <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+          <tr><td><code>created_at</code></td><td>timestamptz</td><td></td><td>생성일시</td><td></td><td></td></tr>
+          <tr><td><code>updated_at</code></td><td>timestamptz</td><td></td><td>수정일시</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="schema-header"><h3>members</h3><span>Organization 하위 개별 사용자 계정. 동일 Organization 내 동일 권한(플랫)</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>멤버 고유 ID</td><td></td><td>2026-05-20 <code>a421b56</code></td></tr>
+          <tr><td><code>org_id</code></td><td>uuid</td><td><span class="key-fk">FK</span> <span class="key-idx">IDX</span></td><td>소속 기업</td><td>&rarr; organizations.id</td><td></td></tr>
+          <tr><td><code>name</code></td><td>text</td><td></td><td>이름</td><td></td><td></td></tr>
+          <tr><td><code>email</code></td><td>text</td><td><span class="key-uq">UQ</span></td><td>이메일 (개인화 링크 인증용)</td><td></td><td></td></tr>
+          <tr><td><code>position</code></td><td>text</td><td></td><td>직위/직급 <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+          <tr><td><code>phone</code></td><td>text</td><td></td><td>연락처 <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+          <tr><td><code>created_at</code></td><td>timestamptz</td><td></td><td>생성일시</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="schema-header"><h3>organizers</h3><span>운영사 계정. master/sub 2단계 권한</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>운영사 계정 ID</td><td></td><td>2026-05-20 <code>a421b56</code></td></tr>
+          <tr><td><code>email</code></td><td>text</td><td><span class="key-uq">UQ</span></td><td>이메일 (인증코드 로그인)</td><td></td><td></td></tr>
+          <tr><td><code>name</code></td><td>text</td><td></td><td>담당자명</td><td></td><td></td></tr>
+          <tr><td><code>role</code></td><td>text</td><td></td><td><span class="col-enum">master | sub</span></td><td></td><td></td></tr>
+          <tr><td><code>org_name</code></td><td>text</td><td></td><td>운영사 조직명 (운영사무국, KOTRA 등)</td><td></td><td></td></tr>
+          <tr><td><code>created_at</code></td><td>timestamptz</td><td></td><td>생성일시</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="schema-header"><h3>visitors</h3><span>일반 참관객 QR 진입 로그. BM-001 완료 시 organizations + members로 전환 (On-site Buyer)</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>참관객 ID</td><td></td><td>2026-05-26 <code>4306fbd</code></td></tr>
+          <tr><td><code>event_id</code></td><td>uuid</td><td><span class="key-fk">FK</span></td><td>진입한 전시회</td><td>&rarr; events.id</td><td></td></tr>
+          <tr><td><code>converted_org_id</code></td><td>uuid</td><td><span class="key-fk">FK</span></td><td>On-site Buyer 전환 시 생성된 Organization <span class="col-nullable">nullable</span></td><td>&rarr; organizations.id</td><td></td></tr>
+          <tr><td><code>created_at</code></td><td>timestamptz</td><td></td><td>QR 진입 시각</td><td></td><td></td></tr>
+          <tr><td><code>converted_at</code></td><td>timestamptz</td><td></td><td>On-site Buyer 전환 시각 <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="schema-header"><h3>terms_agreements</h3><span>약관 동의 기록. 참가기관 최초 로그인 시 필수</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>동의 기록 ID</td><td></td><td>2026-05-20 <code>a421b56</code></td></tr>
+          <tr><td><code>member_id</code></td><td>uuid</td><td><span class="key-fk">FK</span></td><td>동의한 멤버</td><td>&rarr; members.id</td><td></td></tr>
+          <tr><td><code>term_type</code></td><td>text</td><td></td><td><span class="col-enum">ai_agent_data | conversation_data</span></td><td></td><td></td></tr>
+          <tr><td><code>agreed_at</code></td><td>timestamptz</td><td></td><td>동의 시각</td><td></td><td></td></tr>
+          <tr><td><code>ip_address</code></td><td>inet</td><td></td><td>동의 시 IP</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      </div><!-- /schema-user -->
+
+      <div class="case-content" id="schema-event">
+
+      <div class="schema-header"><h3>events</h3><span>전시회 (DX Korea 2026 등)</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>이벤트 ID</td><td></td><td>2026-05-20 <code>a421b56</code></td></tr>
+          <tr><td><code>name</code></td><td>text</td><td></td><td>전시회명</td><td></td><td></td></tr>
+          <tr><td><code>start_date</code></td><td>date</td><td></td><td>시작일</td><td></td><td></td></tr>
+          <tr><td><code>end_date</code></td><td>date</td><td></td><td>종료일</td><td></td><td></td></tr>
+          <tr><td><code>biz_match_start</code></td><td>date</td><td></td><td>비즈매칭 신청 시작일 (8/26)</td><td></td><td></td></tr>
+          <tr><td><code>biz_match_end</code></td><td>date</td><td></td><td>비즈매칭 신청 마감일 (9/11)</td><td></td><td></td></tr>
+          <tr><td><code>venue</code></td><td>text</td><td></td><td>전시장 정보</td><td></td><td></td></tr>
+          <tr><td><code>created_at</code></td><td>timestamptz</td><td></td><td>생성일시</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="schema-header"><h3>event_participants</h3><span>기업의 이벤트 참여. RLS 데이터 격리 기준</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>참여 ID</td><td></td><td>2026-05-26 <code>4306fbd</code></td></tr>
+          <tr><td><code>org_id</code></td><td>uuid</td><td><span class="key-fk">FK</span> <span class="key-idx">IDX</span></td><td>참여 기업</td><td>&rarr; organizations.id</td><td></td></tr>
+          <tr><td><code>event_id</code></td><td>uuid</td><td><span class="key-fk">FK</span> <span class="key-idx">IDX</span></td><td>참여 이벤트</td><td>&rarr; events.id</td><td></td></tr>
+          <tr><td><code>role</code></td><td>text</td><td></td><td><span class="col-enum">exhibitor | buyer | both</span></td><td></td><td></td></tr>
+          <tr><td><code>organizer_id</code></td><td>uuid</td><td><span class="key-fk">FK</span></td><td>담당 운영사. RLS 데이터 격리 기준</td><td>&rarr; organizers.id</td><td></td></tr>
+          <tr><td><code>booth_number</code></td><td>text</td><td></td><td>부스 번호 (Exhibitor만) <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+          <tr><td><code>profile_completed</code></td><td>boolean</td><td></td><td>프로필 작성 완료 여부</td><td></td><td></td></tr>
+          <tr><td><code>profile_step</code></td><td>int</td><td></td><td>마지막 완료 단계 (1~5). 재진입 시 이어서 작성</td><td></td><td></td></tr>
+          <tr><td><code>created_at</code></td><td>timestamptz</td><td></td><td>생성일시</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      </div><!-- /schema-event -->
+
+      <div class="case-content" id="schema-agent">
+
+      <div class="schema-header"><h3>agent_profiles</h3><span>기업 에이전트 설정. 기업당 1개, 영속 (이벤트 독립)</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>에이전트 프로필 ID</td><td></td><td>2026-05-20 <code>a421b56</code></td></tr>
+          <tr><td><code>org_id</code></td><td>uuid</td><td><span class="key-fk">FK</span> <span class="key-uq">UQ</span></td><td>소속 기업 (1:1)</td><td>&rarr; organizations.id</td><td></td></tr>
+          <tr><td><code>tone</code></td><td>text</td><td></td><td><span class="col-enum">formal | friendly</span> 에이전트 톤</td><td></td><td></td></tr>
+          <tr><td><code>restrictions</code></td><td>text[]</td><td></td><td>금지 규칙 ("이건 절대 말하지 마")</td><td></td><td></td></tr>
+          <tr><td><code>faq</code></td><td>jsonb</td><td></td><td>FAQ 응답 규칙 (질문-답변 쌍)</td><td></td><td></td></tr>
+          <tr><td><code>company_intro</code></td><td>text</td><td></td><td>회사 소개 (에이전트용) <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+          <tr><td><code>products</code></td><td>jsonb</td><td></td><td>제품/서비스 목록 [{name, spec, description}]</td><td></td><td></td></tr>
+          <tr><td><code>updated_at</code></td><td>timestamptz</td><td></td><td>수정일시</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="schema-header"><h3>agent_knowledge</h3><span>에이전트 지식. 이벤트별 추가 로딩 가능</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>지식 ID</td><td></td><td>2026-05-20 <code>a421b56</code></td></tr>
+          <tr><td><code>agent_profile_id</code></td><td>uuid</td><td><span class="key-fk">FK</span> <span class="key-idx">IDX</span></td><td>에이전트 프로필</td><td>&rarr; agent_profiles.id</td><td></td></tr>
+          <tr><td><code>event_id</code></td><td>uuid</td><td><span class="key-fk">FK</span></td><td>null=공통 지식, 값=이벤트 전용 <span class="col-nullable">nullable</span></td><td>&rarr; events.id</td><td></td></tr>
+          <tr><td><code>content_type</code></td><td>text</td><td></td><td><span class="col-enum">product | brochure | spec | faq</span></td><td></td><td></td></tr>
+          <tr><td><code>content</code></td><td>text</td><td></td><td>지식 본문</td><td></td><td></td></tr>
+          <tr><td><code>created_at</code></td><td>timestamptz</td><td></td><td>생성일시</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="schema-header"><h3>conversations</h3><span>NABI 대화 + 에이전트 대화 저장</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>대화 ID</td><td></td><td>2026-05-20 <code>a421b56</code></td></tr>
+          <tr><td><code>type</code></td><td>text</td><td><span class="key-idx">IDX</span></td><td><span class="col-enum">nabi | agent</span></td><td></td><td></td></tr>
+          <tr><td><code>member_id</code></td><td>uuid</td><td><span class="key-fk">FK</span> <span class="key-idx">IDX</span></td><td>대화 참여 멤버. Visitor는 대화 불가(전체 기업 탭 탐색만 가능), On-site Buyer 전환 후 member_id 사용</td><td>&rarr; members.id</td><td></td></tr>
+          <tr><td><code>agent_profile_id</code></td><td>uuid</td><td><span class="key-fk">FK</span></td><td>type=agent일 때 대상 에이전트 <span class="col-nullable">nullable</span></td><td>&rarr; agent_profiles.id</td><td></td></tr>
+          <tr><td><code>agent_mode</code></td><td>text</td><td></td><td><span class="col-enum">auto | confirm | direct</span> 에이전트 모드</td><td></td><td></td></tr>
+          <tr><td><code>messages</code></td><td>jsonb</td><td></td><td>메시지 배열 [{role, content, timestamp}]</td><td></td><td></td></tr>
+          <tr><td><code>created_at</code></td><td>timestamptz</td><td></td><td>대화 시작 시각</td><td></td><td></td></tr>
+          <tr><td><code>updated_at</code></td><td>timestamptz</td><td></td><td>마지막 메시지 시각</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      </div><!-- /schema-agent -->
+
+      <div class="case-content" id="schema-match">
+
+      <div class="schema-header"><h3>keywords</h3><span>사전 정의 키워드. 대분류/중분류 체계</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>키워드 ID</td><td></td><td>2026-05-20 <code>a421b56</code></td></tr>
+          <tr><td><code>category</code></td><td>text</td><td><span class="key-idx">IDX</span></td><td>대분류 (드론, 통신, 사이버보안 등)</td><td></td><td></td></tr>
+          <tr><td><code>subcategory</code></td><td>text</td><td></td><td>중분류 <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+          <tr><td><code>label</code></td><td>text</td><td><span class="key-uq">UQ</span></td><td>키워드 표시명</td><td></td><td></td></tr>
+          <tr><td><code>label_en</code></td><td>text</td><td></td><td>영문 표시명 <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="schema-header"><h3>org_keywords</h3><span>기업별 키워드. 사전 선택 + AI 추출 + 사용자 보정</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>연결 ID</td><td></td><td>2026-05-20 <code>a421b56</code></td></tr>
+          <tr><td><code>org_id</code></td><td>uuid</td><td><span class="key-fk">FK</span> <span class="key-idx">IDX</span></td><td>기업</td><td>&rarr; organizations.id</td><td></td></tr>
+          <tr><td><code>keyword_id</code></td><td>uuid</td><td><span class="key-fk">FK</span></td><td>키워드</td><td>&rarr; keywords.id</td><td></td></tr>
+          <tr><td><code>source</code></td><td>text</td><td></td><td><span class="col-enum">selected | ai_extracted | user_corrected</span></td><td></td><td></td></tr>
+          <tr><td><code>event_id</code></td><td>uuid</td><td><span class="key-fk">FK</span></td><td>이벤트 컨텍스트 <span class="col-nullable">nullable</span></td><td>&rarr; events.id</td><td></td></tr>
+          <tr><td><code>created_at</code></td><td>timestamptz</td><td></td><td>생성일시</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="schema-header"><h3>buyer_needs</h3><span>NABI가 파악한 바이어 니즈 요약. 매칭 엔진 입력</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>니즈 ID</td><td></td><td>2026-05-20 <code>a421b56</code></td></tr>
+          <tr><td><code>member_id</code></td><td>uuid</td><td><span class="key-fk">FK</span> <span class="key-idx">IDX</span></td><td>바이어 멤버</td><td>&rarr; members.id</td><td></td></tr>
+          <tr><td><code>event_id</code></td><td>uuid</td><td><span class="key-fk">FK</span></td><td>이벤트</td><td>&rarr; events.id</td><td></td></tr>
+          <tr><td><code>category</code></td><td>text</td><td></td><td>니즈 대분류</td><td></td><td></td></tr>
+          <tr><td><code>keywords</code></td><td>text[]</td><td></td><td>추출된 키워드 배열</td><td></td><td></td></tr>
+          <tr><td><code>constraints</code></td><td>jsonb</td><td></td><td>제약조건 {budget_range, timeline, environment, specs}</td><td></td><td></td></tr>
+          <tr><td><code>free_text</code></td><td>text</td><td></td><td>원문 자유 텍스트 입력</td><td></td><td></td></tr>
+          <tr><td><code>institution_type</code></td><td>text</td><td></td><td><span class="col-enum">military | gov_public | defense | civilian | research | other</span></td><td></td><td></td></tr>
+          <tr><td><code>nationality</code></td><td>text</td><td></td><td>국적 <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+          <tr><td><code>created_at</code></td><td>timestamptz</td><td></td><td>생성일시</td><td></td><td></td></tr>
+          <tr><td><code>updated_at</code></td><td>timestamptz</td><td></td><td>수정일시</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      </div><!-- /schema-match -->
+
+      <div class="case-content" id="schema-meeting">
+
+      <div class="schema-header"><h3>schedule_table</h3><span>중앙 스케줄 테이블. 4가지 매칭 유형 모두 여기에 기록</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>스케줄 ID</td><td></td><td>2026-05-26 <code>4306fbd</code></td></tr>
+          <tr><td><code>event_id</code></td><td>uuid</td><td><span class="key-fk">FK</span> <span class="key-idx">IDX</span></td><td>이벤트</td><td>&rarr; events.id</td><td></td></tr>
+          <tr><td><code>requester_org_id</code></td><td>uuid</td><td><span class="key-fk">FK</span> <span class="key-idx">IDX</span></td><td>미팅 신청 기업</td><td>&rarr; organizations.id</td><td></td></tr>
+          <tr><td><code>target_org_id</code></td><td>uuid</td><td><span class="key-fk">FK</span> <span class="key-idx">IDX</span></td><td>미팅 대상 기업</td><td>&rarr; organizations.id</td><td></td></tr>
+          <tr><td><code>match_type</code></td><td>text</td><td><span class="key-idx">IDX</span></td><td><span class="col-enum">open | ai | forced | onsite</span></td><td></td><td></td></tr>
+          <tr><td><code>venue_type</code></td><td>text</td><td></td><td><span class="col-enum">booth | matching_zone | business_room</span></td><td></td><td></td></tr>
+          <tr><td><code>venue_detail</code></td><td>text</td><td></td><td>부스 번호 / 테이블 번호 / 룸 번호</td><td></td><td></td></tr>
+          <tr><td><code>time_slot</code></td><td>timestamptz</td><td><span class="key-idx">IDX</span></td><td>미팅 시작 시각 (30분 단위)</td><td></td><td></td></tr>
+          <tr><td><code>status</code></td><td>text</td><td><span class="key-idx">IDX</span></td><td><span class="col-enum">proposed | accepted | rejected | counter_proposed | cancelled | completed | noshow</span></td><td></td><td></td></tr>
+          <tr><td><code>reject_reason_type</code></td><td>text</td><td></td><td>거절/취소 사유 키워드 <span class="col-nullable">nullable</span> <span class="col-enum">time_unavailable | interest_mismatch | other</span></td><td></td><td></td></tr>
+          <tr><td><code>reject_reason_text</code></td><td>text</td><td></td><td>거절/취소 사유 자유 입력 <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+          <tr><td><code>message</code></td><td>text</td><td></td><td>미팅 신청 메시지 (AI 초안 기반) <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+          <tr><td><code>counter_to_id</code></td><td>uuid</td><td><span class="key-fk">FK</span></td><td>역제안 시 원본 스케줄 참조 <span class="col-nullable">nullable</span></td><td>&rarr; schedule_table.id</td><td></td></tr>
+          <tr><td><code>ai_score</code></td><td>numeric(5,2)</td><td></td><td>AI 매칭 적합도 % (match_type=ai일 때) <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+          <tr><td><code>ai_reason</code></td><td>text</td><td></td><td>AI 추천 이유 <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+          <tr><td><code>created_at</code></td><td>timestamptz</td><td></td><td>생성일시</td><td></td><td></td></tr>
+          <tr><td><code>updated_at</code></td><td>timestamptz</td><td></td><td>상태 변경 시각</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="schema-header"><h3>meetings</h3><span>미팅 상세. schedule_table의 확장 정보</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>미팅 ID</td><td></td><td>2026-05-20 <code>a421b56</code></td></tr>
+          <tr><td><code>schedule_id</code></td><td>uuid</td><td><span class="key-fk">FK</span> <span class="key-uq">UQ</span></td><td>스케줄 (1:1)</td><td>&rarr; schedule_table.id</td><td></td></tr>
+          <tr><td><code>attendee_member_ids</code></td><td>uuid[]</td><td></td><td>참석자 멤버 ID 배열 (다대다)</td><td>&rarr; members.id[]</td><td></td></tr>
+          <tr><td><code>topic</code></td><td>text</td><td></td><td>관심 주제 (NABI 대화 기반 자동 채워짐) <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+          <tr><td><code>ai_summary</code></td><td>text</td><td></td><td>미팅 후 AI 요약 (MY-002 표시) <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+          <tr><td><code>follow_up</code></td><td>text</td><td></td><td>후속 조치 <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+          <tr><td><code>completed_at</code></td><td>timestamptz</td><td></td><td>미팅 완료 시각 <span class="col-nullable">nullable</span></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="schema-header"><h3>meeting_slots</h3><span>미팅 가용 슬롯. 충돌 자동 방지</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>슬롯 ID</td><td></td><td>2026-05-20 <code>a421b56</code></td></tr>
+          <tr><td><code>participant_id</code></td><td>uuid</td><td><span class="key-fk">FK</span> <span class="key-idx">IDX</span></td><td>참여 기업</td><td>&rarr; event_participants.id</td><td></td></tr>
+          <tr><td><code>date</code></td><td>date</td><td></td><td>날짜</td><td></td><td></td></tr>
+          <tr><td><code>time_start</code></td><td>time</td><td></td><td>시작 시각</td><td></td><td></td></tr>
+          <tr><td><code>time_end</code></td><td>time</td><td></td><td>종료 시각</td><td></td><td></td></tr>
+          <tr><td><code>available</code></td><td>boolean</td><td></td><td>예약 가능 여부. 예약 시 false 전환</td><td></td><td></td></tr>
+          <tr><td><code>schedule_id</code></td><td>uuid</td><td><span class="key-fk">FK</span></td><td>예약된 스케줄 <span class="col-nullable">nullable</span></td><td>&rarr; schedule_table.id</td><td></td></tr>
+        </tbody>
+      </table>
+
+      </div><!-- /schema-meeting -->
+
+      <div class="case-content" id="schema-etc">
+
+      <div class="schema-header"><h3>cached_responses</h3><span>폴백용 캐시 응답. Claude API 장애 시 사용</span></div>
+      <table class="schema-col-table">
+        <colgroup><col class="sc-col"><col class="sc-type"><col class="sc-key"><col class="sc-desc"><col class="sc-rel"><col class="sc-rev"></colgroup>
+        <thead><tr><th>컬럼</th><th>타입</th><th>키</th><th>설명</th><th>관계</th><th>개정이력</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>uuid</td><td><span class="key-pk">PK</span></td><td>캐시 ID</td><td></td><td>2026-05-20 <code>a421b56</code></td></tr>
+          <tr><td><code>query_pattern</code></td><td>text</td><td><span class="key-idx">IDX</span></td><td>질문 패턴 (자주 묻는 질문)</td><td></td><td></td></tr>
+          <tr><td><code>response</code></td><td>text</td><td></td><td>사전 답변</td><td></td><td></td></tr>
+          <tr><td><code>agent_profile_id</code></td><td>uuid</td><td><span class="key-fk">FK</span></td><td>대상 에이전트 <span class="col-nullable">nullable</span></td><td>&rarr; agent_profiles.id</td><td></td></tr>
+          <tr><td><code>ttl</code></td><td>interval</td><td></td><td>캐시 유효 기간</td><td></td><td></td></tr>
+          <tr><td><code>created_at</code></td><td>timestamptz</td><td></td><td>생성일시</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      </div><!-- /schema-etc -->
+
+      <div class="key-points">
+        <div class="key-points-title">핵심 설계 원칙</div>
+        <ul>
+          <li>기업은 상황에 따라 참가사/바이어 어느 쪽이든 될 수 있음 &rarr; <code>organizations</code> + <code>event_participants</code>로 역할 분리</li>
+          <li>매칭 단위는 Organization (Member 아님) &rarr; ADR-0002</li>
+          <li>에이전트 정체성은 기업 레벨 (<code>agent_profiles</code>), 지식은 이벤트별 추가 로딩 (<code>agent_knowledge</code>)</li>
+          <li>4가지 매칭(Open/AI/Forced/On-site) 모두 동일한 <code>schedule_table</code>에 기록</li>
+          <li>Supabase RLS로 이벤트별 데이터 격리 (<code>event_participants.organizer_id</code> 기반)</li>
+          <li>Visitor는 QR 진입 로그만 <code>visitors</code> 테이블에 기록. BM-001 완료 시 <code>organizations</code> + <code>members</code>에 On-site Buyer로 전환. 미팅 신청은 전환 후 <code>requester_org_id</code>로 통일</li>
+          <li>대화 히스토리는 <code>conversations.messages</code>에 jsonb 배열로 저장. Supabase Realtime으로 실시간 push</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 미해결 -->
+  <div class="scenario" id="sc-todo">
+    <div class="scenario-card">
+      <div class="scenario-title">미해결 / 추가 논의 필요</div>
+      <ul class="todo-list">
+        <li><span class="todo-check"></span>비즈매칭 신청기간 중 프로필 보강 리마인더 전략</li>
+        <li><span class="todo-check"></span>매칭 결과 발표 시점과 방식 (일괄? 순차?)</li>
+        <li><span class="todo-check"></span>현장에서 Buyer+Exhibitor 역할 전환</li>
+        <li><span class="todo-check"></span>해외 바이어 영어 UI 전환</li>
+        <li><span class="todo-check" style="background:#16a34a; border-color:#16a34a;"></span><span style="text-decoration:line-through; color:var(--text-tertiary);">참가사 &rarr; 바이어 Open Matching 상세 플로우</span> <span style="color:#16a34a; font-size:12px; font-weight:600;">해결됨</span></li>
+        <li><span class="todo-check"></span>노쇼 발생 시 실시간 슬롯 재배정 플로우</li>
+        <li><span class="todo-check"></span>NABI 플랫폼 자체 회원가입 기능 필요 여부 (초대/QR만 vs 자체 가입 오픈)</li>
+      </ul>
+
+      <div style="margin-top:32px;">
+        <div class="phase-divider">다음 할 일</div>
+        <ul class="todo-list">
+          <li><span class="todo-check"></span>각 페이지별 가설/목적/관리지표/기능정의 하나씩 체크</li>
+          <li><span class="todo-check"></span>각 페이지별 프로토타입 화면 붙이기 (베리에이션 넘겨가며 볼 수 있도록)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// 모바일 드로어 토글
+function toggleNav(force) {
+  var open = (typeof force === 'boolean') ? force : !document.body.classList.contains('nav-open');
+  document.body.classList.toggle('nav-open', open);
+}
+
+function show(id, el) {
+  document.querySelectorAll('.scenario').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('sc-' + id).classList.add('active');
+  document.body.classList.remove('nav-open');  // 항목 선택 시 모바일 드로어 닫기
+  if (el) {
+    el.classList.add('active');
+  } else {
+    // find sidebar item by id mapping
+    const map = {
+      'pf-apply': 0, 'pf-discover': 1, 'pf-meeting': 2, 'pf-my-meeting': 3, 'pf-organizer': 4,
+      'us-buyer': 5, 'us-exhibitor': 6, 'us-visitor': 7, 'us-organizer': 8,
+      'pagelist': 9, 'dbschema': 10, 'journey': 11, 'summary': 12, 'todo': 13
+    };
+    const items = document.querySelectorAll('.sidebar-item');
+    if (map[id] !== undefined && items[map[id]]) {
+      items[map[id]].classList.add('active');
+    }
+  }
+  window.scrollTo(0, 0);
+}
+
+function showCase(group, caseId, el) {
+  var parent = el.closest('.scenario-card');
+  var tabs = parent.querySelectorAll('#' + group + '-tabs .case-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  // hide all case-content in this group
+  var contents = parent.querySelectorAll('.case-content');
+  contents.forEach(c => {
+    if (c.id && c.id.startsWith(group + '-')) {
+      c.classList.remove('active');
+    }
+  });
+  document.getElementById(group + '-' + caseId).classList.add('active');
+}
+
+function showPP(id) {
+  document.querySelectorAll('.pp-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.pp-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('pp-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+
+</body>
+</html>

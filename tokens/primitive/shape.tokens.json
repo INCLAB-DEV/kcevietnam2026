@@ -1,0 +1,14 @@
+{
+  "$description": "NABI radius (4/8/12 scale, xl absorbed into lg) and border-width primitives. CSS names preserved: radius --radius-*, border width --bw*.",
+  "radius": {
+    "sm":   { "$type": "dimension", "$value": "4px",    "$extensions": { "com.nabi.css": "--radius-sm" } },
+    "md":   { "$type": "dimension", "$value": "8px",    "$extensions": { "com.nabi.css": "--radius-md" } },
+    "lg":   { "$type": "dimension", "$value": "12px",   "$extensions": { "com.nabi.css": "--radius-lg" } },
+    "full": { "$type": "dimension", "$value": "9999px", "$extensions": { "com.nabi.css": "--radius-full" } }
+  },
+  "borderWidth": {
+    "thin":    { "$type": "dimension", "$value": "1px",   "$extensions": { "com.nabi.css": "--bw-thin" } },
+    "default": { "$type": "dimension", "$value": "1.5px", "$extensions": { "com.nabi.css": "--bw" } },
+    "strong":  { "$type": "dimension", "$value": "2px",   "$extensions": { "com.nabi.css": "--bw-strong" } }
+  }
+}

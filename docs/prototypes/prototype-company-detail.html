@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NABI - 기업 상세 프로토타입 (DV-002, THROWAWAY)</title>
+<link rel="stylesheet" href="nabi-ui.css?v=20260607">
+<!-- PROTOTYPE: DV-002 company detail page — standalone from DV-001 -->
+<style>
+  /* 토큰·리셋·크롬·dev 바·셸 반응형은 nabi-ui.css(단일 소스)에서 상속 */
+  body { background: var(--bg-primary); }
+
+  /* ── 단일 셸 반응형: company-detail 는 #detail-root(=.app-content) 한 곳에만 렌더.
+     content-form(720px 중앙 컬럼)로 데스크톱에서 자연 높이로 흐른다. ── */
+  @container shell (min-width: 720px) {
+    .detail-page { height: auto; overflow: visible; }
+    .detail-body { overflow: visible; }
+  }
+
+  /* ========== DETAIL PAGE ========== */
+  .detail-page {
+    display: flex; flex-direction: column; height: 100%;
+    overflow: hidden; background: var(--bg-primary);
+  }
+  .detail-header {
+    display: flex; align-items: center; padding: 16px 20px 14px; gap: 12px;
+    flex-shrink: 0; background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-default);
+  }
+  .detail-back {
+    width: 36px; height: 36px; border-radius: 50%; border: none;
+    background: var(--bg-secondary); cursor: pointer; font-size: 18px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    font-family: var(--font-stack);
+  }
+  .detail-back:hover { background: var(--border-default); }
+  .detail-header-title {
+    font-size: 17px; font-weight: 700; flex: 1;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .detail-header-bookmark {
+    width: 36px; height: 36px; border-radius: 50%; border: none;
+    background: none; cursor: pointer; font-size: 20px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    color: var(--text-tertiary); transition: all 0.15s;
+  }
+  .detail-header-bookmark.saved { color: var(--accent-green); }
+
+  .detail-body { flex: 1; overflow-y: auto; padding: 20px; }
+
+  /* Match banner */
+  .match-banner {
+    display: flex; align-items: center; gap: 14px; padding: 18px;
+    background: var(--accent-subtle); border-radius: var(--radius-lg); margin-bottom: 24px;
+  }
+  .match-score {
+    font-size: 36px; font-weight: 800; color: var(--accent-primary);
+    line-height: 1; flex-shrink: 0;
+  }
+  .match-score-unit { font-size: 18px; font-weight: 700; }
+  .match-label { font-size: 12px; color: var(--accent-primary); font-weight: 600; margin-bottom: 2px; }
+  .match-reason-short { font-size: 13px; color: var(--accent-primary); line-height: 1.4; }
+
+  /* Sections */
+  .section { margin-bottom: 24px; }
+  .section-title {
+    font-size: 13px; font-weight: 700; color: var(--text-tertiary);
+    margin-bottom: 12px; letter-spacing: 0.3px;
+  }
+  .section-body { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+  /* AI reason block */
+  .ai-reason {
+    padding: 16px; background: var(--accent-subtle); border-radius: var(--radius-md);
+    font-size: 14px; color: var(--accent-primary); line-height: 1.7;
+  }
+
+  /* Booth */
+  .booth-card {
+    display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+    background: var(--bg-secondary); border-radius: var(--radius-md);
+  }
+  .booth-icon {
+    width: 40px; height: 40px; border-radius: var(--radius-sm);
+    background: var(--bg-elevated); border: 1px solid var(--border-default);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: var(--text-tertiary); flex-shrink: 0;
+  }
+  .booth-text { font-size: 15px; font-weight: 700; }
+  .booth-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+
+  /* Exhibit items */
+  .exhibit-list { display: flex; flex-direction: column; gap: 8px; }
+  .exhibit-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    background: var(--bg-secondary); border-radius: var(--radius-md);
+  }
+  .exhibit-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent-primary); flex-shrink: 0;
+  }
+  .exhibit-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+
+  /* Keyword tags */
+  .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag {
+    padding: 6px 14px; background: var(--accent-subtle); color: var(--accent-primary);
+    border-radius: var(--radius-full); font-size: 13px; font-weight: 600;
+  }
+
+  /* Achievement items */
+  .achievement-list { display: flex; flex-direction: column; gap: 10px; }
+  .achievement-item {
+    font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+    padding-left: 14px; border-left: 2px solid var(--border-default);
+  }
+
+  /* Company info meta */
+  .info-meta {
+    display: flex; gap: 20px; margin-top: 12px;
+    font-size: 12px; color: var(--text-tertiary); font-weight: 600;
+  }
+
+  /* Action bar */
+  .action-bar {
+    display: flex; gap: 10px; padding: 16px 20px;
+    flex-shrink: 0; border-top: 1px solid var(--border-default);
+    background: var(--bg-elevated);
+  }
+  .action-btn {
+    flex: 1; padding: 14px; border-radius: var(--radius-md); font-size: 15px;
+    font-weight: 700; cursor: pointer; font-family: var(--font-stack); border: none;
+    transition: all 0.15s;
+  }
+  .action-btn:hover { opacity: 0.85; }
+  .action-btn.primary { background: var(--accent-primary); color: white; }
+  .action-btn.secondary { background: var(--bg-secondary); color: var(--text-primary); }
+
+  /* ========== MEETING MODAL ========== */
+  .meeting-overlay {
+    display: none; position: absolute; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 100;
+    align-items: flex-end; justify-content: center;
+  }
+  .meeting-overlay.active { display: flex; }
+  .meeting-sheet {
+    width: 100%; max-height: 85%; background: var(--bg-elevated);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .meeting-handle {
+    width: 40px; height: 4px; background: var(--border-default);
+    border-radius: 2px; margin: 12px auto 0; flex-shrink: 0;
+  }
+  .meeting-header {
+    display: flex; align-items: center; padding: 16px 20px 12px; gap: 12px; flex-shrink: 0;
+  }
+  .meeting-header-title { font-size: 17px; font-weight: 700; }
+  .meeting-header-close {
+    margin-left: auto; width: 32px; height: 32px; border-radius: 50%;
+    border: none; background: var(--bg-secondary); cursor: pointer;
+    font-size: 16px; display: flex; align-items: center; justify-content: center;
+  }
+  .meeting-body { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
+  .meeting-company-card {
+    display: flex; align-items: center; gap: 14px; padding: 16px;
+    background: var(--accent-subtle); border-radius: var(--radius-lg); margin-bottom: 24px;
+  }
+  .meeting-company-logo {
+    width: 44px; height: 44px; background: var(--accent-primary); color: white;
+    border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 800; flex-shrink: 0;
+  }
+  .meeting-company-name { font-size: 15px; font-weight: 700; }
+  .meeting-company-sub { font-size: 12px; color: var(--accent-primary); margin-top: 2px; }
+  .meeting-section-title {
+    font-size: 15px; font-weight: 700; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .step-num {
+    width: 24px; height: 24px; border-radius: 50%; background: var(--accent-primary);
+    color: white; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .meeting-venue-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+  .meeting-venue {
+    display: flex; align-items: center; gap: 14px; padding: 16px;
+    border: 1.5px solid var(--border-default); border-radius: var(--radius-lg);
+    cursor: pointer; transition: all 0.15s; background: var(--bg-elevated);
+  }
+  .meeting-venue:hover { border-color: var(--accent-primary); }
+  .meeting-venue.selected { border-color: var(--accent-primary); background: var(--accent-subtle); }
+  .meeting-venue-icon {
+    width: 44px; height: 44px; border-radius: var(--radius-md);
+    background: var(--bg-secondary); color: var(--text-tertiary);
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .meeting-venue-text { flex: 1; }
+  .meeting-venue-name { font-size: 15px; font-weight: 600; }
+  .meeting-venue-desc { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+  .meeting-venue-check {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border-default);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: transparent; flex-shrink: 0;
+  }
+  .meeting-venue.selected .meeting-venue-check {
+    background: var(--accent-primary); border-color: var(--accent-primary); color: white;
+  }
+  .meeting-slots { display: none; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .meeting-slots.active { display: flex; }
+  .meeting-slot-row { display: flex; gap: 8px; }
+  .meeting-slot {
+    flex: 1; padding: 12px 8px; border: 1.5px solid var(--border-default);
+    border-radius: var(--radius-md); text-align: center; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: var(--font-stack); background: var(--bg-elevated); color: var(--text-primary);
+  }
+  .meeting-slot:hover { border-color: var(--accent-primary); }
+  .meeting-slot.selected { border-color: var(--accent-primary); background: var(--accent-subtle); color: var(--accent-primary); }
+  .meeting-slot.disabled { opacity: 0.35; cursor: not-allowed; text-decoration: line-through; }
+  .meeting-slot-label { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; font-weight: 400; }
+  .meeting-footer {
+    padding: 16px 20px 24px; flex-shrink: 0; border-top: 1px solid var(--border-default);
+  }
+  .meeting-submit {
+    width: 100%; padding: 16px; background: var(--accent-primary); color: white;
+    border: none; border-radius: var(--radius-md); font-size: 16px; font-weight: 700;
+    cursor: pointer; font-family: var(--font-stack);
+  }
+  .meeting-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ========== TOAST ========== */
+  .toast {
+    position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-20px);
+    padding: 12px 24px; background: #1a1a1a; color: white;
+    border-radius: var(--radius-full); font-size: 14px; font-weight: 600;
+    z-index: 9998; opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- 글로벌 nav(app-bar + 드로어)는 nabi-nav.js가 .app-shell 상단에 주입 -->
+<div class="app-shell">
+  <main class="app-main">
+    <div class="app-content content-form" id="detail-root"></div>
+  </main>
+</div>
+
+<div class="selector-bar">
+  <div class="selector-label">DV-002</div>
+  <div class="selector-sep"></div>
+  <button class="selector-btn active" data-id="1" onclick="selectCompany(1)">한화에어로</button>
+  <button class="selector-btn" data-id="2" onclick="selectCompany(2)">LIG넥스원</button>
+  <button class="selector-btn" data-id="3" onclick="selectCompany(3)">에어빌리티</button>
+  <button class="selector-btn" data-id="4" onclick="selectCompany(4)">KAI</button>
+  <button class="selector-btn" data-id="5" onclick="selectCompany(5)">현대로템</button>
+  <button class="selector-btn" data-id="6" onclick="selectCompany(6)">풍산</button>
+  <button class="selector-btn" data-id="7" onclick="selectCompany(7)">한컴인스페이스</button>
+  <div class="selector-sep"></div>
+  <div class="view-toggle">
+    <button class="view-toggle-btn" onclick="setPreview('mobile')">Mobile</button>
+    <button class="view-toggle-btn active" onclick="setPreview('desktop')">Desktop</button>
+  </div>
+</div>
+
+<script>
+// ==========================================
+// DATA
+// ==========================================
+const COMPANIES = [
+  { id:1, name:'한화에어로스페이스', booth:'A-101', logo:'한', matchScore:94, keywords:['항공 엔진','우주 발사체','방산 전자'], strength:'국내 유일 항공엔진 독자 개발·양산 체계를 갖추고, 우주 발사체 추진 시스템과 방산 전자 통합 솔루션을 제공합니다.', reason:'관심 분야 "항공 추진 시스템"과 전시 품목 "항공 엔진"이 직접 매칭. 예산 범위와 도입 시기도 부합합니다.', detail:'한화에어로스페이스는 1977년 설립된 대한민국 대표 항공우주·방산 기업입니다. 항공기 엔진, 우주 발사체, 감시정찰 시스템 등 첨단 방산 제품을 개발·양산하고 있습니다. 최근 우주 발사체 추진 시스템, AI 기반 감시정찰 시스템으로 사업 영역을 확장하고 있습니다.', category:'항공우주', founded:'1977년', employees:'약 7,000명', exhibits:['T700 항공엔진 실물 모형','누리호 추진시스템 패널','차세대 감시정찰 드론'], achievements:['누리호 3차 발사 성공 기여 (2024)','폴란드 K9 자주포 엔진 수출','T700 엔진 국내 독자 정비 체계 구축'] },
+  { id:2, name:'LIG넥스원', booth:'B-205', logo:'L', matchScore:89, keywords:['유도무기','감시정찰','C4I'], strength:'정밀유도무기 분야 국내 1위. 천궁, 해궁 등 핵심 무기체계를 개발·납품하며, AI 기반 지휘통제시스템(C4I)을 선보입니다.', reason:'"감시정찰 시스템" 관심 키워드와 "감시정찰·C4I" 전시 품목 매칭. 도입 단계가 비교검토 단계로 적합합니다.', detail:'LIG넥스원은 정밀유도무기, 감시정찰, 항공전자, 수중음향 분야의 핵심 방산 기업입니다. 천궁 II 방공유도무기, 해궁 함대공유도탄 등을 개발했으며, 최근 AI 기반 지휘통제시스템과 무인체계 분야로 역량을 확대하고 있습니다.', category:'유도무기', founded:'1976년', employees:'약 4,500명', exhibits:['천궁 II 축소 모형','AI 기반 C4I 시연','차세대 대함유도탄 패널'], achievements:['천궁 II UAE 수출 계약 (2024)','해궁 Block-II 양산 착수','AI 표적 자동분류 시스템 실전 배치'] },
+  { id:3, name:'에어빌리티', booth:'C-312', logo:'에', matchScore:85, keywords:['밀폐공간 드론','산업용 UAV','비파괴검사'], strength:'세계 최초 밀폐공간 비행 가능 구형 드론(ELIOS) 국내 독점 공급. 위험 환경 무인 점검 솔루션 전문.', reason:'"무인체계·드론" 관심 키워드 매칭. 밀폐공간 점검이라는 특수 영역에서 독보적인 기술력 보유.', detail:'에어빌리티 주식회사는 스위스 Flyability사의 실내·밀폐공간 전용 드론 ELIOS 시리즈를 국내에 독점 공급합니다. 발전소, 선박, 탱크 등 위험 환경 점검에 활용됩니다. 국내 원전, 해군 함정 등 고위험 밀폐공간 점검 시장을 선도하고 있습니다.', category:'무인체계', founded:'2015년', employees:'약 50명', exhibits:['ELIOS 3 실기체 시연','밀폐공간 3D 매핑 데모','비파괴검사 AI 분석 시스템'], achievements:['국내 원전 밀폐공간 점검 독점 수행','해군 함정 내부 점검 시범 사업 수주','ELIOS 3 LiDAR 탑재 모델 국내 최초 도입'] },
+  { id:4, name:'한국항공우주산업(KAI)', booth:'A-110', logo:'K', matchScore:82, keywords:['전투기','헬기','위성'], strength:'FA-50, KF-21, 수리온 등 국산 항공기 개발. 차세대 전투기와 무인기 사업을 주도합니다.', reason:'"항공 추진 시스템" 관심 분야와 관련. 항공기 플랫폼 전체 통합 관점에서 시너지 가능.', detail:'한국항공우주산업(KAI)은 대한민국 유일의 완성 항공기 제조사입니다. KF-21 보라매, FA-50 경전투기, 수리온 헬기 등을 개발·양산하며, 차세대 무인 전투기와 도심항공모빌리티(UAM) 사업을 추진 중입니다.', category:'항공우주', founded:'1999년', employees:'약 8,000명', exhibits:['KF-21 보라매 축소 모형','FA-50 Block 20 패널','무인 전투기 컨셉'], achievements:['KF-21 초도비행 성공 (2022)','FA-50 폴란드 48대 수출 계약','수리온 해병대형 양산 납품'] },
+  { id:5, name:'현대로템', booth:'B-301', logo:'현', matchScore:78, keywords:['전차','장갑차','자주포'], strength:'K2 흑표 전차 등 지상 기동 플랫폼 전문. 미래 전투차량과 무인 지상체계를 개발 중입니다.', reason:'예산 범위와 도입 시기가 부합. 지상 기동 플랫폼과 관심 분야 "방호 시스템"의 연관성.', detail:'현대로템은 K2 흑표 전차, K808/K806 차륜형장갑차, K9 자주포 차체 등 지상 무기체계 전문 기업입니다. 폴란드 수출 등 글로벌 방산 시장에서도 성과를 내고 있으며, 무인 전투차량과 수소 기반 군용 동력 시스템을 개발 중입니다.', category:'기동', founded:'1977년', employees:'약 5,500명', exhibits:['K2 흑표 전차 실물 전시','K808 차륜형장갑차','미래형 무인 전투차량 컨셉'], achievements:['폴란드 K2PL 1,000대 계약 (2022)','K808 차륜형장갑차 양산 개시','K2 파워팩 국산화 완료'] },
+  { id:6, name:'풍산', booth:'D-415', logo:'풍', matchScore:73, keywords:['탄약','정밀타격','추진체'], strength:'국내 유일 종합탄약 제조사. 스마트 탄약과 차세대 추진체 기술을 선보입니다.', reason:'"항공 추진 시스템"의 추진체 키워드 부분 매칭. 추진체 분야 기술 협력 가능성.', detail:'풍산은 1968년 설립된 국내 유일의 종합탄약 제조기업입니다. 소구경부터 대구경 탄약, 스마트 탄약, 추진체까지 전 품목을 개발·생산합니다. 미 육군을 포함한 NATO 회원국에 탄약을 공급하고 있습니다.', category:'탄약', founded:'1968년', employees:'약 3,200명', exhibits:['스마트 탄약 라인업','차세대 추진체 샘플','155mm 정밀유도탄'], achievements:['미 육군 탄약 공급 계약 (2023)','155mm 정밀유도포탄 개발 완료','NATO 표준 탄약 인증 획득'] },
+  { id:7, name:'한컴인스페이스', booth:'C-202', logo:'한', matchScore:70, keywords:['위성통신','영상분석','우주감시'], strength:'초소형 위성 기반 영상 데이터 분석과 우주 상황 인식(SSA) 솔루션을 제공합니다.', reason:'"감시정찰 시스템" 관심 분야와 위성 기반 영상분석 기술 연관. 우주 도메인 확장 관점.', detail:'한컴인스페이스는 한글과컴퓨터 그룹의 우주산업 전문 기업입니다. 초소형 위성 개발, 위성 영상 분석, 우주 상황 인식 시스템을 운영합니다. 군 위성 영상 분석 서비스와 우주 감시 체계 구축에 참여하고 있습니다.', category:'우주', founded:'2021년', employees:'약 120명', exhibits:['세종 1호 위성 모형','위성 영상 AI 분석 데모','우주 상황 인식(SSA) 대시보드'], achievements:['세종 1호 발사 성공 (2024)','군 위성 영상 분석 서비스 수주','우주 상황 인식 시스템 시범 운영 개시'] }
+];
+
+const SLOTS = [
+  {t:'09:00',l:'오전',d:false},{t:'10:00',l:'오전',d:false},{t:'11:00',l:'오전',d:true},
+  {t:'13:00',l:'오후',d:false},{t:'14:00',l:'오후',d:false},{t:'15:00',l:'오후',d:false},{t:'16:00',l:'오후',d:true}
+];
+
+let currentCompanyId = 1;
+let bookmarks = [];
+let mtVenue = null, mtSlot = null;
+
+// ==========================================
+// RENDER
+// ==========================================
+function render() {
+  // 단일 소스: 항상 #detail-root(=.app-content) 한 곳에만 렌더.
+  // 모바일↔데스크톱 차이는 셸 폭(@container shell)으로 reflow.
+  const container = document.getElementById('detail-root');
+  if (container) container.innerHTML = buildDetailPage(currentCompanyId);
+}
+
+function buildDetailPage(companyId) {
+  const c = COMPANIES.find(x => x.id === companyId);
+  if (!c) return '';
+  const saved = bookmarks.includes(c.id);
+  return `
+    <div class="detail-page">
+      <div class="detail-header">
+        <button class="detail-back" onclick="goBack()">←</button>
+        <div class="detail-header-title">${c.name}</div>
+        <button class="detail-header-bookmark ${saved ? 'saved' : ''}" id="header-bookmark" onclick="toggleBookmark(${c.id})">
+          ${saved ? '★' : '☆'}
+        </button>
+      </div>
+      <div class="detail-body">
+        <div class="match-banner">
+          <div class="match-score">${c.matchScore}<span class="match-score-unit">%</span></div>
+          <div>
+            <div class="match-label">AI 적합도</div>
+            <div class="match-reason-short">${c.reason.split('.')[0]}.</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">AI 추천 이유</div>
+          <div class="ai-reason">${c.reason}</div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">부스 위치</div>
+          <div class="booth-card">
+            <div class="booth-icon">MAP</div>
+            <div>
+              <div class="booth-text">${c.booth}</div>
+              <div class="booth-sub">DX Korea 2026 전시장</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">전시 제품</div>
+          <div class="exhibit-list">
+            ${c.exhibits.map(e => `
+              <div class="exhibit-item">
+                <div class="exhibit-dot"></div>
+                <div class="exhibit-name">${e}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">분야</div>
+          <div class="tag-list">
+            ${c.keywords.map(k => `<span class="tag">${k}</span>`).join('')}
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">강점</div>
+          <div class="section-body">${c.strength}</div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">주요 실적</div>
+          <div class="achievement-list">
+            ${c.achievements.map(a => `
+              <div class="achievement-item">${a}</div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">기업 정보</div>
+          <div class="section-body">${c.detail}</div>
+          <div class="info-meta">
+            <span>설립 ${c.founded}</span>
+            <span>규모 ${c.employees}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <button class="action-btn secondary" id="action-bookmark" onclick="toggleBookmark(${c.id})">
+          ${saved ? '★ 저장됨' : '☆ 관심기업'}
+        </button>
+        <button class="action-btn primary" onclick="openMeeting(${c.id})">미팅 신청</button>
+      </div>
+
+      <div class="meeting-overlay" id="meeting-modal" onclick="if(event.target===this)closeMeeting()"></div>
+    </div>
+  `;
+}
+
+// ==========================================
+// NAVIGATION
+// ==========================================
+function goBack() {
+  showToast('← 기업 탐색으로 돌아가기 (프로토타입)');
+}
+
+function selectCompany(id) {
+  currentCompanyId = id;
+  document.querySelectorAll('.selector-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.id) === id);
+  });
+  render();
+}
+
+// 개발용 미리보기 토글 — 별도 DOM/재렌더 없이 셸 폭만 제약(컨테이너 쿼리가 reflow)
+function setPreview(mode) {
+  document.body.classList.toggle('preview-mobile', mode === 'mobile');
+  document.querySelectorAll('.view-toggle-btn').forEach(function (b) {
+    b.classList.toggle('active', b.textContent.trim().toLowerCase().indexOf(mode) !== -1);
+  });
+}
+
+// ==========================================
+// BOOKMARK
+// ==========================================
+function toggleBookmark(id) {
+  const idx = bookmarks.indexOf(id);
+  if (idx >= 0) {
+    bookmarks.splice(idx, 1);
+    showToast('관심기업 해제');
+  } else {
+    bookmarks.push(id);
+    const c = COMPANIES.find(x => x.id === id);
+    showToast(`${c.name} 관심기업 등록`);
+  }
+  const saved = bookmarks.includes(id);
+  const hb = document.getElementById('header-bookmark');
+  if (hb) { hb.className = 'detail-header-bookmark' + (saved ? ' saved' : ''); hb.textContent = saved ? '★' : '☆'; }
+  const ab = document.getElementById('action-bookmark');
+  if (ab) { ab.textContent = saved ? '★ 저장됨' : '☆ 관심기업'; }
+}
+
+// ==========================================
+// MEETING MODAL
+// ==========================================
+// 미팅 신청 — 공유 컴포넌트(nabi-meeting.js) 호출. discover와 동일한 풍부 플로.
+function openMeeting(companyId) {
+  const c = COMPANIES.find(x => x.id === companyId);
+  if (!c || !window.NABI_MEETING) return;
+  NABI_MEETING.open(
+    { name: c.name, booth: c.booth, matchScore: c.matchScore, logo: c.logo },
+    { onSubmit: function () { showToast(`${c.name} 미팅 신청 완료`); } }
+  );
+}
+
+function closeMeeting() {
+  const modal = document.getElementById('meeting-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+function selVenue(el, venue) {
+  document.querySelectorAll('.meeting-venue').forEach(v => v.classList.remove('selected'));
+  el.classList.add('selected'); mtVenue = venue;
+  const slots = document.getElementById('mt-slots');
+  if (slots) slots.classList.add('active');
+  const body = document.getElementById('meeting-body');
+  if (body) setTimeout(() => body.scrollTop = body.scrollHeight, 100);
+  updMtBtn();
+}
+
+function selSlot(el, time) {
+  document.querySelectorAll('.meeting-slot').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected'); mtSlot = time; updMtBtn();
+}
+
+function updMtBtn() {
+  const btn = document.getElementById('mt-submit');
+  if (!btn) return;
+  if (mtVenue && mtSlot) { btn.disabled = false; btn.textContent = '미팅 신청하기'; }
+  else if (mtVenue) { btn.disabled = true; btn.textContent = '시간을 선택해주세요'; }
+  else { btn.disabled = true; btn.textContent = '장소와 시간을 선택해주세요'; }
+}
+
+function submitMeeting() {
+  const c = COMPANIES.find(x => x.id === currentCompanyId);
+  showToast(`${c.name} 미팅 신청 완료`);
+  closeMeeting();
+}
+
+// ==========================================
+// TOAST
+// ==========================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ==========================================
+// INIT
+// ==========================================
+render();
+</script>
+
+<script>
+  window.NABI_NAV_ACTIVE = 'discover';
+  window.NABI_NAV_USER = { name: '김재현', avatar: 'KJ' };
+</script>
+<script src="nabi-nav.js?v=20260607"></script>
+<script src="nabi-meeting.js?v=20260609"></script>
+<script>
+/* 기본 = 데스크톱(셸 전체폭). ?view=mobile 로 폰 프리뷰 시작 가능. */
+(function () {
+  if (new URLSearchParams(location.search).get('view') === 'mobile') setPreview('mobile');
+})();
+</script>
+</body>
+</html>

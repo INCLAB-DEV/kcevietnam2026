@@ -1,0 +1,2902 @@
+<title>NABI 비즈매칭 서비스 개발 보고서</title>
+
+<style>
+/* ============================================================
+   NABI 개발보고서 — A4 인쇄(PDF 변환) 전용 스타일시트
+   외부 리소스 없음(폰트·CSS·이미지 전부 인라인 또는 시스템)
+   ============================================================ */
+
+@page {
+  size: A4;
+  margin: 16mm 14mm 15mm 14mm;
+}
+@page :first {
+  margin: 0;
+}
+
+:root {
+  --ink:        #14181f;
+  --ink-soft:   #3d4653;
+  --ink-faint:  #6b7480;
+  --rule:       #c9d0d9;
+  --rule-soft:  #e3e8ee;
+  --navy:       #1b3a5c;
+  --navy-soft:  #2f5c86;
+  --accent:     #14507a;
+  --accent-bg:  #eef4f9;
+  --warn-bg:    #fdf4e7;
+  --warn-line:  #d19a3e;
+  --ok-bg:      #eef6f0;
+  --ok-line:    #4a8b62;
+  --grey-bg:    #f4f6f8;
+  --mono: "SFMono-Regular", "SF Mono", Menlo, Consolas, "D2Coding", monospace;
+  --sans: "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR",
+          "Malgun Gothic", "Helvetica Neue", Arial, sans-serif;
+}
+
+html { background: #ffffff; }
+
+body {
+  font-family: var(--sans);
+  color: var(--ink);
+  background: #ffffff;
+  font-size: 9.7pt;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+/* 화면에서 볼 때만 A4 폭을 흉내낸다(인쇄 시엔 @page가 지배) */
+.sheet {
+  max-width: 176mm;
+  margin: 0 auto;
+  padding: 12mm 0 20mm;
+}
+
+/* ---------- 표지 ---------- */
+.cover {
+  page-break-after: always;
+  break-after: page;
+  min-height: 252mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 26mm 20mm 20mm;
+  box-sizing: border-box;
+  border-top: 9mm solid var(--navy);
+}
+.cover-top { }
+.cover-kicker {
+  font-size: 9.6pt;
+  letter-spacing: .22em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 6mm;
+}
+.cover-title {
+  font-size: 27pt;
+  line-height: 1.32;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: var(--navy);
+  margin: 0 0 4mm;
+}
+.cover-sub {
+  font-size: 12.4pt;
+  color: var(--ink-soft);
+  font-weight: 500;
+  line-height: 1.6;
+  margin: 0;
+}
+.cover-rule {
+  height: 2px;
+  background: var(--navy);
+  margin: 8mm 0 6mm;
+  width: 42mm;
+}
+.cover-scope {
+  font-size: 10pt;
+  color: var(--ink-faint);
+  line-height: 1.8;
+}
+.cover-meta {
+  border-top: 1.5px solid var(--rule);
+  padding-top: 6mm;
+}
+.cover-meta table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+.cover-meta th {
+  text-align: left;
+  width: 32mm;
+  padding: 2.1mm 0;
+  color: var(--ink-faint);
+  font-weight: 600;
+  vertical-align: top;
+  white-space: nowrap;
+}
+.cover-meta td { padding: 2.1mm 0; color: var(--ink); font-weight: 500; vertical-align: top; }
+.cover-note {
+  margin-top: 6mm;
+  font-size: 8.8pt;
+  color: var(--ink-faint);
+  line-height: 1.6;
+}
+
+/* ---------- 목차 ---------- */
+.toc { page-break-after: always; break-after: page; }
+.toc h2 {
+  font-size: 16pt; font-weight: 800; color: var(--navy);
+  border-bottom: 2px solid var(--navy); padding-bottom: 3mm; margin: 0 0 6mm;
+}
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc > ol > li { margin-bottom: 1.2mm; }
+.toc-l1 {
+  display: flex; align-items: baseline; gap: 3mm;
+  font-weight: 700; font-size: 10.8pt; color: var(--ink);
+  padding: 1.4mm 0;
+}
+.toc-l2 {
+  display: flex; align-items: baseline; gap: 3mm;
+  font-size: 9.8pt; color: var(--ink-soft); padding: .7mm 0 .7mm 8mm;
+}
+.toc-num { flex: 0 0 auto; color: var(--accent); font-variant-numeric: tabular-nums; min-width: 9mm; }
+.toc-l2 .toc-num { min-width: 12mm; }
+.toc-dots { flex: 1 1 auto; border-bottom: 1px dotted var(--rule); transform: translateY(-1mm); }
+.toc-fig { margin-top: 8mm; font-size: 9.6pt; }
+.toc-fig h3 { font-size: 11pt; color: var(--navy); margin: 0 0 2mm; }
+.toc-fig ul { margin: 0; padding-left: 5mm; color: var(--ink-soft); }
+.toc-fig li { margin: .8mm 0; }
+
+/* ---------- 섹션 ---------- */
+h1.sec {
+  font-size: 15.5pt; font-weight: 800; color: var(--navy);
+  margin: 0 0 4mm; padding-bottom: 2.2mm;
+  border-bottom: 2px solid var(--navy);
+  page-break-before: always; break-before: page;
+  page-break-after: avoid; break-after: avoid;
+  letter-spacing: -.01em;
+}
+h1.sec .n { color: var(--accent); margin-right: 3mm; }
+h1.sec.first { page-break-before: auto; break-before: auto; }
+
+h2.sub {
+  font-size: 11.4pt; font-weight: 700; color: var(--navy);
+  margin: 5.4mm 0 2.2mm;
+  page-break-after: avoid; break-after: avoid;
+}
+h2.sub .n { color: var(--accent); margin-right: 2.4mm; font-variant-numeric: tabular-nums; }
+
+h3.sub3 {
+  font-size: 10pt; font-weight: 700; color: var(--ink);
+  margin: 3.4mm 0 1.3mm;
+  page-break-after: avoid; break-after: avoid;
+}
+h3.sub3::before { content: "▪ "; color: var(--accent); }
+
+p { margin: 0 0 2.3mm; }
+ul, ol { margin: 0 0 2.4mm; padding-left: 5.2mm; }
+li { margin: 0.8mm 0; }
+li > ul, li > ol { margin-top: 1.1mm; margin-bottom: 0; }
+
+strong { font-weight: 700; color: var(--ink); }
+code, .code {
+  font-family: var(--mono);
+  font-size: .88em;
+  background: var(--grey-bg);
+  border: 1px solid var(--rule-soft);
+  border-radius: 2px;
+  padding: 0 .35em;
+  color: #1f2d3d;
+  word-break: break-all;
+}
+
+/* ---------- 표 ---------- */
+table.t {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8.5pt;
+  line-height: 1.45;
+  margin: 2.4mm 0 3.4mm;
+  /* 표는 페이지를 넘길 수 있게 두되, 행은 쪼개지 않고 헤더는 매 페이지 반복한다.
+     (표 전체에 break-inside:avoid를 걸면 긴 표 앞에 빈 페이지가 생긴다) */
+  page-break-inside: auto; break-inside: auto;
+}
+table.t thead { display: table-header-group; }
+table.t tr { page-break-inside: avoid; break-inside: avoid; }
+table.t caption {
+  caption-side: top;
+  text-align: left;
+  font-size: 9pt;
+  font-weight: 700;
+  color: var(--accent);
+  padding-bottom: 1.6mm;
+}
+table.t th {
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+  text-align: left;
+  padding: 1.5mm 1.8mm;
+  border: 1px solid var(--navy);
+  vertical-align: middle;
+}
+table.t td {
+  padding: 1.4mm 1.8mm;
+  border: 1px solid var(--rule);
+  vertical-align: top;
+}
+table.t tbody tr:nth-child(even) td { background: #f7f9fb; }
+table.t td.c, table.t th.c { text-align: center; }
+table.t td.mono { font-family: var(--mono); font-size: 8.4pt; word-break: break-all; }
+table.t td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.t-wrap { overflow-x: auto; }
+
+/* 큰 표는 페이지를 넘겨도 되게 */
+table.t.long { page-break-inside: auto; break-inside: auto; }
+table.t.long tr { page-break-inside: avoid; break-inside: avoid; }
+table.t.long thead { display: table-header-group; }
+
+/* ---------- 그림 ---------- */
+figure.fig {
+  margin: 3.6mm 0 4.4mm;
+  page-break-inside: avoid; break-inside: avoid;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: #fcfdfe;
+  padding: 3mm 3mm 2.4mm;
+}
+figure.fig svg { display: block; width: 100%; height: auto; }
+figure.fig figcaption {
+  margin-top: 2.2mm;
+  padding-top: 1.8mm;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 8.3pt;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+figure.fig figcaption b { color: var(--navy); }
+
+/* ---------- 박스 ---------- */
+.box {
+  border-left: 3.5px solid var(--accent);
+  background: var(--accent-bg);
+  padding: 2.6mm 3.2mm;
+  margin: 2.8mm 0 3.2mm;
+  font-size: 8.9pt;
+  line-height: 1.55;
+  page-break-inside: avoid; break-inside: avoid;
+  border-radius: 0 3px 3px 0;
+}
+.box .lab {
+  display: block;
+  font-size: 8.4pt; font-weight: 800; letter-spacing: .1em;
+  color: var(--accent); margin-bottom: 1.4mm;
+}
+.box p:last-child, .box ul:last-child { margin-bottom: 0; }
+.box.warn { border-left-color: var(--warn-line); background: var(--warn-bg); }
+.box.warn .lab { color: #8a5c14; }
+.box.ok { border-left-color: var(--ok-line); background: var(--ok-bg); }
+.box.ok .lab { color: #2f6644; }
+
+/* ---------- 지표 카드 ---------- */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2.2mm;
+  margin: 3mm 0 3.6mm;
+  page-break-inside: avoid; break-inside: avoid;
+}
+.kpi {
+  border: 1px solid var(--rule);
+  border-top: 2.4px solid var(--accent);
+  border-radius: 2px;
+  padding: 2.3mm 2mm;
+  text-align: center;
+  background: #fff;
+}
+.kpi .v {
+  font-size: 14pt; font-weight: 800; color: var(--navy);
+  line-height: 1.15; font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+}
+.kpi .u { font-size: 8.2pt; font-weight: 700; color: var(--accent); }
+.kpi .l { font-size: 8.2pt; color: var(--ink-faint); margin-top: 1.2mm; line-height: 1.4; }
+
+/* ---------- 정의형 리스트 ---------- */
+dl.defs { margin: 1.6mm 0 2.4mm; font-size: 9.1pt; }
+dl.defs dt { font-weight: 700; color: var(--navy); margin-top: 1.9mm; }
+dl.defs dd { margin: .6mm 0 0 0; padding-left: 4mm; color: var(--ink-soft); }
+
+/* ---------- 배지 ---------- */
+.badge {
+  display: inline-block;
+  font-size: 7.8pt; font-weight: 700; letter-spacing: .04em;
+  padding: .3mm 1.6mm; border-radius: 2px; vertical-align: .8mm;
+  border: 1px solid currentColor;
+}
+.b-done { color: #2f6644; background: var(--ok-bg); }
+.b-part { color: #8a5c14; background: var(--warn-bg); }
+.b-todo { color: #7a3b3b; background: #fbeeee; }
+.b-na   { color: var(--ink-faint); background: var(--grey-bg); }
+
+/* ---------- 각주/출처 ---------- */
+.src {
+  font-size: 8pt; color: var(--ink-faint); font-family: var(--mono);
+  margin: -1.4mm 0 2.6mm; line-height: 1.45; word-break: break-all;
+}
+.src::before { content: "출처 "; font-family: var(--sans); font-weight: 700; }
+
+hr.soft { border: none; border-top: 1px solid var(--rule-soft); margin: 4mm 0; }
+
+.keep { page-break-inside: avoid; break-inside: avoid; }
+.newpage { page-break-before: always; break-before: page; }
+
+/* 화면 미리보기에서만 종이 느낌 */
+@media screen {
+  html { background: #eceff3; }
+  .paper {
+    background: #fff;
+    max-width: 210mm;
+    margin: 0 auto;
+    box-shadow: 0 1px 10px rgba(0,0,0,.13);
+  }
+  .sheet { padding-left: 17mm; padding-right: 17mm; max-width: none; }
+}
+@media print {
+  .paper { box-shadow: none; max-width: none; }
+  .sheet { padding: 0; max-width: none; }
+}
+</style>
+
+<div class="paper">
+
+<!-- ══════════════════════════ 표지 ══════════════════════════ -->
+<section class="cover">
+  <div class="cover-top">
+    <div class="cover-kicker">DEVELOPMENT REPORT</div>
+    <h1 class="cover-title">NABI 비즈매칭 서비스<br>개발 보고서</h1>
+    <p class="cover-sub">MICE 방산 전시회 AI 에이전트 기반<br>바이어–셀러 매칭 플랫폼 구축</p>
+    <div class="cover-rule"></div>
+    <div class="cover-scope">
+      슈퍼어드민 콘솔 · 알림/이메일 · 엑셀 연동 · 회원가입/권한 체계 ·<br>
+      행사별 정책 설정 · 다국어(i18n) · 배포 파이프라인 정비
+    </div>
+  </div>
+
+  <div class="cover-meta">
+    <table>
+      <tr><th>사&nbsp;업&nbsp;명</th><td>NABI — 비즈매칭 서비스 구축</td></tr>
+      <tr><th>발주기관</th><td>마인즈그라운드(주) <span style="color:var(--ink-faint)">— MICE 전문 대행사</span></td></tr>
+      <tr><th>수행기관</th><td>중앙대학교</td></tr>
+      <tr><th>사업기간</th><td>2026. 08. 21. &ndash; 2026. 12. 31.</td></tr>
+      <tr><th>보고 기준일</th><td><strong>2026. 08. 28.</strong></td></tr>
+      <tr><th>보고 범위</th><td>2026-08-28 병렬 개발 사이클 산출물 전량</td></tr>
+      <tr><th>대상 행사</th><td>KADEX with DX Korea 2026 외 (멀티 행사 운영 전제)</td></tr>
+    </table>
+    <p class="cover-note">
+      본 보고서에 기재된 파일 경로 · 리비전 · 테스트 수치는 보고 기준일의 저장소 상태에서 직접 확인한 값이다.
+      현재 실제로 동작하는 범위와 잔여 개발 항목은 <b>§7 기능별 실사용 현황과 잔여 로드맵</b>에,
+      미확정 사항과 기술 부채는 <b>§9 미해결 과제 및 백로그</b>에 별도 수록하였다.
+    </p>
+  </div>
+</section>
+
+
+<div class="sheet">
+
+<!-- ══════════════════════════ 목차 ══════════════════════════ -->
+<section class="toc">
+  <h2>목 차</h2>
+  <ol>
+    <li><div class="toc-l1"><span class="toc-num">1.</span><span>보고 개요</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">1.1</span><span>사업 개요 및 보고 범위</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">1.2</span><span>핵심 성과 요약</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">1.3</span><span>워크스트림 진행 현황</span><span class="toc-dots"></span></div></li>
+
+    <li><div class="toc-l1"><span class="toc-num">2.</span><span>설계 원칙 및 기준 문서 체계</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">2.1</span><span>멀티 행사 전제와 행사별 정책 설정</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">2.2</span><span>의사결정 기록(ADR)과 기능정의서(PRD) 체계</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">2.3</span><span>진실원천(Source of Truth) 규약</span><span class="toc-dots"></span></div></li>
+
+    <li><div class="toc-l1"><span class="toc-num">3.</span><span>시스템 아키텍처</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">3.1</span><span>시스템 컨텍스트</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">3.2</span><span>백엔드 수직 슬라이스 구조</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">3.3</span><span>권한 모델</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">3.4</span><span>멀티 행사 데이터 모델</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">3.5</span><span>알림 채널 포트 구조</span><span class="toc-dots"></span></div></li>
+
+    <li><div class="toc-l1"><span class="toc-num">4.</span><span>구현 내역</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">4.1</span><span>알림 시스템 및 이메일 발송</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">4.2</span><span>슈퍼어드민 API</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">4.3</span><span>엑셀 Export / Import</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">4.4</span><span>참가자 화면 정책 3건</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">4.5</span><span>슈퍼어드민 콘솔(프런트엔드)</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">4.6</span><span>다국어(i18n)</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">4.7</span><span>회원가입 및 역할 체계</span><span class="toc-dots"></span></div></li>
+
+    <li><div class="toc-l1"><span class="toc-num">5.</span><span>인프라 및 정합성 작업</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">5.1</span><span>배포 차단 요인(P0) 2건 해소</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">5.2</span><span>마이그레이션 체인 정리 및 실 DB 적용</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">5.3</span><span>스키마 파생 문서 동기화</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">5.4</span><span>계약 문서 정리</span><span class="toc-dots"></span></div></li>
+
+    <li><div class="toc-l1"><span class="toc-num">6.</span><span>품질 보증 — 이종 벤더 크로스리뷰</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">6.1</span><span>방법론: 작성자 ≠ 리뷰어, 벤더 교차</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">6.2</span><span>모듈별 리뷰 성과</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">6.3</span><span>실 DB 첫 구동 검증</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">6.4</span><span>테스트 현황</span><span class="toc-dots"></span></div></li>
+
+    <li><div class="toc-l1"><span class="toc-num">7.</span><span>기능별 실사용 현황과 잔여 로드맵</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">7.1</span><span>판정 기준과 보고 취지</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">7.2</span><span>기능별 FE ↔ BE 통합 현황</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">7.3</span><span>잔여 로드맵 — 다음 단계 최우선 3대 과제</span><span class="toc-dots"></span></div></li>
+
+    <li><div class="toc-l1"><span class="toc-num">8.</span><span>E2E 검증</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">8.1</span><span>검증 환경과 시나리오</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">8.2</span><span>단계별 결과표</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">8.3</span><span>발견 결함 · 한계 및 조치</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l2"><span class="toc-num">8.4</span><span>증적 목록</span><span class="toc-dots"></span></div></li>
+
+    <li><div class="toc-l1"><span class="toc-num">9.</span><span>미해결 과제 및 백로그</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l1"><span class="toc-num">10.</span><span>결론 및 다음 단계</span><span class="toc-dots"></span></div></li>
+    <li><div class="toc-l1"><span class="toc-num">부록</span><span>A. 산출물 파일 인덱스 &nbsp;/&nbsp; B. 용어 정리</span><span class="toc-dots"></span></div></li>
+  </ol>
+
+  <div class="toc-fig">
+    <h3>그림 목차</h3>
+    <ul>
+      <li>[그림 1] NABI 시스템 컨텍스트 — 계층·경계·외부 연동</li>
+      <li>[그림 2] 3계층 권한 모델 — 부여 경로와 경계 가드</li>
+      <li>[그림 3] 멀티 행사 데이터 모델 — events 중심 관계도</li>
+      <li>[그림 4] 알림 채널 포트 구조 — 생성·팬아웃·기록</li>
+    </ul>
+    <h3 style="margin-top:5mm">표 목차</h3>
+    <ul>
+      <li>[표 1] 워크스트림별 진행 현황 &nbsp;·&nbsp; [표 2] 행사별 정책 컬럼</li>
+      <li>[표 3] 알림 6종 정의 &nbsp;·&nbsp; [표 4] 슈퍼어드민 API 엔드포인트 군</li>
+      <li>[표 5] 엑셀 산출물 &nbsp;·&nbsp; [표 6] 콘솔 8개 섹션 &nbsp;·&nbsp; [표 7] mock seam 인벤토리</li>
+      <li>[표 8] 마이그레이션 리비전 체인 &nbsp;·&nbsp; [표 9] 크로스리뷰 성과 &nbsp;·&nbsp; [표 10] 테스트 현황</li>
+      <li>[표 11] 기능별 FE↔BE 통합 현황 &nbsp;·&nbsp; [표 12] 잔여 로드맵 3대 과제</li>
+      <li>[표 13] E2E 단계별 결과 &nbsp;·&nbsp; [표 14] E2E 발견 결함·한계 및 조치</li>
+      <li>[표 15] 미해결 과제 및 백로그</li>
+    </ul>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════ 1. 보고 개요 ══════════════════════════ -->
+<h1 class="sec first"><span class="n">1.</span>보고 개요</h1>
+
+<h2 class="sub"><span class="n">1.1</span>사업 개요 및 보고 범위</h2>
+
+<p>
+NABI는 MICE 방산 전시회를 대상으로 하는 <strong>AI 에이전트 기반 바이어–셀러 매칭 서비스</strong>다.
+참가사와 바이어의 정보를 최대한 수집하여 매칭 정확도를 극대화하고, 그 효과를 정량적으로 입증하는 것을
+사업의 핵심 목표로 한다. 발주기관인 마인즈그라운드(주)는 MICE 전문 대행사로서 <strong>복수의 행사를
+연속 운영</strong>하는 것이 비즈니스 모델이며, 따라서 본 서비스는 특정 전시회 전용 시스템이 아니라
+<strong>행사를 갈아 끼울 수 있는 플랫폼</strong>으로 설계된다.
+</p>
+
+<p>
+본 보고서는 <strong>2026년 8월 28일 수행된 병렬 개발 사이클</strong>의 산출물을 정리한다. 해당 사이클은
+개발계획서 §7(신규 요구사항) 및 §8(우선순위 긴급 개발 5건)에 대응하여, 7개 워크스트림을 동시에
+진행하는 멀티에이전트 병렬 개발 방식으로 수행되었다. 보고 범위는 다음과 같다.
+</p>
+
+<ul>
+  <li><strong>기능 구현</strong> — 알림·이메일, 슈퍼어드민 API, 엑셀 연동, 참가자 화면 정책, 슈퍼어드민 콘솔, 다국어, 회원가입/권한</li>
+  <li><strong>인프라·정합성</strong> — 배포 차단 요인(P0) 해소, 마이그레이션 체인 정리, 스키마 파생 문서 동기화, 계약 문서 정리</li>
+  <li><strong>품질 보증</strong> — 이종 벤더 크로스리뷰 프로세스와 그 성과, 실 PostgreSQL 첫 구동 검증</li>
+</ul>
+
+<div class="box">
+  <span class="lab">주요 마감 일정</span>
+  <p style="margin-bottom:1.4mm"><strong>2026-06-17</strong> · 정부/주관사 대상 컨셉 데모(일부 동작 + 일부 목업)</p>
+  <p style="margin-bottom:1.4mm"><strong>2026-08-26 ~ 09-11</strong> · 비즈매칭 신청기간 — 서비스 프로덕션 오픈</p>
+  <p><strong>2026-09</strong> · DX Korea 2026 전시회 당일 운영</p>
+</div>
+
+<h2 class="sub"><span class="n">1.2</span>핵심 성과 요약</h2>
+
+<div class="kpis" style="grid-template-columns:repeat(5,1fr)">
+  <div class="kpi"><div class="v">7</div><div class="u">WORKSTREAMS</div><div class="l">병렬 워크스트림<br>전부 구현 완료</div></div>
+  <div class="kpi"><div class="v">1,182</div><div class="u">TESTS PASSED</div><div class="l">backend 437 +<br>frontend 745</div></div>
+  <div class="kpi"><div class="v">16</div><div class="u">REVISIONS</div><div class="l">단일 head 체인<br>실 PG 17 클린 적용</div></div>
+  <div class="kpi"><div class="v">2</div><div class="u">P0 RESOLVED</div><div class="l">배포 차단 요인<br>전량 해소</div></div>
+  <div class="kpi"><div class="v">21</div><div class="u">E2E EVIDENCE</div><div class="l">실 브라우저 검증<br>증적 확보</div></div>
+</div>
+
+<p>이번 사이클의 성과를 세 가지로 요약하면 다음과 같다.</p>
+
+<dl class="defs">
+  <dt>① 운영자 도구 계층의 완성</dt>
+  <dd>
+    슈퍼어드민 API(백엔드)와 슈퍼어드민 콘솔(프런트엔드) 8개 섹션이 동시에 구축되어, 행사 생성부터
+    기업 관리·미팅 운영 취소·통역사 배정·운영자 권한 부여까지 운영 업무 전 구간을 화면에서 처리할 수 있게 되었다.
+    핵심은 <strong>행사 스위처</strong>로, 콘솔 전 섹션이 선택된 행사 컨텍스트로 스코프되어 행사 간
+    데이터·정책이 완전히 분리된다.
+  </dd>
+  <dt>② 행사별 정책 설정의 코드 반영</dt>
+  <dd>
+    "베트남 전시는 부스 미팅만 운영한다", "같은 역할끼리는 서로 열람하지 않는다" 같은 요구를
+    <strong>하드코딩이 아니라 <code>events</code> 테이블의 정책 컬럼</strong>으로 구현하였다. 다음 행사에서
+    반대 값을 넣어도 코드 변경이 필요 없다.
+  </dd>
+  <dt>③ 배포 가능 상태로의 전환</dt>
+  <dd>
+    Alembic multiple heads와 컨테이너 이미지 부재라는 배포 차단 요인 2건을 해소하고, 16개 리비전 체인을
+    실 PostgreSQL 17에 클린 적용하여 <strong>실 DB 위에서 백엔드 테스트 437건 전량 통과</strong>를 확인하였다.
+    이 과정에서 프로덕션 결함 1건을 사전 검출·수리하였다(§6.3).
+  </dd>
+  <dt>④ 실 환경 E2E 검증 완료</dt>
+  <dd>
+    브라우저 자동화로 <strong>회원가입 → 로그인 → 어드민 운영 → 엑셀 → 알림</strong>까지 실 PostgreSQL 위에서
+    검증하였다. <strong>권한 매트릭스 전수 통과</strong>와 어드민 대시보드 집계의 실 DB 일치를 확인하였으며,
+    이 과정에서 결함 2건(CORS 자격증명 설정, 운영자 디렉터리 DB 미참조)을 발견하여
+    <strong>수리·재검증까지 완료</strong>하고 회귀 테스트 7건으로 고정하였다(§8.3).
+  </dd>
+</dl>
+
+<h2 class="sub"><span class="n">1.3</span>워크스트림 진행 현황</h2>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 1] 워크스트림별 진행 현황 (기준일 2026-08-28)</caption>
+  <thead>
+    <tr>
+      <th style="width:6%">No</th>
+      <th style="width:22%">워크스트림</th>
+      <th style="width:28%">주요 산출물</th>
+      <th style="width:32%">비고</th>
+      <th style="width:12%" class="c">상태</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="c">1</td><td>알림 시스템 + 이메일</td>
+      <td class="mono">backend/app/notifications/</td>
+      <td>알림 6종, 공유 인박스, 채널 포트, 리마인더 스케줄러</td>
+      <td class="c"><span class="badge b-done">완료</span></td>
+    </tr>
+    <tr>
+      <td class="c">2</td><td>슈퍼어드민 API</td>
+      <td class="mono">backend/app/admin/</td>
+      <td>26개 엔드포인트, 행사·기업·미팅·통역사·운영자</td>
+      <td class="c"><span class="badge b-done">완료</span></td>
+    </tr>
+    <tr>
+      <td class="c">3</td><td>엑셀 Export / Import</td>
+      <td class="mono">backend/app/excel/</td>
+      <td>3종 xlsx 내보내기 + 명단 임포트 어드민 별칭</td>
+      <td class="c"><span class="badge b-done">완료</span></td>
+    </tr>
+    <tr>
+      <td class="c">4</td><td>참가자 화면 정책 3건</td>
+      <td class="mono">frontend/lib/discover/, lib/meeting/</td>
+      <td>상호 열람 차단 · 장소 부스 한정 · 불가슬롯 UI 제거</td>
+      <td class="c"><span class="badge b-done">완료</span></td>
+    </tr>
+    <tr>
+      <td class="c">5</td><td>슈퍼어드민 콘솔</td>
+      <td class="mono">frontend/app/admin/</td>
+      <td>8개 섹션 + 행사 스위처, mock seam 유지</td>
+      <td class="c"><span class="badge b-part">목업 연동</span></td>
+    </tr>
+    <tr>
+      <td class="c">6</td><td>다국어(i18n)</td>
+      <td class="mono">frontend/messages/, lib/i18n/</td>
+      <td>next-intl, ko/en 각 134 문자열, URL 구조 불변</td>
+      <td class="c"><span class="badge b-part">부분 적용</span></td>
+    </tr>
+    <tr>
+      <td class="c">7</td><td>회원가입 + 역할 체계</td>
+      <td class="mono">backend/app/auth/signup_*</td>
+      <td>바이어·참가사 자체가입, organizer 이중 차단</td>
+      <td class="c"><span class="badge b-done">완료</span></td>
+    </tr>
+    <tr>
+      <td class="c">I</td><td>인프라·정합성</td>
+      <td class="mono">Dockerfile ×2, migrations/</td>
+      <td>P0 2건, 리비전 체인 단일화, 문서 동기화</td>
+      <td class="c"><span class="badge b-done">완료</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box warn">
+  <span class="lab">상태 표기 기준</span>
+  <p><span class="badge b-done">완료</span> 실 코드·실 DB 기준 동작 및 테스트 통과 &nbsp;/&nbsp;
+  <span class="badge b-part">목업 연동</span> 화면·계약은 완성, 실 API 배선은 seam으로 남김 &nbsp;/&nbsp;
+  <span class="badge b-part">부분 적용</span> 적용 범위가 지정된 화면군에 한정됨</p>
+</div>
+
+
+<!-- ══════════════════════════ 2. 설계 원칙 ══════════════════════════ -->
+<h1 class="sec"><span class="n">2.</span>설계 원칙 및 기준 문서 체계</h1>
+
+<h2 class="sub"><span class="n">2.1</span>멀티 행사 전제와 행사별 정책 설정</h2>
+
+<p>
+발주기관의 비즈니스 모델이 단일 행사가 아니라 <strong>연속되는 복수 행사의 운영</strong>이라는 점은
+본 시스템의 최상위 설계 제약이다. KADEX with DX Korea 2026이 첫 적용 대상이지만, 그 다음에 베트남
+전시가 오고, 그 다음에 또 다른 행사가 온다. 따라서 개별 행사의 운영 규칙을 코드에 새기는 것은
+곧바로 기술 부채가 된다.
+</p>
+
+<p>
+이번 사이클에서 이 원칙은 <code>events</code> 테이블의 <strong>정책 컬럼</strong>으로 구체화되었다.
+운영 규칙 요구가 들어오면 조건문을 심는 대신 컬럼을 하나 세우고, 도메인 규칙 함수가 그 값을
+파라미터로 받는다.
+</p>
+
+<div class="t-wrap">
+<table class="t">
+  <caption>[표 2] <code>events</code> 테이블의 행사별 정책 컬럼</caption>
+  <thead>
+    <tr>
+      <th style="width:26%">컬럼</th><th style="width:20%">타입 · 제약</th>
+      <th style="width:12%" class="c">기본값</th><th style="width:42%">정책 의미</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="mono">slot_minutes</td>
+      <td class="mono">integer, CHECK IN (10,20,30,60)</td>
+      <td class="c mono">30</td>
+      <td>미팅 슬롯 한 칸의 길이(분). 운영자가 4개 선택지 중 지정</td>
+    </tr>
+    <tr>
+      <td class="mono">enabled_venue_types</td>
+      <td class="mono">text[], CHECK &lt;@ VENUE_TYPES</td>
+      <td class="mono" style="font-size:7.8pt">{booth, zone_table,<br>business_room}</td>
+      <td>이 행사에서 사용하는 미팅 장소 유형의 부분집합. 부스만 운영하는 행사는 <code>{booth}</code></td>
+    </tr>
+    <tr>
+      <td class="mono">allow_same_role_discovery</td>
+      <td class="mono">boolean</td>
+      <td class="c mono">false</td>
+      <td>참가사↔참가사, 바이어↔바이어 상호 열람 허용 여부. 교차 역할 열람은 정책과 무관하게 항상 허용</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p class="src">backend/app/models.py — class Event (SLOT_MINUTES_CHOICES, VENUE_TYPES 상수 및 CHECK 제약)</p>
+
+<div class="box ok">
+  <span class="lab">설계 판단</span>
+  <p>
+    <code>allow_same_role_discovery</code>는 <strong>동일 역할 간 열람</strong>만 제어한다. 참가사와
+    바이어 사이의 열람은 이 플래그로도 막히지 않는데, 이는 매칭 서비스의 존재 이유에 해당하는
+    <strong>구조적 규칙</strong>이기 때문이다. 정책 파라미터가 흔들 수 있는 범위와 흔들면 안 되는
+    범위를 코드에서 명시적으로 분리하였다.
+  </p>
+</div>
+
+<h2 class="sub"><span class="n">2.2</span>의사결정 기록(ADR)과 기능정의서(PRD) 체계</h2>
+
+<p>
+본 프로젝트는 아키텍처 결정을 <code>docs/adr/</code>에, 기능 스펙을 <code>docs/prd/</code>에 분리 관리한다.
+기준일 현재 ADR 13건(0001–0013), PRD 17건이 등록되어 있으며, PRD 파일명은
+<code>F-{기능ID}.md</code> 규약을 따라 <code>docs/page-list.csv</code>의 화면 ID와 1:1 대응한다.
+이번 사이클의 구현은 다음 ADR에 직접 근거한다.
+</p>
+
+<ul>
+  <li><strong>ADR-0001</strong> Organization 단일 엔티티 — 참가사·바이어를 하나의 <code>organizations</code>로 통합, 역할은 행사별 역할 행에서 부여</li>
+  <li><strong>ADR-0002</strong> 매칭 단위는 Organization — 개인이 아니라 기업이 매칭 대상</li>
+  <li><strong>ADR-0008</strong> 플랫폼 스택 AWS + 백엔드가 DB를 소유 — Next.js는 DB 직접 접속 없음</li>
+  <li><strong>ADR-0010</strong> 알림 모델 — 조직 공유 인박스, 멱등 생성, 채널 팬아웃 (§4.1의 직접 근거)</li>
+  <li><strong>ADR-0012</strong> 운영자 권한의 행사 단위 부여와 scoped sub — 3계층 권한 모델의 근거 (§3.3)</li>
+</ul>
+
+<h2 class="sub"><span class="n">2.3</span>진실원천(Source of Truth) 규약</h2>
+
+<p>
+같은 사실이 여러 곳에 적혀 있으면 반드시 어긋난다. 본 프로젝트는 항목별로 진실원천을 하나만 지정하고
+나머지는 파생물로 취급한다.
+</p>
+
+<div class="t-wrap">
+<table class="t">
+  <thead>
+    <tr><th style="width:26%">항목</th><th style="width:34%">진실원천</th><th style="width:40%">파생물 · 동기화 방식</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DB 스키마</td>
+      <td class="mono">backend/app/models.py<br>+ migrations/versions/</td>
+      <td><code>docs/db/schema.sql</code>(사람이 읽는 ERD) → ERDCloud 임포트</td>
+    </tr>
+    <tr>
+      <td>도메인 용어</td>
+      <td class="mono">CONTEXT.md (공유 커널)</td>
+      <td>레이어 고유 용어는 <code>frontend/</code>·<code>backend/CONTEXT.md</code></td>
+    </tr>
+    <tr>
+      <td>디자인 토큰</td>
+      <td class="mono">tokens/ (W3C DTCG)</td>
+      <td><code>node tokens/build-css.mjs</code> → <code>nabi-ui.css</code>의 <code>:root</code></td>
+    </tr>
+    <tr>
+      <td>알림 타입 집합</td>
+      <td class="mono">models.NOTIFICATION_TYPES<br>(DB CHECK 제약)</td>
+      <td><code>notifications/schemas.py</code>의 Literal — 모듈 로드 시 <code>assert</code>로 드리프트 검출</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box">
+  <span class="lab">드리프트 방지 장치</span>
+  <p>
+    알림 타입은 단순 주석 규약이 아니라 <strong>실행 가능한 검증</strong>으로 묶여 있다.
+    <code>app/notifications/schemas.py</code>는 임포트 시점에
+    <code>assert set(get_args(NotificationType)) == set(models.NOTIFICATION_TYPES)</code>와
+    <code>assert set(PAYLOAD_MODEL_BY_TYPE) == set(models.NOTIFICATION_TYPES)</code>를 수행한다.
+    ORM 상수와 Pydantic 스키마가 어긋나면 애플리케이션이 기동하지 못하므로, 불일치가 런타임까지
+    흘러갈 수 없다.
+  </p>
+</div>
+
+
+<!-- ══════════════════════════ 3. 아키텍처 ══════════════════════════ -->
+<h1 class="sec"><span class="n">3.</span>시스템 아키텍처</h1>
+
+<h2 class="sub"><span class="n">3.1</span>시스템 컨텍스트</h2>
+
+<p>
+NABI는 <strong>Next.js 16(App Router)</strong> 프레젠테이션 계층과 <strong>FastAPI</strong> 애플리케이션
+계층으로 구성된 2-tier 구조이며, 두 계층의 경계는 ADR-0008에 따라 <strong>"FastAPI가 모든 DB 접근을
+소유한다"</strong>로 고정되어 있다. Next.js는 데이터베이스에 직접 접속하지 않고, 브라우저의 요청을
+same-origin 라우트 핸들러가 받아 FastAPI로 전달하는 <strong>BFF 2-hop</strong> 방식을 취한다.
+</p>
+
+<figure class="fig">
+<svg viewBox="0 0 760 560" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="NABI 시스템 컨텍스트 다이어그램">
+  <defs>
+    <marker id="ar1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1b3a5c"/>
+    </marker>
+    <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7480"/>
+    </marker>
+  </defs>
+  <style>
+    .lbl{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;fill:#14181f}
+    .ttl{font-size:14px;font-weight:700;fill:#1b3a5c}
+    .sm{font-size:11px;fill:#3d4653}
+    .xs{font-size:9.5px;fill:#6b7480}
+    .tier{font-size:10px;font-weight:700;fill:#14507a;letter-spacing:1.2px}
+    .mono{font-family:Menlo,Consolas,monospace;font-size:10px;fill:#3d4653}
+  </style>
+
+  <!-- Tier 1: users -->
+  <rect x="20" y="16" width="720" height="58" rx="4" fill="#f4f6f8" stroke="#c9d0d9"/>
+  <text class="lbl tier" x="32" y="34">ACTORS</text>
+  <rect x="150" y="26" width="150" height="38" rx="3" fill="#fff" stroke="#1b3a5c" stroke-width="1.4"/>
+  <text class="lbl sm" x="225" y="42" text-anchor="middle" font-weight="700">바이어 (buyer)</text>
+  <text class="lbl xs" x="225" y="56" text-anchor="middle">해외 구매담당 · 딥링크 진입</text>
+  <rect x="312" y="26" width="150" height="38" rx="3" fill="#fff" stroke="#1b3a5c" stroke-width="1.4"/>
+  <text class="lbl sm" x="387" y="42" text-anchor="middle" font-weight="700">참가사 (exhibitor)</text>
+  <text class="lbl xs" x="387" y="56" text-anchor="middle">방산 제조·수출 기업</text>
+  <rect x="474" y="26" width="150" height="38" rx="3" fill="#fff" stroke="#14507a" stroke-width="1.4"/>
+  <text class="lbl sm" x="549" y="42" text-anchor="middle" font-weight="700">운영자 (organizer)</text>
+  <text class="lbl xs" x="549" y="56" text-anchor="middle">master · sub</text>
+
+  <line x1="387" y1="74" x2="387" y2="98" stroke="#1b3a5c" stroke-width="1.6" marker-end="url(#ar1)"/>
+  <text class="lbl xs" x="396" y="90">HTTPS / 브라우저</text>
+
+  <!-- Tier 2: Next.js -->
+  <rect x="20" y="102" width="720" height="118" rx="4" fill="#eef4f9" stroke="#14507a" stroke-width="1.3"/>
+  <text class="lbl tier" x="32" y="120">PRESENTATION</text>
+  <text class="lbl ttl" x="140" y="122">Next.js 16 · App Router (React 19)</text>
+  <text class="lbl xs" x="405" y="122">— ECS Fargate / standalone 이미지</text>
+
+  <rect x="34" y="132" width="164" height="76" rx="3" fill="#fff" stroke="#8fa8bd"/>
+  <text class="lbl sm" x="116" y="150" text-anchor="middle" font-weight="700">라우트 가드</text>
+  <text class="lbl mono" x="116" y="166" text-anchor="middle">proxy.ts</text>
+  <text class="lbl xs" x="116" y="182" text-anchor="middle">역할별 접근 제어</text>
+  <text class="lbl xs" x="116" y="196" text-anchor="middle">/admin = organizer 전용</text>
+
+  <rect x="208" y="132" width="164" height="76" rx="3" fill="#fff" stroke="#8fa8bd"/>
+  <text class="lbl sm" x="290" y="150" text-anchor="middle" font-weight="700">BFF 라우트 핸들러</text>
+  <text class="lbl mono" x="290" y="166" text-anchor="middle">app/api/**</text>
+  <text class="lbl xs" x="290" y="182" text-anchor="middle">FastAPI 프록시 4개</text>
+  <text class="lbl xs" x="290" y="196" text-anchor="middle">+ 목업 BFF 8개</text>
+
+  <rect x="382" y="132" width="164" height="76" rx="3" fill="#fff" stroke="#8fa8bd"/>
+  <text class="lbl sm" x="464" y="150" text-anchor="middle" font-weight="700">mock seam</text>
+  <text class="lbl mono" x="464" y="166" text-anchor="middle">lib/**/​*-client.ts</text>
+  <text class="lbl xs" x="464" y="182" text-anchor="middle">env 스위치 5 + 어댑터 5</text>
+  <text class="lbl xs" x="464" y="196" text-anchor="middle">실연동 시 내부만 교체</text>
+
+  <rect x="556" y="132" width="170" height="76" rx="3" fill="#fff" stroke="#8fa8bd"/>
+  <text class="lbl sm" x="641" y="150" text-anchor="middle" font-weight="700">i18n · 어드민 콘솔</text>
+  <text class="lbl mono" x="641" y="166" text-anchor="middle">next-intl / app/admin</text>
+  <text class="lbl xs" x="641" y="182" text-anchor="middle">NEXT_LOCALE 쿠키</text>
+  <text class="lbl xs" x="641" y="196" text-anchor="middle">nabi_admin_event 쿠키</text>
+
+  <line x1="290" y1="220" x2="290" y2="252" stroke="#1b3a5c" stroke-width="1.6" marker-end="url(#ar1)"/>
+  <text class="lbl xs" x="299" y="240">server-side fetch (2nd hop)</text>
+  <text class="lbl mono" x="299" y="252">NABI_BACKEND_URL</text>
+
+  <!-- Tier 3: FastAPI -->
+  <rect x="20" y="258" width="720" height="140" rx="4" fill="#f4f6f8" stroke="#1b3a5c" stroke-width="1.3"/>
+  <text class="lbl tier" x="32" y="276">APPLICATION</text>
+  <text class="lbl ttl" x="140" y="278">FastAPI · Python 3.12 — 모든 DB 접근 소유 (ADR-0008)</text>
+
+  <text class="lbl xs" x="34" y="298" font-weight="700" fill="#14507a">수직 슬라이스 (app/&lt;slice&gt;/router · service · schemas)</text>
+  <g>
+    <rect x="34" y="304" width="82" height="30" rx="3" fill="#fff" stroke="#8fa8bd"/><text class="lbl mono" x="75" y="323" text-anchor="middle">auth</text>
+    <rect x="122" y="304" width="82" height="30" rx="3" fill="#fff" stroke="#8fa8bd"/><text class="lbl mono" x="163" y="323" text-anchor="middle">bm</text>
+    <rect x="210" y="304" width="82" height="30" rx="3" fill="#fff" stroke="#8fa8bd"/><text class="lbl mono" x="251" y="323" text-anchor="middle">consent</text>
+    <rect x="298" y="304" width="82" height="30" rx="3" fill="#fff" stroke="#8fa8bd"/><text class="lbl mono" x="339" y="323" text-anchor="middle">roster</text>
+    <rect x="386" y="304" width="82" height="30" rx="3" fill="#fff" stroke="#14507a" stroke-width="1.6"/><text class="lbl mono" x="427" y="323" text-anchor="middle" font-weight="700">admin</text>
+    <rect x="474" y="304" width="106" height="30" rx="3" fill="#fff" stroke="#14507a" stroke-width="1.6"/><text class="lbl mono" x="527" y="323" text-anchor="middle" font-weight="700">notifications</text>
+    <rect x="586" y="304" width="66" height="30" rx="3" fill="#fff" stroke="#14507a" stroke-width="1.6"/><text class="lbl mono" x="619" y="323" text-anchor="middle" font-weight="700">excel</text>
+    <rect x="658" y="304" width="68" height="30" rx="3" fill="#fff" stroke="#8fa8bd"/><text class="lbl mono" x="692" y="323" text-anchor="middle">reviews</text>
+  </g>
+
+  <rect x="34" y="344" width="336" height="44" rx="3" fill="#fff" stroke="#8fa8bd" stroke-dasharray="3 2"/>
+  <text class="lbl sm" x="202" y="361" text-anchor="middle" font-weight="700">domain/ — 순수 규칙 (I/O 없음)</text>
+  <text class="lbl mono" x="202" y="378" text-anchor="middle">visibility_rules · acceptance_rule · review_capture</text>
+
+  <rect x="382" y="344" width="344" height="44" rx="3" fill="#fff" stroke="#8fa8bd" stroke-dasharray="3 2"/>
+  <text class="lbl sm" x="554" y="361" text-anchor="middle" font-weight="700">ports / adapters</text>
+  <text class="lbl mono" x="554" y="378" text-anchor="middle">NotificationChannel · EmailSender · SessionAuthenticator</text>
+
+  <line x1="200" y1="398" x2="200" y2="424" stroke="#1b3a5c" stroke-width="1.6" marker-end="url(#ar1)"/>
+  <line x1="480" y1="398" x2="480" y2="424" stroke="#6b7480" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#ar2)"/>
+
+  <!-- Tier 4: data & external -->
+  <rect x="20" y="428" width="356" height="112" rx="4" fill="#eef6f0" stroke="#4a8b62" stroke-width="1.2"/>
+  <text class="lbl tier" x="32" y="446" fill="#2f6644">DATA</text>
+  <rect x="34" y="454" width="160" height="34" rx="3" fill="#fff" stroke="#4a8b62"/>
+  <text class="lbl sm" x="114" y="468" text-anchor="middle" font-weight="700">PostgreSQL 17</text>
+  <text class="lbl xs" x="114" y="481" text-anchor="middle">AWS RDS 타깃 · Alembic</text>
+  <rect x="202" y="454" width="160" height="34" rx="3" fill="#fff" stroke="#4a8b62"/>
+  <text class="lbl sm" x="282" y="468" text-anchor="middle" font-weight="700">Amazon S3</text>
+  <text class="lbl xs" x="282" y="481" text-anchor="middle">원본 영구보관 · 암호화</text>
+  <text class="lbl xs" x="34" y="506" font-weight="700">head 리비전</text>
+  <text class="lbl mono" x="102" y="506">orggrant0001</text>
+  <text class="lbl xs" x="34" y="522">16 리비전 단일 체인 · 실 PG 17 클린 적용 확인</text>
+
+  <rect x="384" y="428" width="356" height="112" rx="4" fill="#fdf4e7" stroke="#d19a3e" stroke-width="1.2"/>
+  <text class="lbl tier" x="396" y="446" fill="#8a5c14">EXTERNAL</text>
+  <rect x="398" y="454" width="106" height="34" rx="3" fill="#fff" stroke="#d19a3e"/>
+  <text class="lbl sm" x="451" y="474" text-anchor="middle" font-weight="700">Claude API</text>
+  <rect x="512" y="454" width="106" height="34" rx="3" fill="#fff" stroke="#d19a3e"/>
+  <text class="lbl sm" x="565" y="474" text-anchor="middle" font-weight="700">Whisper (STT)</text>
+  <rect x="626" y="454" width="100" height="34" rx="3" fill="#fff" stroke="#d19a3e"/>
+  <text class="lbl sm" x="676" y="474" text-anchor="middle" font-weight="700">SMTP</text>
+  <rect x="398" y="496" width="152" height="30" rx="3" fill="#fff" stroke="#d19a3e" stroke-dasharray="3 2"/>
+  <text class="lbl xs" x="474" y="515" text-anchor="middle">DX Korea 인증 API <tspan font-weight="700">(스텁)</tspan></text>
+  <rect x="558" y="496" width="168" height="30" rx="3" fill="#fff" stroke="#d19a3e" stroke-dasharray="3 2"/>
+  <text class="lbl xs" x="642" y="515" text-anchor="middle">Amazon Cognito JWKS <tspan font-weight="700">(스텁)</tspan></text>
+</svg>
+<figcaption>
+  <b>[그림 1] NABI 시스템 컨텍스트.</b> 실선 테두리는 이번 사이클에 실 코드로 구현된 요소,
+  점선 테두리는 인터페이스만 정의되고 실 어댑터가 미구현인 요소(스텁)를 나타낸다.
+  진한 테두리의 슬라이스(<code>admin</code>·<code>notifications</code>·<code>excel</code>)가 이번에 신규
+  추가되었다. 배포 타깃은 AWS ECS / ECR / ALB이며, 인증 세션은 Cognito(JWKS·RS256)를 전제로 한다.
+</figcaption>
+</figure>
+
+<h2 class="sub"><span class="n">3.2</span>백엔드 수직 슬라이스 구조</h2>
+
+<p>
+백엔드는 계층(Controller–Service–Repository)을 가로로 자르는 대신 <strong>기능 단위로 세로로 자르는
+수직 슬라이스</strong> 구조를 취한다. 각 슬라이스는 <code>router.py</code>(HTTP 경계) ·
+<code>service.py</code>(트랜잭션 소유) · <code>schemas.py</code>(입출력 계약)를 자체 보유하며,
+슬라이스 간에는 서로의 내부를 참조하지 않는다.
+</p>
+
+<p>
+이 구조의 이점은 이번처럼 <strong>여러 워크스트림이 동시에 진행될 때</strong> 명확히 드러난다.
+알림·어드민·엑셀 세 슬라이스가 같은 날 병렬로 작성되었음에도 파일 충돌이 발생하지 않았고,
+각 슬라이스가 독립적으로 테스트 가능했다. 공통 로직은 두 방향으로만 새어나간다.
+</p>
+
+<ul>
+  <li><strong><code>app/domain/</code></strong> — I/O가 전혀 없는 순수 함수 모듈.
+      <code>visibility_rules.py</code>(열람 범위), <code>acceptance_rule.py</code>(수락 모델),
+      <code>review_capture.py</code>·<code>review_provenance_binding.py</code>(리뷰 귀속).
+      DB도 HTTP도 모르므로 단위 테스트가 즉시 가능하다.</li>
+  <li><strong>ports / adapters</strong> — 외부 세계와의 접점을 Protocol로 선언하고 구현체를 갈아 끼운다.
+      <code>NotificationChannel</code>, <code>EmailSender</code>(SMTP↔Fake),
+      <code>SessionAuthenticator</code>·<code>EventOperatorDirectory</code>(Cognito↔테스트 더블).</li>
+</ul>
+
+<div class="box">
+  <span class="lab">FastAPI 라우터 등록 현황</span>
+  <p>
+    <code>app/main.py</code>는 기준일 현재 <strong>10개 라우터</strong>를 등록한다 —
+    <code>roster</code>, <code>auth</code>, <code>login</code>, <code>signup</code>, <code>consent</code>,
+    <code>reviews</code>, <code>bm</code>, <code>excel</code>, <code>notifications</code>, <code>admin</code>.
+    이 중 <code>signup</code>·<code>excel</code>·<code>notifications</code>·<code>admin</code> 4개가
+    이번 사이클에 신규 등록되었다. 앱 인스턴스는 리마인더 스케줄러를 lifespan으로 물고 있다
+    (<code>lifespan=reminder_scheduler_lifespan</code>).
+  </p>
+</div>
+
+<h2 class="sub"><span class="n">3.3</span>권한 모델</h2>
+
+<p>
+권한 체계는 ADR-0012에 따라 <strong>3계층</strong>으로 구성되며, 계층마다 <strong>부여 경로가 다르다</strong>.
+"어떤 권한을 누가 줄 수 있는가"를 API 설계 수준에서 강제하는 것이 이 모델의 핵심이다.
+</p>
+
+<figure class="fig">
+<svg viewBox="0 0 760 460" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="3계층 권한 모델 다이어그램">
+  <defs>
+    <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#14507a"/>
+    </marker>
+    <marker id="stop" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <circle cx="5" cy="5" r="4" fill="#fff" stroke="#a33" stroke-width="1.6"/>
+      <path d="M 2.5 2.5 L 7.5 7.5" stroke="#a33" stroke-width="1.6"/>
+    </marker>
+  </defs>
+  <style>
+    .l2{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif}
+    .h{font-size:13px;font-weight:700;fill:#1b3a5c}
+    .s{font-size:10.5px;fill:#3d4653}
+    .x{font-size:9.5px;fill:#6b7480}
+    .m{font-family:Menlo,Consolas,monospace;font-size:9.5px;fill:#14507a}
+    .cap{font-size:10px;font-weight:700;fill:#14507a;letter-spacing:1px}
+  </style>
+
+  <text class="l2 cap" x="24" y="20">계정 계층</text>
+  <text class="l2 cap" x="330" y="20">부여 경로 (누가 줄 수 있는가)</text>
+  <text class="l2 cap" x="580" y="20">경계 가드</text>
+
+  <!-- Tier A: participants -->
+  <rect x="20" y="32" width="286" height="106" rx="4" fill="#eef4f9" stroke="#14507a" stroke-width="1.3"/>
+  <text class="l2 h" x="34" y="54">① 참가자 — Member</text>
+  <rect x="34" y="62" width="122" height="30" rx="3" fill="#fff" stroke="#8fa8bd"/>
+  <text class="l2 s" x="95" y="82" text-anchor="middle">바이어 buyer</text>
+  <rect x="164" y="62" width="128" height="30" rx="3" fill="#fff" stroke="#8fa8bd"/>
+  <text class="l2 s" x="228" y="82" text-anchor="middle">참가사 exhibitor</text>
+  <text class="l2 x" x="34" y="110">기업(Organization)에 소속 · 행사별 역할 행으로 참여</text>
+  <text class="l2 x" x="34" y="126">인증: 로컬 자격증명 또는 DX Korea 딥링크 진입</text>
+
+  <rect x="322" y="46" width="232" height="78" rx="4" fill="#fff" stroke="#4a8b62" stroke-width="1.4"/>
+  <text class="l2 s" x="336" y="66" font-weight="700" fill="#2f6644">자체가입 (self-signup)</text>
+  <text class="l2 m" x="336" y="84">POST /api/auth/signup</text>
+  <text class="l2 x" x="336" y="100">bcrypt 해시 · 201 / 409(중복) / 422(검증)</text>
+  <text class="l2 x" x="336" y="114">role 선택지: buyer | exhibitor 만</text>
+
+  <rect x="570" y="46" width="170" height="78" rx="4" fill="#f4f6f8" stroke="#c9d0d9"/>
+  <text class="l2 x" x="582" y="64" font-weight="700">역할 분기 · 열람 제한</text>
+  <text class="l2 m" x="582" y="80">domain/visibility_rules</text>
+  <text class="l2 x" x="582" y="96">동일 역할 열람은</text>
+  <text class="l2 m" x="582" y="110">allow_same_role_discovery</text>
+
+  <line x1="306" y1="85" x2="320" y2="85" stroke="#14507a" stroke-width="1.4" marker-end="url(#ar3)"/>
+  <line x1="554" y1="85" x2="568" y2="85" stroke="#14507a" stroke-width="1.4" marker-end="url(#ar3)"/>
+
+  <!-- Tier B: sub -->
+  <rect x="20" y="152" width="286" height="106" rx="4" fill="#eef4f9" stroke="#14507a" stroke-width="1.3"/>
+  <text class="l2 h" x="34" y="174">② 서브어드민 — organizer / sub</text>
+  <text class="l2 x" x="34" y="196">행사×계정 단위 권한 행: event_organizers</text>
+  <text class="l2 m" x="34" y="212">permission_level = 'sub'</text>
+  <text class="l2 x" x="34" y="230">관할(Jurisdiction): 자신이 관리하는 바이어에 한정</text>
+  <text class="l2 m" x="34" y="246">organization_event_roles.managing_organizer_id</text>
+
+  <rect x="322" y="164" width="232" height="82" rx="4" fill="#fff" stroke="#d19a3e" stroke-width="1.4"/>
+  <text class="l2 s" x="336" y="184" font-weight="700" fill="#8a5c14">API로 부여 — master만 가능</text>
+  <text class="l2 m" x="336" y="202">POST /api/admin/events/{id}/organizers</text>
+  <text class="l2 x" x="336" y="218">permission_level 은 'sub' 만 허용</text>
+  <text class="l2 x" x="336" y="234">중복 부여 시 409 Conflict</text>
+
+  <rect x="570" y="164" width="170" height="82" rx="4" fill="#f4f6f8" stroke="#c9d0d9"/>
+  <text class="l2 x" x="582" y="182" font-weight="700">읽기만 겸용 가드 통과</text>
+  <text class="l2 m" x="582" y="198">admin/guard.py</text>
+  <text class="l2 x" x="582" y="216">모든 쓰기 경로는</text>
+  <text class="l2 m" x="582" y="230">require_event_master</text>
+  <text class="l2 x" x="582" y="242">콘솔 UI도 read-only 폴백</text>
+
+  <line x1="306" y1="205" x2="320" y2="205" stroke="#14507a" stroke-width="1.4" marker-end="url(#ar3)"/>
+  <line x1="554" y1="205" x2="568" y2="205" stroke="#14507a" stroke-width="1.4" marker-end="url(#ar3)"/>
+
+  <!-- Tier C: master -->
+  <rect x="20" y="272" width="286" height="106" rx="4" fill="#eef4f9" stroke="#1b3a5c" stroke-width="2"/>
+  <text class="l2 h" x="34" y="294">③ 슈퍼어드민 — organizer / master</text>
+  <text class="l2 x" x="34" y="316">행사 단위 master (전역 master 개념 없음)</text>
+  <text class="l2 m" x="34" y="332">permission_level = 'master'</text>
+  <text class="l2 x" x="34" y="350">해당 행사의 전 데이터 열람 + 전 쓰기 권한</text>
+  <text class="l2 x" x="34" y="366">열람 제한 규칙 밖 — 운영자는 전부 본다</text>
+
+  <rect x="322" y="284" width="232" height="82" rx="4" fill="#fff" stroke="#a33" stroke-width="1.5"/>
+  <text class="l2 s" x="336" y="304" font-weight="700" fill="#8a2b2b">DB 직접 INSERT 로만 부여</text>
+  <text class="l2 x" x="336" y="322">API 경로 없음 — 절차는 backend/README.md</text>
+  <text class="l2 x" x="336" y="340">master 부여 시도 → 거부</text>
+  <text class="l2 x" x="336" y="356">master 회수 시도 → 403 Forbidden</text>
+
+  <rect x="570" y="284" width="170" height="82" rx="4" fill="#f4f6f8" stroke="#c9d0d9"/>
+  <text class="l2 x" x="582" y="302" font-weight="700">행사 생성 부트스트랩 가드</text>
+  <text class="l2 m" x="582" y="318">require_existing_</text>
+  <text class="l2 m" x="582" y="332">master_identity</text>
+  <text class="l2 x" x="582" y="350">"어딘가에서 이미 master인</text>
+  <text class="l2 x" x="582" y="362">계정"만 새 행사를 만든다</text>
+
+  <line x1="306" y1="325" x2="320" y2="325" stroke="#14507a" stroke-width="1.4" marker-end="url(#ar3)"/>
+  <line x1="554" y1="325" x2="568" y2="325" stroke="#14507a" stroke-width="1.4" marker-end="url(#ar3)"/>
+
+  <!-- blocked path -->
+  <path d="M 160 138 L 160 268" stroke="#a33" stroke-width="1.6" stroke-dasharray="5 3" marker-end="url(#stop)"/>
+  <rect x="52" y="184" width="100" height="44" rx="3" fill="#fbeeee" stroke="#a33" stroke-dasharray="3 2"/>
+  <text class="l2 x" x="102" y="202" text-anchor="middle" fill="#8a2b2b" font-weight="700">자체가입으로</text>
+  <text class="l2 x" x="102" y="216" text-anchor="middle" fill="#8a2b2b">운영자 승격 불가</text>
+
+  <!-- footer note -->
+  <rect x="20" y="392" width="720" height="54" rx="4" fill="#fdf4e7" stroke="#d19a3e"/>
+  <text class="l2 s" x="34" y="412" font-weight="700" fill="#8a5c14">역할 전환 가드 (참가자 계층 내부)</text>
+  <text class="l2 x" x="34" y="430">기업의 참가사↔바이어 역할 전환은 해당 행사의 미팅이 <tspan font-weight="700">0건일 때만</tspan> 허용 — 미팅이 하나라도 있으면 409 Conflict.</text>
+  <text class="l2 x" x="34" y="442">이미 성사된 매칭의 귀속(provenance)이 사후에 뒤바뀌는 것을 방지한다.</text>
+</svg>
+<figcaption>
+  <b>[그림 2] 3계층 권한 모델.</b> 계층별로 부여 경로가 다르다는 점이 이 모델의 핵심이다.
+  참가자는 API로 스스로 가입하고, 서브어드민은 master가 API로 부여하며,
+  <strong>슈퍼어드민(master)은 API로는 어떤 경로로도 만들어지지 않는다</strong> — DB 직접 조작만이
+  유일한 경로다. 이 비대칭이 "권한 상승 경로가 코드에 존재하지 않는다"는 보증을 만든다.
+</figcaption>
+</figure>
+
+<h2 class="sub"><span class="n">3.4</span>멀티 행사 데이터 모델</h2>
+
+<p>
+데이터 모델의 중심은 <code>events</code>이며, 운영에 관계된 거의 모든 테이블이 <code>event_id</code>를
+보유한다. 이는 "행사가 바뀌면 데이터가 완전히 분리된다"는 요구를 스키마 수준에서 보장하기 위함이다.
+</p>
+
+<figure class="fig">
+<svg viewBox="0 0 760 430" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="멀티 행사 데이터 모델 관계도">
+  <style>
+    .l3{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif}
+    .tb{font-family:Menlo,Consolas,monospace;font-size:11px;font-weight:700;fill:#fff}
+    .fl{font-family:Menlo,Consolas,monospace;font-size:9px;fill:#3d4653}
+    .fk{font-family:Menlo,Consolas,monospace;font-size:9px;fill:#14507a;font-weight:700}
+    .nt{font-size:9px;fill:#6b7480}
+    .rel{font-size:9px;fill:#14507a;font-family:Menlo,Consolas,monospace}
+    .newt{font-size:8.5px;font-weight:700;fill:#2f6644}
+  </style>
+
+  <!-- events (center) -->
+  <rect x="286" y="16" width="192" height="112" rx="3" fill="#fff" stroke="#1b3a5c" stroke-width="2"/>
+  <rect x="286" y="16" width="192" height="20" rx="3" fill="#1b3a5c"/>
+  <rect x="286" y="30" width="192" height="6" fill="#1b3a5c"/>
+  <text class="l3 tb" x="382" y="31" text-anchor="middle">events</text>
+  <text class="l3 fk" x="294" y="50">PK id (uuid)</text>
+  <text class="l3 fl" x="294" y="63">name · name_en · slug</text>
+  <text class="l3 fl" x="294" y="76">exhibition_start / _end</text>
+  <line x1="290" y1="82" x2="474" y2="82" stroke="#c9d0d9"/>
+  <text class="l3 fk" x="294" y="95">slot_minutes</text>
+  <text class="l3 fk" x="294" y="108">enabled_venue_types[]</text>
+  <text class="l3 fk" x="294" y="121">allow_same_role_discovery</text>
+  <text class="l3 nt" x="484" y="97">◀ 행사별</text>
+  <text class="l3 nt" x="484" y="110">정책 컬럼</text>
+
+  <!-- organizations -->
+  <rect x="24" y="16" width="176" height="72" rx="3" fill="#fff" stroke="#8fa8bd" stroke-width="1.3"/>
+  <rect x="24" y="16" width="176" height="20" rx="3" fill="#4a6784"/>
+  <rect x="24" y="26" width="176" height="10" fill="#4a6784"/>
+  <text class="l3 tb" x="112" y="31" text-anchor="middle">organizations</text>
+  <text class="l3 fk" x="32" y="52">PK id</text>
+  <text class="l3 fl" x="32" y="65">name_ko · name_en</text>
+  <text class="l3 nt" x="32" y="80">참가사·바이어 통합 (ADR-0001)</text>
+
+  <!-- organization_event_roles -->
+  <rect x="24" y="118" width="230" height="106" rx="3" fill="#fff" stroke="#14507a" stroke-width="1.6"/>
+  <rect x="24" y="118" width="230" height="20" fill="#14507a"/>
+  <text class="l3 tb" x="139" y="133" text-anchor="middle">organization_event_roles</text>
+  <text class="l3 fk" x="32" y="154">FK organization_id · FK event_id</text>
+  <text class="l3 fl" x="32" y="167">is_exhibitor · is_buyer · buyer_subtype</text>
+  <text class="l3 fl" x="32" y="180">application_status (5-state)</text>
+  <text class="l3 fk" x="32" y="193">managing_organizer_id</text>
+  <text class="l3 fk" x="32" y="206">proxy_written_by_organizer_id</text>
+  <text class="l3 nt" x="32" y="218">UNIQUE (organization_id, event_id)</text>
+
+  <!-- meetings -->
+  <rect x="290" y="164" width="184" height="86" rx="3" fill="#fff" stroke="#8fa8bd" stroke-width="1.3"/>
+  <rect x="290" y="164" width="184" height="20" fill="#4a6784"/>
+  <text class="l3 tb" x="382" y="179" text-anchor="middle">meetings</text>
+  <text class="l3 fk" x="298" y="200">FK event_id</text>
+  <text class="l3 fl" x="298" y="213">scheduled_start / scheduled_end</text>
+  <text class="l3 fl" x="298" y="226">status · venue · provenance</text>
+  <text class="l3 fl" x="298" y="239">ai_score (nullable, 미정의)</text>
+
+  <!-- meeting_venues -->
+  <rect x="510" y="164" width="226" height="60" rx="3" fill="#fff" stroke="#8fa8bd" stroke-width="1.3"/>
+  <rect x="510" y="164" width="226" height="20" fill="#4a6784"/>
+  <text class="l3 tb" x="623" y="179" text-anchor="middle">meeting_venues</text>
+  <text class="l3 fl" x="518" y="200">venue_type ∈ {booth, zone_table, business_room}</text>
+  <text class="l3 nt" x="518" y="215">events.enabled_venue_types 가 사용 가능 집합을 제한</text>
+
+  <!-- event_organizers -->
+  <rect x="510" y="248" width="226" height="76" rx="3" fill="#fff" stroke="#14507a" stroke-width="1.6"/>
+  <rect x="510" y="248" width="226" height="20" fill="#14507a"/>
+  <text class="l3 tb" x="623" y="263" text-anchor="middle">event_organizers</text>
+  <text class="l3 fk" x="518" y="284">FK event_id · FK organizer_id</text>
+  <text class="l3 fl" x="518" y="297">permission_level ∈ {master, sub}</text>
+  <text class="l3 fk" x="518" y="310">created_at</text>
+  <text class="l3 newt" x="596" y="310">← 이번 사이클 추가(P0 결함 수리)</text>
+  <text class="l3 nt" x="518" y="321">UNIQUE (event_id, organizer_id)</text>
+
+  <!-- organizers -->
+  <rect x="510" y="344" width="226" height="66" rx="3" fill="#fff" stroke="#8fa8bd" stroke-width="1.3"/>
+  <rect x="510" y="344" width="226" height="20" fill="#4a6784"/>
+  <text class="l3 tb" x="623" y="359" text-anchor="middle">organizers</text>
+  <text class="l3 fl" x="518" y="380">name · email</text>
+  <text class="l3 fk" x="518" y="393">member_id (unique, nullable)</text>
+  <text class="l3 nt" x="518" y="405">인증 신원 ↔ FK 브릿지 — get-or-create</text>
+
+  <!-- interpreters -->
+  <rect x="24" y="248" width="230" height="72" rx="3" fill="#fff" stroke="#14507a" stroke-width="1.6"/>
+  <rect x="24" y="248" width="230" height="20" fill="#14507a"/>
+  <text class="l3 tb" x="139" y="263" text-anchor="middle">interpreters</text>
+  <text class="l3 newt" x="196" y="240">신규 테이블</text>
+  <text class="l3 fk" x="32" y="284">FK event_id</text>
+  <text class="l3 fl" x="32" y="297">name · languages[] · phone · email</text>
+  <text class="l3 nt" x="32" y="312">행사 소속 개인 자원 (기업 아님)</text>
+
+  <!-- interpreter_assignments -->
+  <rect x="24" y="340" width="230" height="72" rx="3" fill="#fff" stroke="#14507a" stroke-width="1.6"/>
+  <rect x="24" y="340" width="230" height="20" fill="#14507a"/>
+  <text class="l3 tb" x="139" y="355" text-anchor="middle">interpreter_assignments</text>
+  <text class="l3 newt" x="196" y="332">신규 테이블</text>
+  <text class="l3 fk" x="32" y="376">FK interpreter_id · organization_id · event_id</text>
+  <text class="l3 nt" x="32" y="392">UNIQUE (event_id, organization_id)</text>
+  <text class="l3 nt" x="32" y="405">기업당 통역사 1인 · 통역사 1인은 다수 기업 가능</text>
+
+  <!-- relationship lines -->
+  <path d="M 200 52 L 243 52 L 243 118" fill="none" stroke="#14507a" stroke-width="1.3"/>
+  <text class="l3 rel" x="206" y="46">1 : N</text>
+  <path d="M 286 72 L 262 72 L 262 118" fill="none" stroke="#14507a" stroke-width="1.3"/>
+  <text class="l3 rel" x="264" y="108">1 : N</text>
+  <path d="M 382 128 L 382 164" fill="none" stroke="#14507a" stroke-width="1.3"/>
+  <text class="l3 rel" x="388" y="150">1 : N</text>
+  <path d="M 474 206 L 492 206 L 492 194 L 510 194" fill="none" stroke="#8fa8bd" stroke-width="1.2" stroke-dasharray="3 2"/>
+  <path d="M 478 100 L 494 100 L 494 286 L 510 286" fill="none" stroke="#14507a" stroke-width="1.3"/>
+  <text class="l3 rel" x="497" y="250">1 : N</text>
+  <path d="M 623 324 L 623 344" fill="none" stroke="#14507a" stroke-width="1.3"/>
+  <text class="l3 rel" x="629" y="338">N : 1</text>
+  <path d="M 286 110 L 268 110 L 268 284 L 254 284" fill="none" stroke="#14507a" stroke-width="1.3"/>
+  <text class="l3 rel" x="228" y="278">1 : N</text>
+  <path d="M 139 320 L 139 340" fill="none" stroke="#14507a" stroke-width="1.3"/>
+  <text class="l3 rel" x="145" y="334">1 : N</text>
+</svg>
+<figcaption>
+  <b>[그림 3] 멀티 행사 데이터 모델.</b> 진한 테두리는 이번 사이클에 신규 추가되었거나 변경된 테이블이다.
+  <code>organizations</code>는 행사에 종속되지 않는 전역 엔티티이고(같은 기업이 여러 행사에 참가),
+  참가 사실과 역할·승인상태는 <code>organization_event_roles</code>가 행사별로 보유한다.
+  운영자 역시 계정(<code>organizers</code>)과 행사별 권한(<code>event_organizers</code>)이 분리되어,
+  한 계정이 행사 A에서는 master, 행사 B에서는 sub일 수 있다.
+</figcaption>
+</figure>
+
+<h2 class="sub"><span class="n">3.5</span>알림 채널 포트 구조</h2>
+
+<p>
+알림은 ADR-0010에 따라 <strong>조직(Organization) 공유 인박스</strong> 모델을 취한다. 알림의 수신자는
+개인이 아니라 기업이며, 한 명이 읽으면 조직 전체에 읽음으로 표시된다. 외부 채널(이메일 등) 발송만
+소속 멤버 개인 연락처로 팬아웃된다.
+</p>
+
+<figure class="fig">
+<svg viewBox="0 0 760 400" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="알림 채널 포트 구조 다이어그램">
+  <defs>
+    <marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#14507a"/>
+    </marker>
+  </defs>
+  <style>
+    .l4{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif}
+    .t4{font-size:12px;font-weight:700;fill:#1b3a5c}
+    .s4{font-size:10px;fill:#3d4653}
+    .x4{font-size:9px;fill:#6b7480}
+    .m4{font-family:Menlo,Consolas,monospace;font-size:9.5px;fill:#14507a}
+    .c4{font-size:9.5px;font-weight:700;fill:#14507a;letter-spacing:1px}
+  </style>
+
+  <!-- triggers -->
+  <text class="l4 c4" x="24" y="18">발화 지점</text>
+  <rect x="20" y="26" width="152" height="26" rx="3" fill="#fff" stroke="#8fa8bd"/>
+  <text class="l4 s4" x="96" y="43" text-anchor="middle">미팅 신청 / 수락 / 취소</text>
+  <rect x="20" y="58" width="152" height="26" rx="3" fill="#fff" stroke="#8fa8bd"/>
+  <text class="l4 s4" x="96" y="75" text-anchor="middle">회의록 정리 완료</text>
+  <rect x="20" y="90" width="152" height="42" rx="3" fill="#fdf4e7" stroke="#d19a3e"/>
+  <text class="l4 s4" x="96" y="107" text-anchor="middle" font-weight="700">리마인더 스케줄러</text>
+  <text class="l4 x4" x="96" y="122" text-anchor="middle">60초 tick · 시작 10분 전</text>
+
+  <line x1="172" y1="60" x2="204" y2="60" stroke="#14507a" stroke-width="1.5" marker-end="url(#ar4)"/>
+  <path d="M 172 111 L 188 111 L 188 66 L 204 66" fill="none" stroke="#14507a" stroke-width="1.5" marker-end="url(#ar4)"/>
+
+  <!-- service -->
+  <rect x="206" y="26" width="230" height="140" rx="4" fill="#eef4f9" stroke="#14507a" stroke-width="1.6"/>
+  <text class="l4 t4" x="321" y="46" text-anchor="middle">notifications / service.py</text>
+  <text class="l4 x4" x="321" y="60" text-anchor="middle">트랜잭션 소유 · DB 접근 집중</text>
+  <rect x="218" y="70" width="206" height="40" rx="3" fill="#fff" stroke="#8fa8bd"/>
+  <text class="l4 s4" x="321" y="86" text-anchor="middle" font-weight="700">멱등 생성</text>
+  <text class="l4 m4" x="321" y="101" text-anchor="middle">INSERT … ON CONFLICT DO NOTHING</text>
+  <rect x="218" y="116" width="206" height="40" rx="3" fill="#fff" stroke="#8fa8bd"/>
+  <text class="l4 x4" x="321" y="132" text-anchor="middle">UNIQUE (type, meeting_id,</text>
+  <text class="l4 x4" x="321" y="145" text-anchor="middle">recipient_org_id, due_at) NULLS NOT DISTINCT</text>
+
+  <line x1="436" y1="96" x2="470" y2="96" stroke="#14507a" stroke-width="1.5" marker-end="url(#ar4)"/>
+
+  <!-- notifications table -->
+  <rect x="472" y="26" width="264" height="76" rx="4" fill="#eef6f0" stroke="#4a8b62" stroke-width="1.5"/>
+  <text class="l4 t4" x="604" y="46" text-anchor="middle" fill="#2f6644">notifications (조직 공유 인박스)</text>
+  <text class="l4 m4" x="484" y="64">recipient_org_id · payload(jsonb 스냅샷)</text>
+  <text class="l4 m4" x="484" y="78">read_at · read_by_member_id — 조직이 공유</text>
+  <text class="l4 x4" x="484" y="93">조회는 키셋 페이지네이션 (created_at, id) 커서</text>
+
+  <!-- channel port -->
+  <rect x="206" y="182" width="530" height="34" rx="4" fill="#fff" stroke="#1b3a5c" stroke-width="1.8" stroke-dasharray="5 3"/>
+  <text class="l4 t4" x="471" y="197" text-anchor="middle">Protocol NotificationChannel — send(envelope, recipients) → list[DispatchResult]</text>
+  <text class="l4 x4" x="471" y="210" text-anchor="middle">DB·SMTP 세부를 모르는 순수 포트. 채널 추가 = 이 파일에 클래스 1개 + build_channels 등록 (service·router 무수정)</text>
+
+  <line x1="321" y1="166" x2="321" y2="180" stroke="#14507a" stroke-width="1.5" marker-end="url(#ar4)"/>
+
+  <!-- channels -->
+  <rect x="20" y="240" width="216" height="96" rx="4" fill="#fff" stroke="#8fa8bd" stroke-width="1.4"/>
+  <text class="l4 t4" x="128" y="260" text-anchor="middle">InAppChannel</text>
+  <text class="l4 x4" x="128" y="277" text-anchor="middle">행 생성 자체가 발신 — 외부 호출 없음</text>
+  <text class="l4 x4" x="128" y="292" text-anchor="middle">전원 즉시 status='sent'</text>
+  <text class="l4 x4" x="128" y="312" text-anchor="middle">dispatch 기록은 감사(audit) 목적</text>
+
+  <rect x="252" y="240" width="238" height="96" rx="4" fill="#fff" stroke="#8fa8bd" stroke-width="1.4"/>
+  <text class="l4 t4" x="371" y="260" text-anchor="middle">EmailChannel</text>
+  <text class="l4 x4" x="371" y="277" text-anchor="middle">알림 6종 한/영 병기 제목 템플릿</text>
+  <rect x="264" y="286" width="102" height="38" rx="3" fill="#eef4f9" stroke="#8fa8bd"/>
+  <text class="l4 x4" x="315" y="302" text-anchor="middle" font-weight="700">SmtpEmailSender</text>
+  <text class="l4 x4" x="315" y="315" text-anchor="middle">fail-closed</text>
+  <rect x="376" y="286" width="102" height="38" rx="3" fill="#f4f6f8" stroke="#8fa8bd"/>
+  <text class="l4 x4" x="427" y="302" text-anchor="middle" font-weight="700">FakeEmailSender</text>
+  <text class="l4 x4" x="427" y="315" text-anchor="middle">기록만 (기본값)</text>
+
+  <rect x="506" y="240" width="230" height="96" rx="4" fill="#f4f6f8" stroke="#c9d0d9" stroke-dasharray="4 3"/>
+  <text class="l4 t4" x="621" y="260" text-anchor="middle" fill="#6b7480">메신저 채널 (확장 지점)</text>
+  <text class="l4 x4" x="621" y="278" text-anchor="middle">카카오 알림톡 · SMS 등</text>
+  <text class="l4 x4" x="621" y="296" text-anchor="middle">추가 시 변경 파일 = channels.py 1개</text>
+  <text class="l4 x4" x="621" y="313" text-anchor="middle">service.py · router.py 는 무수정</text>
+
+  <path d="M 250 216 L 250 228 L 128 228 L 128 238" fill="none" stroke="#14507a" stroke-width="1.4" marker-end="url(#ar4)"/>
+  <path d="M 400 216 L 400 228 L 371 228 L 371 238" fill="none" stroke="#14507a" stroke-width="1.4" marker-end="url(#ar4)"/>
+  <path d="M 640 216 L 640 228 L 621 228 L 621 238" fill="none" stroke="#6b7480" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ar4)"/>
+
+  <!-- dispatches -->
+  <rect x="206" y="356" width="330" height="34" rx="4" fill="#eef6f0" stroke="#4a8b62" stroke-width="1.5"/>
+  <text class="l4 s4" x="371" y="371" text-anchor="middle" font-weight="700" fill="#2f6644">notification_dispatches</text>
+  <text class="l4 x4" x="371" y="384" text-anchor="middle">(member_id, channel, status ∈ sent | skipped | failed, error)</text>
+  <path d="M 128 336 L 128 348 L 300 348 L 300 354" fill="none" stroke="#14507a" stroke-width="1.4" marker-end="url(#ar4)"/>
+  <path d="M 371 336 L 371 354" fill="none" stroke="#14507a" stroke-width="1.4" marker-end="url(#ar4)"/>
+  <text class="l4 x4" x="546" y="376">← 개별 수신자 실패가 다른 수신자 발송을 막지 않는다 (우아한 열화)</text>
+</svg>
+<figcaption>
+  <b>[그림 4] 알림 채널 포트 구조.</b> 채널 인터페이스는 DB row(ORM)에 의존하지 않는
+  <code>NotificationEnvelope</code> DTO만 받으므로 채널 단위 테스트가 독립적으로 가능하다.
+  DB 기록(<code>notification_dispatches</code> upsert)의 책임은 채널이 아니라 호출부인
+  <code>service.py</code>에 있으며, 이 분리 덕분에 새 채널 추가가 파일 1개 수정으로 끝난다.
+</figcaption>
+</figure>
+
+
+<!-- ══════════════════════════ 4. 구현 내역 ══════════════════════════ -->
+<h1 class="sec"><span class="n">4.</span>구현 내역</h1>
+
+<p>
+이번 사이클은 7개 워크스트림을 병렬로 진행하였다. 각 워크스트림은 담당 슬라이스가 분리되어 있어
+동시 작업이 가능했으며, 교차 지점(예: 어드민 API ↔ 어드민 콘솔)은 계약 문서로 사전 합의한 뒤 각자
+구현하는 방식을 취했다.
+</p>
+
+<h2 class="sub"><span class="n">4.1</span>알림 시스템 및 이메일 발송</h2>
+<p class="src">backend/app/notifications/ — channels.py · email.py · router.py · scheduler.py · schemas.py · service.py</p>
+
+<p>
+ADR-0010과 F-NT-001에 근거하여 알림 6종을 구현하였다. 알림 타입 집합은 DB CHECK 제약이 진실원천이며,
+Pydantic 스키마와의 일치는 §2.3에서 설명한 <code>assert</code>로 강제된다.
+</p>
+
+<div class="t-wrap">
+<table class="t">
+  <caption>[표 3] 알림 6종 정의와 이메일 제목(한/영 병기)</caption>
+  <thead>
+    <tr><th style="width:22%">타입 코드</th><th style="width:20%">발화 조건</th><th style="width:29%">국문 제목</th><th style="width:29%">영문 제목</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="mono">meeting_requested</td><td>미팅 신청 접수</td><td>미팅 신청이 도착했어요</td><td>New meeting request</td></tr>
+    <tr><td class="mono">meeting_accepted</td><td>신청 수락</td><td>미팅 신청이 수락됐어요</td><td>Your meeting request was accepted</td></tr>
+    <tr><td class="mono">meeting_cancelled</td><td>미팅 취소</td><td>미팅이 취소됐어요</td><td>A meeting was cancelled</td></tr>
+    <tr><td class="mono">meeting_reminder</td><td>시작 10분 전(스케줄러)</td><td>미팅 시작 10분 전이에요</td><td>Your meeting starts in 10 minutes</td></tr>
+    <tr><td class="mono">review_prompt</td><td>미팅 종료 후 리뷰 안내</td><td>미팅 회의록을 입력해 주세요</td><td>Please submit your meeting review</td></tr>
+    <tr><td class="mono">review_ready</td><td>회의록 정리 완료</td><td>회의록 정리가 끝났어요</td><td>Your meeting report is ready</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3 class="sub3">조직 공유 인박스와 키셋 페이지네이션</h3>
+<p>
+알림 수신자는 <code>recipient_org_id</code>, 즉 기업 단위다. 읽음 상태(<code>read_at</code>,
+<code>read_by_member_id</code>)도 조직이 공유하므로, 담당자가 바뀌거나 여러 명이 함께 보는
+실제 운영 상황과 일치한다. 조회는 <code>(created_at, id)</code> 복합 커서를 쓰는 <strong>키셋
+페이지네이션</strong>으로 구현하여, OFFSET 방식에서 발생하는 페이지 경계 누락·중복 문제를 회피하였다.
+인박스 API는 목록 조회, 단건 읽음 처리, 전체 읽음 처리 3개 엔드포인트로 구성된다.
+</p>
+
+<h3 class="sub3">멱등 생성</h3>
+<p>
+같은 사건이 두 번 통지되는 것을 방지하기 위해 <code>notifications</code>에
+<code>(type, meeting_id, recipient_org_id, due_at)</code> 유니크 제약을
+<code>NULLS NOT DISTINCT</code> 옵션과 함께 걸고, 생성은
+<code>INSERT … ON CONFLICT DO NOTHING</code>으로 수행한다. 중복으로 판정되면 행이 생기지 않을 뿐
+아니라 <strong>채널 디스패치도 건너뛰므로 중복 이메일이 발송되지 않는다</strong>.
+</p>
+
+<h3 class="sub3">리마인더 스케줄러</h3>
+<p>
+<code>run_reminder_tick(db, now, *, channels)</code>은 세션과 현재시각을 주입받는 <strong>순수 호출
+가능 함수</strong>로 설계되어, FastAPI lifespan 없이도 테스트가 tick을 직접 호출하며 시간을 조작할 수
+있다. 프로덕션에서는 lifespan이 <code>SCHEDULER_ENABLED</code> 환경 플래그 아래 60초 주기 asyncio
+태스크로 이 함수를 호출한다. 리드타임은 10분(<code>REMINDER_LEAD_MINUTES</code>)이며,
+<code>scheduled_start - 10분 ≤ now</code>이고 여전히 <code>accepted</code> 상태인 미팅을 대상으로
+양측에 발화한다. 멱등 유니크 제약 덕분에 매 tick이 같은 미팅을 다시 찾아도 두 번째 호출은 no-op이다.
+</p>
+
+<h3 class="sub3">이메일 발송기 — fail-closed</h3>
+<p>
+<code>email_backend</code> 설정은 <code>fake</code>(기본값)와 <code>smtp</code> 두 값을 가진다.
+기본이 <code>fake</code>인 것은 로컬·테스트 환경에서 실 메일이 나가는 사고를 막기 위함이며,
+<code>smtp</code>로 전환했는데 자격증명이 비어 있으면 <strong>조용히 무시하지 않고 생성 시점에
+실패시킨다</strong>(fail-closed). "설정한 줄 알았는데 안 나가고 있었다"는 운영 사고를 구조적으로 차단한다.
+</p>
+
+<h2 class="sub"><span class="n">4.2</span>슈퍼어드민 API</h2>
+<p class="src">backend/app/admin/ — guard.py · router.py · schemas.py · service.py</p>
+
+<p>
+운영 업무 전 구간을 API로 노출하는 슬라이스로, 기준일 현재 <strong>26개 엔드포인트</strong>가 등록되어
+있다. 모든 경로는 <code>/api/admin/events/{event_id}/…</code> 형태로 <strong>행사를 경로 변수에
+포함</strong>하여, 행사 스코프가 URL 수준에서 명시된다.
+</p>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 4] 슈퍼어드민 API 엔드포인트 군</caption>
+  <thead>
+    <tr><th style="width:20%">기능군</th><th style="width:8%" class="c">개수</th><th style="width:36%">주요 경로</th><th style="width:36%">핵심 규칙</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>행사 CRUD</td><td class="c">4</td>
+      <td class="mono">GET/POST /events<br>GET/PATCH /events/{id}</td>
+      <td>생성은 <code>require_existing_master_identity</code> — 이미 어딘가에서 master인 계정만</td>
+    </tr>
+    <tr>
+      <td>행사별 정책 설정</td><td class="c">2</td>
+      <td class="mono">GET/PATCH /events/{id}/settings</td>
+      <td><code>slot_minutes</code>(10/20/30/60) · <code>enabled_venue_types</code> · <code>allow_same_role_discovery</code></td>
+    </tr>
+    <tr>
+      <td>기업 관리</td><td class="c">6</td>
+      <td class="mono">GET .../organizations<br>PATCH .../{id}/profile<br>POST .../{id}/proxy-profile<br>PATCH .../{id}/unavailable-slots<br>PATCH .../{id}/role</td>
+      <td>신청서 직접 수정 및 대리작성. 대리작성 시
+          <code>application_status</code>는 <code>'registered'</code>(미신청) 유지 — 대리작성은 제출이 아니다</td>
+    </tr>
+    <tr>
+      <td>미팅 운영</td><td class="c">2</td>
+      <td class="mono">GET .../meetings<br>POST .../meetings/{id}/cancel</td>
+      <td>운영자 재량 취소. 취소 알림이 양측 조직 인박스로 발화</td>
+    </tr>
+    <tr>
+      <td>알림 운영</td><td class="c">2</td>
+      <td class="mono">GET .../notifications<br>POST .../notifications/...</td>
+      <td>행사 스코프 알림 로그 조회</td>
+    </tr>
+    <tr>
+      <td>통역사 관리</td><td class="c">7</td>
+      <td class="mono">GET/POST .../interpreters<br>GET/PATCH/DELETE .../{id}<br>POST/DELETE 기업 배정</td>
+      <td>신규 테이블 <code>interpreters</code>·<code>interpreter_assignments</code>.
+          기업당 통역사 1인(UNIQUE)</td>
+    </tr>
+    <tr>
+      <td>운영자(역할) 관리</td><td class="c">3</td>
+      <td class="mono">GET/POST .../organizers<br>DELETE .../organizers/{id}</td>
+      <td>서브어드민만 API로 부여 가능. master 부여 불가, master 회수 시 403</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3 class="sub3">역할 전환 가드</h3>
+<p>
+기업의 참가사↔바이어 역할 전환(<code>PATCH .../organizations/{id}/role</code>)은 해당 행사의 미팅이
+<strong>0건일 때만</strong> 허용한다. 미팅이 존재하면 서비스 계층이
+<code>RoleChangeBlockedError</code>를 던지고 라우터가 <strong>409 Conflict</strong>로 변환한다.
+이미 성사된 매칭의 귀속(provenance)이 사후에 뒤바뀌는 것을 막기 위한 조치다.
+</p>
+
+<h3 class="sub3">참가사 불가슬롯의 운영자 전용화</h3>
+<p>
+"참가할 수 없는 시간대"를 기업이 직접 입력하던 기존 흐름을 운영자 전용으로 전환하였다.
+기업 측 경로로 들어오는 불가슬롯 변경 요청은 <strong>422</strong>로 거절되고,
+운영자만 <code>PATCH .../organizations/{id}/unavailable-slots</code>로 설정할 수 있다.
+프런트엔드도 대응하여 참가사 폼에서 슬롯 그리드를 제거하였다(§4.4).
+</p>
+
+<h3 class="sub3">운영자 신원 브릿지</h3>
+<p>
+인증 가드가 돌려주는 값은 회원ID(<code>member_id</code>, Cognito sub와 동일 키 공간)뿐인데,
+<code>organizers</code> 테이블을 참조하는 FK(대리작성 감사 컬럼, sub 관할 판정 컬럼)를 채우려면 실제
+<code>Organizer</code> 행이 필요하다. 실 Cognito 운영자 어댑터가 아직 없는 상태이므로,
+<code>resolve_organizer_id()</code>가 <code>organizers.member_id</code>를 키로 get-or-create하여 다리를
+놓는다. 실 배선이 들어오면 이 함수 내부만 실 매핑 조회로 교체하면 된다.
+</p>
+
+<div class="box ok">
+  <span class="lab">크로스리뷰로 수정된 결함</span>
+  <p>
+    이 get-or-create 경로에는 <strong>동시 요청 시 race condition</strong>이 있었다. 두 요청이 같은
+    <code>member_id</code>로 동시에 진입하면 둘 다 조회에 실패하고 둘 다 INSERT를 시도하여, 유니크
+    제약 위반으로 한쪽이 <strong>500 Internal Server Error</strong>를 반환했다. 이종 벤더 리뷰에서
+    발견되어 <code>IntegrityError</code> 포착 → 롤백 → 재조회 패턴으로 수정하였다(§6.2).
+  </p>
+</div>
+
+<h2 class="sub"><span class="n">4.3</span>엑셀 Export / Import</h2>
+<p class="src">backend/app/excel/ — router.py · service.py</p>
+
+<p>
+운영자가 현황을 외부로 반출하고 명단을 반입하는 경로다. 내보내기 3종과 임포트 1종으로 구성된다.
+</p>
+
+<div class="t-wrap">
+<table class="t">
+  <caption>[표 5] 엑셀 산출물</caption>
+  <thead>
+    <tr><th style="width:24%">엔드포인트</th><th style="width:22%">산출물</th><th style="width:54%">주요 컬럼 (한/영 병기 헤더)</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="mono">GET .../export/<br>organizations.xlsx</td><td>기업 현황</td>
+      <td>기업명 · 역할(참가사/바이어) · 승인상태 · 키워드. 승인상태
+          <code>approved</code>·<code>submitted</code>만 포함(매칭 노출 게이트와 동일 기준)</td>
+    </tr>
+    <tr>
+      <td class="mono">GET .../export/<br>meetings.xlsx</td><td>미팅 현황</td>
+      <td>날짜 · 시간대 · 참가기업 · 바이어 · 상태 · 귀속(provenance) · 노쇼 여부</td>
+    </tr>
+    <tr>
+      <td class="mono">GET .../export/<br>reviews.xlsx</td><td>회의록 현황</td>
+      <td>날짜 / Date · 참가기업 / Exhibitor · 바이어 / Buyer ·
+          리뷰작성 여부(양측) · 러브콜 / Love Call</td>
+    </tr>
+    <tr>
+      <td class="mono">POST .../import/roster</td><td>명단 반입</td>
+      <td>기존 roster 임포트 서비스의 <strong>어드민 별칭</strong> — 멱등 upsert 로직 재사용</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box warn">
+  <span class="lab">비공개 평가 필드의 구조적 차단</span>
+  <p>
+    회의록 내보내기에서 가장 중요한 요건은 <strong>상대방에게 보여서는 안 되는 평가 내용이 파일로
+    새어나가지 않는 것</strong>이다. 이를 필터링 조건이 아니라 <strong>행 생성 함수의 구조</strong>로
+    해결하였다 — <code>format_reviews_rows()</code>는 6개 컬럼만 명시적으로 조립하며, 비공개 평가 필드는
+    애초에 dict에 담기지 않는다. 여기에 더해 <strong>유출 방지 테스트</strong>
+    (<code>test_private_review_fields_not_leaked</code>)를 신설하여, 향후 컬럼이 추가될 때
+    실수로 비공개 필드가 포함되면 테스트가 실패하도록 회귀 방어선을 세웠다.
+  </p>
+</div>
+
+<h2 class="sub"><span class="n">4.4</span>참가자 화면 정책 3건</h2>
+
+<p>
+개발계획서 §8의 우선순위 요구 중 참가자 화면에 해당하는 3건을 구현하였다. 세 건 모두
+<strong>베트남 전시 전용 값을 코드에 박지 않고</strong> 행사 설정값으로 구동되도록 하였다
+(3번 항목은 후술하는 예외).
+</p>
+
+<h3 class="sub3">① 기업 탐색 상호 열람 차단</h3>
+<p>
+순수 판정 함수 <code>visibleOrgs(viewerRole, orgs, allowSameRoleDiscovery)</code>를 두고,
+<strong>데이터 접근 계층에서 일괄 필터</strong>한다. 즉 뷰가 아니라
+<code>lib/api-client/server.ts</code>의 <code>getOrganizations()</code>가 먼저 걸러내므로,
+클라이언트 페이로드에 애초에 볼 수 없는 기업이 실리지 않는다. 여기에 더해 직접 URL 접근
+(상세 페이지 → redirect)과 지연 조회 엔드포인트(→ 403)에도 같은 규칙을 적용하여 <strong>3중 방어</strong>를
+구성하였다. 백엔드에도 동일 규칙의 순수 모듈 <code>app/domain/visibility_rules.py</code>가 존재하며,
+운영자는 이 규칙 밖에 있어 전체를 열람한다.
+</p>
+
+<h3 class="sub3">② 미팅 장소 = 참가사 부스만</h3>
+<p>
+장소 카탈로그 자체는 3종(부스·매칭존·비즈니스룸)을 유지하되,
+<code>getEventSettings().venueTypes</code>로 필터한다. 현재 설정값이 <code>["booth"]</code>이므로
+선택지가 1개가 되며, UI는 <strong>선택지가 1개일 때 자동 선택하여 단계를 접는다</strong>.
+운영자가 다른 장소 유형을 활성화하면 선택 단계가 자동으로 다시 나타난다 — 화면을 다시 만들 필요가 없다.
+</p>
+
+<h3 class="sub3">③ 참가사 폼 불가슬롯 UI 제거</h3>
+<p>
+§4.2에서 서술한 운영자 전용화에 대응하여, 참가사 신청 폼 4단계와 읽기전용 요약 탭에서 슬롯 그리드를
+제거하였다. <strong>이 항목만은 조건부가 아니라 정적 제거</strong>이다 — 권한 이동은 정책 토글이 아니라
+업무 절차의 변경이므로 플래그를 두지 않았다. 관련 타입과 헬퍼 모듈은 어드민 콘솔이 재사용하도록
+보존되어 있다.
+</p>
+
+<h2 class="sub"><span class="n">4.5</span>슈퍼어드민 콘솔(프런트엔드)</h2>
+<p class="src">frontend/app/admin/ · frontend/components/admin/ · frontend/lib/admin/</p>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 6] 슈퍼어드민 콘솔 8개 섹션</caption>
+  <thead>
+    <tr><th style="width:6%" class="c">#</th><th style="width:16%">섹션</th><th style="width:22%">경로</th><th style="width:56%">주요 기능</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="c">1</td><td>대시보드</td><td class="mono">/admin</td><td>행사 요약 지표</td></tr>
+    <tr><td class="c">2</td><td>기업 관리</td><td class="mono">/admin/organizations</td><td>신청서 인라인 편집 · 대리작성 · 역할 전환 · 승인상태</td></tr>
+    <tr><td class="c">3</td><td>미팅 관리</td><td class="mono">/admin/meetings</td><td>미팅 목록 · 운영 취소</td></tr>
+    <tr><td class="c">4</td><td>알림 관리</td><td class="mono">/admin/notifications</td><td>발송 이력 조회</td></tr>
+    <tr><td class="c">5</td><td>행사 관리</td><td class="mono">/admin/events</td><td>행사 생성 · 기본정보 수정</td></tr>
+    <tr><td class="c">6</td><td>운영자 관리</td><td class="mono">/admin/organizers</td><td>서브어드민 부여 · 회수 · 목록</td></tr>
+    <tr><td class="c">7</td><td>행사 설정</td><td class="mono">/admin/settings</td><td>슬롯 길이 · 장소 유형 · 열람 정책 · 기업별 불가슬롯</td></tr>
+    <tr><td class="c">8</td><td>통역사 관리</td><td class="mono">/admin/interpreters</td><td>통역사 CRUD · 기업 배정</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3 class="sub3">행사 스위처 — 행사 간 완전 분리</h3>
+<p>
+콘솔의 핵심 장치다. 선택된 행사는 <code>nabi_admin_event</code> 쿠키(유효기간 1년,
+<code>SameSite=Lax</code>)에 저장되고, 8개 페이지 전부가 서버 컴포넌트에서
+<code>resolveAdminContext()</code>로 이를 읽어 <code>event.id</code>를 데이터 클라이언트에 주입한다.
+서버 측에서 <code>scopeToEvent()</code>가 적용되므로 <strong>다른 행사의 데이터는 클라이언트
+페이로드에 실리지 않는다</strong>. 알 수 없는 쿠키 값이면 첫 번째 행사로 폴백하여 콘솔이 빈 화면으로
+떨어지지 않는다.
+</p>
+
+<h3 class="sub3">2단 접근 제어</h3>
+<p>
+1단은 라우트 가드(<code>proxy.ts</code>)로 <code>/admin*</code> 전체를 organizer 전용으로 막고,
+2단은 <code>lib/admin/guard.ts</code>가 권한 등급을 판정한다. <code>master</code>만 쓰기 가능이며,
+<strong>알 수 없는 등급을 포함한 그 외 전부는 read-only로 폴백</strong>하는 fail-closed 설계다.
+서브어드민에게는 쓰기 컨트롤이 렌더링되지 않는다.
+</p>
+
+<h3 class="sub3">mock seam — 실연동 전환 지점</h3>
+<p>
+콘솔은 현재 목업 데이터로 동작하며, 실 API 전환 시 수정할 지점이 소수 파일로 수렴하도록 설계되었다.
+어드민에 한정하면 <strong>읽기는 <code>lib/admin/server.ts</code> 한 곳</strong>,
+<strong>쓰기는 <code>lib/admin/admin-actions.ts</code>의 <code>dispatch()</code> 함수 한 개</strong>,
+<strong>경로는 <code>lib/admin/api-paths.ts</code>에 집중</strong>되어 있다.
+</p>
+
+<div class="t-wrap">
+<table class="t">
+  <caption>[표 7] mock seam 인벤토리 (프런트엔드 전역)</caption>
+  <thead>
+    <tr><th style="width:26%">유형</th><th style="width:10%" class="c">개수</th><th style="width:64%">내용</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>env 스위치형 클라이언트</td><td class="c">5</td>
+      <td>auth(로그인/딥링크) · signup · 참가사 프로필 · 리뷰 · SmartFill —
+          환경변수 하나로 mock ↔ http 구현 교체</td>
+    </tr>
+    <tr>
+      <td>단일 파일 어댑터</td><td class="c">5</td>
+      <td><code>serverApiClient</code> · <code>sessionApiClient</code> · <code>adminServerClient</code> ·
+          <code>adminActions.dispatch</code> · <code>getEventSettings</code> — 호출부 무수정, 파일 내부만 교체</td>
+    </tr>
+    <tr>
+      <td>스토어(엔드포인트 미생성)</td><td class="c">6</td>
+      <td>바이어 프로필 · 북마크 · 명단 임포트 · 배정 · 멤버 상태 · 알림 —
+          해당 백엔드 엔드포인트가 아직 없어 in-memory/localStorage로 동작</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h2 class="sub"><span class="n">4.6</span>다국어(i18n)</h2>
+<p class="src">frontend/lib/i18n/ · frontend/messages/{ko,en}.json</p>
+
+<p>
+<code>next-intl</code>을 <strong>프로바이더 방식</strong>으로 도입하였다. 미들웨어나
+<code>[locale]</code> 라우트 세그먼트를 두지 않은 것은 의도된 선택으로, <strong>URL 구조를 바꾸지
+않기 위함</strong>이다. 기존 링크·북마크·딥링크가 전부 그대로 유효하다.
+</p>
+
+<ul>
+  <li><strong>전환 방식</strong> — <code>NEXT_LOCALE</code> 쿠키(1년). Server Function으로 쓰고
+      <code>router.refresh()</code>로 서버 컴포넌트를 재렌더한다. 지원 로케일은 <code>ko</code>(기본)·<code>en</code>이며
+      알 수 없는 값은 <code>ko</code>로 폴백한다.</li>
+  <li><strong>메시지</strong> — <code>messages/ko.json</code>·<code>en.json</code>, 각
+      <strong>134개 문자열</strong>로 완전 대칭. 대칭 여부는 전용 테스트
+      (<code>lib/i18n/messages.test.ts</code>)가 검증한다.</li>
+  <li><strong>적용 범위</strong> — 공통 셸(레이아웃·사이드바) · 로그인 · 홈 · 웰컴 · 회원가입.
+      1440px / 375px 두 폭에서 영문 문자열이 레이아웃을 깨뜨리지 않는지 검증하였다.</li>
+</ul>
+
+<div class="box warn">
+  <span class="lab">적용 범위 한계 (정직한 기재)</span>
+  <p>
+    i18n은 <strong>인증·온보딩 진입 화면군에 한정</strong>되어 적용되었다.
+    <code>/apply</code>, <code>/exhibitor/*</code>, <code>/discover</code>, <code>/meetings</code>,
+    <code>/notifications</code>, <code>/organizer/*</code> 및 <strong>어드민 콘솔 전체</strong>는
+    현재 국문 하드코딩 상태다. 어드민 콘솔은 운영자(국내) 전용 화면이라 우선순위가 낮으나,
+    참가자 화면군은 해외 바이어가 실제로 사용하는 구간이므로 후속 확장이 필요하다.
+  </p>
+</div>
+
+<h2 class="sub"><span class="n">4.7</span>회원가입 및 역할 체계</h2>
+<p class="src">backend/app/auth/signup_router.py · signup_service.py · signup_schemas.py · local_verify.py</p>
+
+<p>
+기존에는 DX Korea 딥링크 진입만이 유일한 계정 경로였으나, 자체 가입 경로를 추가하였다.
+</p>
+
+<ul>
+  <li><strong>엔드포인트</strong> — <code>POST /api/auth/signup</code>.
+      <strong>201</strong> 생성 / <strong>409</strong> 중복 / <strong>422</strong> 검증 실패 /
+      <strong>404</strong> 대상 행사 없음.</li>
+  <li><strong>비밀번호</strong> — <code>bcrypt</code> 해시(<code>gensalt()</code> 기본 cost 12).
+      argon2-cffi 대신 bcrypt를 택한 것은 cffi 빌드체인 없이 설치되어 컨테이너 이미지를 단순하게
+      유지하기 때문이다.</li>
+  <li><strong>선택 가능 역할</strong> — <code>buyer</code>, <code>exhibitor</code> 2종만.</li>
+  <li><strong>로그인 검증 체인</strong> — <code>LocalCredentialVerifier</code>를 최우선에 배치하여,
+      자체 가입 계정이 DX Korea 인증 어댑터(현재 스텁)에 도달하지 않고 로컬에서 처리된다.</li>
+</ul>
+
+<h3 class="sub3">organizer 자체가입의 이중 차단</h3>
+<p>
+운영자 권한이 자체가입으로 획득되는 경로는 존재해서는 안 된다. 프런트엔드에서 이를 두 층으로 막았다.
+</p>
+<ol>
+  <li><strong>컴파일 타임</strong> — <code>SignupRole = "buyer" | "exhibitor"</code> 리터럴 유니온.
+      <code>"organizer"</code>는 타입 오류가 된다. 이 보증은
+      <code>@ts-expect-error</code> 테스트로 고정되어 있어, <strong>유니온이 넓어지면 그 테스트가
+      오히려 실패</strong>하도록 설계되었다.</li>
+  <li><strong>런타임</strong> — <code>z.enum(["buyer","exhibitor"])</code>로 제출 직전 재검증.
+      UI 자체도 두 개 버튼만 렌더링하므로 organizer는 제시되지 않는다.</li>
+</ol>
+<p>
+슈퍼어드민은 어떤 API로도 생성되지 않으며, DB 직접 부여만이 유일한 경로다. 그 절차는
+<code>backend/README.md</code>에 문서화되어 있다. 여기에 대응하여 <strong>행사 생성 가드</strong>
+(<code>require_existing_master_identity</code>)를 두어, 새 행사를 만들려면 이미 어딘가에서 master인
+계정이어야 한다 — 최초 1건은 반드시 DB 부트스트랩을 거친다.
+</p>
+
+
+<!-- ══════════════════════════ 5. 인프라 ══════════════════════════ -->
+<h1 class="sec"><span class="n">5.</span>인프라 및 정합성 작업</h1>
+
+<h2 class="sub"><span class="n">5.1</span>배포 차단 요인(P0) 2건 해소</h2>
+
+<h3 class="sub3">① Alembic multiple heads</h3>
+<p>
+병렬 개발 과정에서 마이그레이션 브랜치가 갈라져 head가 복수로 존재했다. 이 상태에서는
+<code>alembic upgrade head</code>가 실패하므로 <strong>배포 자체가 불가능</strong>하다.
+merge revision을 생성하여 단일 head로 수렴시켰다. 기준일 현재 체인에는
+<strong>merge revision 2건</strong>(<code>c71c40959ae7</code>, <code>adminnt0001</code>)이 포함되어 있다.
+</p>
+
+<h3 class="sub3">② 컨테이너 이미지 부재</h3>
+<p>
+ECS Fargate 배포 타깃이 정해져 있음에도 Dockerfile이 존재하지 않았다. backend·frontend 양쪽에
+프로덕션 이미지를 신규 작성하였다.
+</p>
+
+<div class="t-wrap">
+<table class="t">
+  <thead>
+    <tr><th style="width:16%">대상</th><th style="width:22%">베이스 · 스테이지</th><th style="width:62%">구성</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>backend</td>
+      <td class="mono">python:3.12-slim<br>2-stage (builder/runtime)</td>
+      <td><code>uv sync --frozen --no-dev</code>로 의존성 레이어를 먼저 캐시(소스 변경이 이 레이어를
+          무효화하지 않음) → runtime은 venv만 복사. non-root(<code>USER app</code>),
+          <code>uvicorn app.main:app --host 0.0.0.0 --port 8000</code></td>
+    </tr>
+    <tr>
+      <td>frontend</td>
+      <td class="mono">node:22-alpine<br>3-stage (deps/builder/runner)</td>
+      <td><code>output: "standalone"</code> 산출물 + <code>public</code> + <code>.next/static</code>만 복사
+          (<code>node_modules</code> 없음). non-root(uid 1001 <code>nextjs</code>),
+          <code>CMD ["node","server.js"]</code></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box ok">
+  <span class="lab">fail-closed 빌드 인자</span>
+  <p>
+    frontend 이미지의 <code>NEXT_PUBLIC_AUTH_CLIENT</code> 빌드 인자 기본값을 <code>mock</code>이 아니라
+    <strong><code>http</code></strong>로 두었다. 빌드 시 인자를 깜빡해도 프로덕션 이미지가 목업 인증
+    클라이언트를 싣고 나가는 사고가 발생하지 않는다.
+  </p>
+</div>
+
+<h2 class="sub"><span class="n">5.2</span>마이그레이션 체인 정리 및 실 DB 적용</h2>
+
+<p>
+정리 결과 <strong>16개 리비전이 단일 선형 체인</strong>을 이루며, head는
+<code>orggrant0001</code>이다. 이 체인을 <strong>실 PostgreSQL 17에 클린 적용</strong>하여
+빈 데이터베이스에서 head까지 오류 없이 도달함을 확인하였다.
+</p>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 8] 마이그레이션 리비전 체인 (16건, 적용 순서)</caption>
+  <thead>
+    <tr><th style="width:6%" class="c">#</th><th style="width:22%">리비전</th><th style="width:72%">내용</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="c">1</td><td class="mono">416bbb825e07</td><td>초기 스키마 — 전체 ERD parity (base)</td></tr>
+    <tr><td class="c">2</td><td class="mono">e93488b8bc96</td><td>BM 프로필 데이터 모델 · 참가사 확장</td></tr>
+    <tr><td class="c">3</td><td class="mono">a1c0n5ent0001</td><td>동의(consent) v1 시드</td></tr>
+    <tr><td class="c">4</td><td class="mono">my002rev0001</td><td>미팅 후 리뷰(MY-002) 컬럼</td></tr>
+    <tr><td class="c">5</td><td class="mono">my002trn0001</td><td>전사(transcript) 발화 단위 · 화자 라벨</td></tr>
+    <tr><td class="c">6</td><td class="mono">bm002api0001</td><td>BM 프로필 실 필드</td></tr>
+    <tr><td class="c">7</td><td class="mono">bm002slot01</td><td>참가사 미팅 슬롯</td></tr>
+    <tr><td class="c">8</td><td class="mono">bm002align01</td><td>참가사 프런트엔드 필드 정합</td></tr>
+    <tr><td class="c">9</td><td class="mono">bm002cat01</td><td>제품 분류 · 방산 분야</td></tr>
+    <tr><td class="c">10</td><td class="mono">op47perm0001</td><td>운영자 권한 — 행사 단위 (ADR-0012)</td></tr>
+    <tr><td class="c">11</td><td class="mono">c71c40959ae7</td><td><strong>merge</strong> — op47perm0001 + bm002cat01</td></tr>
+    <tr><td class="c">12</td><td class="mono">adminvn0001</td><td>슈퍼어드민 콘솔 · 행사별 정책 컬럼 · 통역사 테이블</td></tr>
+    <tr><td class="c">13</td><td class="mono">nt001type01</td><td>알림 타입 <code>review_ready</code> 추가 (6종 완성)</td></tr>
+    <tr><td class="c">14</td><td class="mono">adminnt0001</td><td><strong>merge</strong> — adminvn0001 + nt001type01</td></tr>
+    <tr><td class="c">15</td><td class="mono">authfe0001</td><td>자체가입 · 어드민 역할 관리</td></tr>
+    <tr><td class="c">16</td><td class="mono">orggrant0001</td><td><strong>head</strong> — <code>event_organizers.created_at</code> 추가 (P0 결함 수리, §6.3)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 class="sub"><span class="n">5.3</span>스키마 파생 문서 동기화</h2>
+<p>
+§2.3의 규약에 따라 <code>backend/app/models.py</code>와 마이그레이션이 진실원천이고
+<code>docs/db/schema.sql</code>은 사람이 읽는 파생 ERD다. 이번 사이클의 신규 테이블
+(<code>interpreters</code>, <code>interpreter_assignments</code>)과 변경 컬럼
+(<code>events</code> 정책 3종, <code>organization_event_roles.proxy_written_by_organizer_id</code>,
+<code>event_organizers.created_at</code>, <code>organizers.member_id</code>)을
+<code>schema.sql</code>에 반영하였다.
+</p>
+<div class="box warn">
+  <span class="lab">수동 조치 필요</span>
+  <p>
+    ERD 시각화 도구는 <strong>ERDCloud로 고정</strong>되어 있으며(diagrams.net은 SQL 임포트 시 관계선이
+    그려지지 않아 배제), <code>schema.sql</code> 갱신분을 반영하려면
+    <strong>ERDCloud에 수동 재임포트</strong>가 필요하다. 자동화 경로가 없으므로 이번 사이클에서는
+    절차 안내만 준비하였다. 대상 ERD: <code>erdcloud.com/d/4GX4DDMkrXe4fTuAh</code>
+  </p>
+</div>
+
+<h2 class="sub"><span class="n">5.4</span>계약 문서 정리</h2>
+<p>구현과 문서가 어긋난 지점을 현행화하였다.</p>
+<ul>
+  <li><strong>행사명 갱신</strong> — 문서 전반의 행사 표기를 <strong>KADEX</strong> 기준으로 통일</li>
+  <li><strong>PRD 정정</strong> — 라우트 경로, 알림 6종(<code>review_ready</code> 포함), 참가사 폼 단계 구성 반영</li>
+  <li><strong>ADR 인덱스 현행화</strong> — 0001–0013 목록과 상태 최신화</li>
+</ul>
+
+
+<!-- ══════════════════════════ 6. 품질 ══════════════════════════ -->
+<h1 class="sec"><span class="n">6.</span>품질 보증 — 이종 벤더 크로스리뷰</h1>
+
+<h2 class="sub"><span class="n">6.1</span>방법론: 작성자 ≠ 리뷰어, 벤더 교차</h2>
+
+<p>
+본 사이클은 AI 에이전트를 병렬 투입하는 개발 방식을 취했다. 이 방식의 가장 큰 위험은
+<strong>같은 오답에 함께 수렴하는 것</strong>이다. 유사한 모델을 여러 개 붙여 다수결을 하면
+리뷰어 수를 늘려도 검출력이 비례해 늘지 않는다 — 비슷한 학습 분포를 가진 모델은 비슷한 실수를
+비슷하게 놓치기 때문이다.
+</p>
+
+<p>
+따라서 리뷰어를 늘리는 대신 <strong>다르게 틀리는 리뷰어</strong>를 섞는 원칙을 채택하였다.
+</p>
+
+<div class="box">
+  <span class="lab">크로스리뷰 2원칙</span>
+  <p style="margin-bottom:1.2mm"><strong>원칙 1 — 작성자 ≠ 리뷰어.</strong>
+    자신이 작성한 코드는 자신이 리뷰하지 않는다. 작성 시점의 가정이 리뷰 시점에도 그대로 유지되어
+    검증이 자기확인으로 전락하는 것을 막는다.</p>
+  <p><strong>원칙 2 — 벤더 교차.</strong>
+    Claude가 구현했으면 Qwen이 리뷰하고, Qwen이 구현했으면 Claude가 리뷰한다.
+    서로 다른 실패 모드를 가진 리뷰어를 배치하여 사각지대를 줄인다.</p>
+</div>
+
+<h2 class="sub"><span class="n">6.2</span>모듈별 리뷰 성과</h2>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 9] 이종 벤더 크로스리뷰 성과</caption>
+  <thead>
+    <tr>
+      <th style="width:14%">대상 모듈</th><th style="width:16%">작성 → 리뷰</th>
+      <th style="width:70%">검출 사항 및 조치</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>엑셀<br><span class="mono" style="font-size:8pt">app/excel/</span></td>
+      <td>Qwen 작성 →<br>Claude 리뷰</td>
+      <td>
+        <p style="margin-bottom:1.2mm"><strong>(1) <code>default_role</code> 검증 누락</strong> — 경로 간 계약 불일치.
+        한쪽 경로는 역할 파라미터를 검증하는데 다른 경로는 검증 없이 통과시켜, 같은 개념이 경로마다
+        다르게 취급되고 있었다. 검증을 일치시켜 수정.</p>
+        <p style="margin-bottom:1.2mm"><strong>(2) 비공개 필드 유출 방지 테스트 신설</strong> — 당시 구현은 안전했으나
+        회귀 방어선이 없었다. 향후 컬럼 추가 시 비공개 평가 필드가 섞이면 실패하도록 테스트 추가.</p>
+        <p><strong>(3) 30분 슬롯 하드코딩</strong> — 미팅 종료시각을 "시작 + 30분"으로 계산하고 있었다.
+        <code>slot_minutes</code>가 행사별 설정(10/20/30/60)인 이상 이는 다른 행사에서 즉시 오류가 된다.
+        실제 <code>scheduled_end</code> 값을 사용하도록 변경.</p>
+      </td>
+    </tr>
+    <tr>
+      <td>알림<br><span class="mono" style="font-size:8pt">app/notifications/</span></td>
+      <td>Claude 작성 →<br>Qwen 리뷰</td>
+      <td>
+        <p style="margin-bottom:1.2mm"><strong>8항목 검증 통과</strong> — 조직 격리, 멱등성, 페이지네이션 경계 등
+        핵심 불변식 전반을 점검하여 이상 없음 확인.</p>
+        <p style="margin-bottom:1.2mm"><strong>예외 로깅 누락 수정</strong> — 일부 실패 경로가 조용히 삼켜지고 있어
+        운영 중 원인 추적이 불가능했을 지점을 보완.</p>
+        <p><strong>기술 부채 식별</strong> — 멱등 유니크에 사용한 <code>NULLS NOT DISTINCT</code>는
+        <strong>PostgreSQL 15 이상</strong>에서만 동작한다. 개발 환경(PG 17)에서는 문제가 없으나
+        RDS 인스턴스 버전 확인이 필요한 사항으로 백로그에 등재(§9).</p>
+      </td>
+    </tr>
+    <tr>
+      <td>어드민<br><span class="mono" style="font-size:8pt">app/admin/</span></td>
+      <td>Claude 작성 →<br>Qwen 리뷰</td>
+      <td>
+        <p style="margin-bottom:1.2mm"><strong>race condition 발견 및 수정</strong> — 운영자 신원 브릿지의
+        get-or-create 경로에서, 동시 요청 시 양쪽 모두 INSERT를 시도해 유니크 제약 위반으로
+        <strong>500 에러</strong>가 발생하는 결함. <code>IntegrityError</code> 포착 → 롤백 → 재조회로 수정.
+        단일 요청 테스트로는 절대 재현되지 않는 유형이다.</p>
+        <p style="margin-bottom:1.2mm"><strong>권한 매트릭스 전수 검증</strong> — 3계층 × 전 엔드포인트 조합의
+        허용·거부가 설계 의도와 일치하는지 전수 확인.</p>
+        <p><strong>정책 결정 유도</strong> — "새 행사는 누가 만들 수 있는가"가 미정의 상태임을 리뷰가
+        지적하여, <code>require_existing_master_identity</code> 가드를 신설하는 결정으로 이어짐.</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box ok">
+  <span class="lab">방법론의 효과</span>
+  <p>
+    검출된 3건의 성격이 서로 다르다는 점에 주목할 만하다 — <strong>경로 간 계약 불일치</strong>(단일
+    파일만 보면 보이지 않음), <strong>동시성 결함</strong>(단일 요청 테스트로 재현 불가),
+    <strong>정책 공백</strong>(코드가 아니라 미결정 사항). 셋 모두 작성자 본인의 재검토로는 발견되기
+    어려운 유형이며, 이종 리뷰어 배치의 실효를 보여준다.
+  </p>
+</div>
+
+<h2 class="sub"><span class="n">6.3</span>실 DB 첫 구동 검증</h2>
+
+<p>
+지금까지 백엔드 테스트는 인메모리 리포지터리와 픽스처 위에서 돌고 있었다. 이번 사이클에
+<strong>실 PostgreSQL 17 위에서 전체 스위트를 처음 구동</strong>하였고, 그 결과 23건이 실패했다.
+실패를 분류한 결과는 다음과 같다.
+</p>
+
+<div class="t-wrap">
+<table class="t">
+  <thead>
+    <tr><th style="width:16%" class="c">분류</th><th style="width:10%" class="c">건수</th><th style="width:74%">내용 및 조치</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="c"><strong>프로덕션 버그</strong></td><td class="c num">1</td>
+      <td>
+        <code>event_organizers.created_at</code> 컬럼 <strong>부재</strong>. ORM 모델과 API 응답 스키마
+        (<code>OrganizerOut.granted_at</code>)는 이 컬럼을 참조하는데 실제 테이블에는 없었다.
+        <strong>운영자 부여 API가 프로덕션에서 호출될 때마다 500을 반환했을 결함</strong>이다.
+        마이그레이션 <code>orggrant0001</code>로 수리.
+      </td>
+    </tr>
+    <tr>
+      <td class="c">테스트 픽스처</td><td class="c num">22</td>
+      <td>
+        인메모리 환경에서는 허용되던 픽스처(NOT NULL 누락, FK 미충족, UUID 형식 등)가 실 제약에
+        걸린 케이스. 실 DB 기준으로 정비.
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box">
+  <span class="lab">시사점</span>
+  <p>
+    22건의 픽스처 실패는 그 자체로는 결함이 아니지만, <strong>인메모리 테스트가 DB 제약을 검증하지
+    않는다</strong>는 사실을 보여준다. 실 DB 구동을 미뤘다면 프로덕션 버그 1건은 배포 후
+    "운영자를 추가할 수 없다"는 장애로 나타났을 것이다. 실 DB 기반 테스트를 상시 경로로 두는 것을
+    권고한다.
+  </p>
+</div>
+
+<h2 class="sub"><span class="n">6.4</span>테스트 현황</h2>
+
+<div class="t-wrap">
+<table class="t">
+  <caption>[표 10] 테스트 현황 (기준일 2026-08-28)</caption>
+  <thead>
+    <tr>
+      <th style="width:16%">영역</th><th style="width:16%">러너 · 환경</th>
+      <th style="width:14%" class="c">테스트 파일</th><th style="width:16%" class="c">통과 / 실패</th>
+      <th style="width:38%">비고</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>backend</td><td class="mono">pytest<br>실 PostgreSQL 17</td>
+      <td class="c num">37</td><td class="c"><strong>437 / 0</strong></td>
+      <td>정의된 테스트 함수 405개, 파라미터화 확장 포함 437 케이스</td>
+    </tr>
+    <tr>
+      <td>frontend</td><td class="mono">vitest 4<br>jsdom</td>
+      <td class="c num">80</td><td class="c"><strong>745 / 0</strong></td>
+      <td>skip/only/todo 0건</td>
+    </tr>
+    <tr style="background:#eef4f9 !important">
+      <td><strong>합계</strong></td><td>—</td>
+      <td class="c num"><strong>117</strong></td><td class="c"><strong>1,182 / 0</strong></td>
+      <td>전 항목 통과 (E2E 수리분 회귀 테스트 포함)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+백엔드 테스트는 슬라이스별로 분포하며, 이번 사이클 신규 슬라이스에 대해서만
+<code>test_admin_api.py</code>, <code>test_admin_notifications_api.py</code>,
+<code>test_notification_service.py</code>, <code>test_notification_channels.py</code>,
+<code>test_notification_scheduler.py</code>, <code>test_notification_schemas.py</code>,
+<code>test_notification_router.py</code>, <code>test_notification_reviews_trigger.py</code>,
+<code>test_excel_export.py</code>, <code>test_excel_import.py</code>,
+<code>test_signup_api.py</code>, <code>test_visibility_rules.py</code> 등
+<strong>12개 파일</strong>이 추가되었다. 여기에 더해 E2E에서 검출된 결함 2건의 재발 방지를 위한
+회귀 테스트가 추가되었다 — <code>test_cors.py</code>(신설, 2건)와
+<code>test_organizer_guard.py</code>의 DB 폴백 검증 5건(실 PostgreSQL 기준)이다.
+</p>
+
+
+<!-- ══════════════════════════ 7. 실사용 현황 ══════════════════════════ -->
+<h1 class="sec"><span class="n">7.</span>기능별 실사용 현황과 잔여 로드맵</h1>
+
+<h2 class="sub"><span class="n">7.1</span>판정 기준과 보고 취지</h2>
+
+<p>
+앞의 §4–§6이 <strong>이번 사이클에 무엇을 만들었는가</strong>를 다뤘다면, 본 장은
+<strong>지금 이 순간 어디까지 실제로 동작하는가</strong>를 기능정의서(PRD) 단위로 정리한다.
+프런트엔드와 백엔드가 병렬로 진행되는 프로젝트에서는 "양쪽 다 만들었는데 아직 연결되지 않은"
+구간이 필연적으로 생기며, 이를 구분하지 않으면 진행률이 과대 보고된다.
+</p>
+
+<div class="box warn">
+  <span class="lab">본 장의 성격 — 미달이 아니라 잔여 로드맵</span>
+  <p>
+    <strong>본 장에 기재되는 미구현 항목은 이번 사이클의 미달이 아니다.</strong>
+    2026-08-28 사이클의 범위는 개발계획서 <strong>§8 우선순위 긴급 개발 5건과 §7 신규 요구 일부</strong>로
+    한정되어 있었고, 그 범위는 §4에 기재한 대로 전량 완료되었다. 본 장이 다루는 것은
+    <strong>애초에 이번 범위 밖에 있던 잔여 개발 항목</strong>이며, 사업 개발기간은 2026년 12월 31일까지다.
+    따라서 아래 표는 "부족분"이 아니라 <strong>남은 일정에 배치할 작업 목록</strong>으로 읽어야 한다.
+  </p>
+</div>
+
+<p>판정은 다음 4단계 기준을 적용한다.</p>
+
+<dl class="defs">
+  <dt><span class="badge b-done">E2E 동작</span> 엔드투엔드 동작 (실 PostgreSQL)</dt>
+  <dd>화면에서 조작하면 FastAPI를 거쳐 실 데이터베이스에 반영된다. 목업 개입 없음.</dd>
+  <dt><span class="badge b-part">스위치 대기</span> 백엔드 완성 · FE 환경변수 스위치만 남음</dt>
+  <dd>백엔드 API와 프런트엔드 화면이 모두 완성되어 있고, <strong>환경변수를 설정하는 것만으로</strong>
+      실연동으로 전환된다. mock seam 설계(§4.5)가 의도한 상태다. 코드 작성이 남아 있지 않다.</dd>
+  <dt><span class="badge b-part">부분 구현</span> 일부 경로만 배선</dt>
+  <dd>주 흐름은 동작하나 일부 하위 기능(예: 승인 심사, 삭제)의 API가 아직 없다.</dd>
+  <dt><span class="badge b-todo">BE 미구현</span> 프런트엔드 완성 · 백엔드 부재</dt>
+  <dd>화면과 상호작용은 완성되어 있으나 대응 백엔드 API가 없어 목업 데이터로 동작한다.</dd>
+</dl>
+
+<h2 class="sub"><span class="n">7.2</span>기능별 FE ↔ BE 통합 현황</h2>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 11] 기능별 FE ↔ BE 통합 현황 (기준일 2026-08-28)</caption>
+  <thead>
+    <tr>
+      <th style="width:13%">기능 ID</th>
+      <th style="width:20%">기능</th>
+      <th style="width:14%" class="c">판정</th>
+      <th style="width:53%">현황 및 전환 조건</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="mono">F-AU-001</td><td>로그인 · 회원가입</td>
+      <td class="c"><span class="badge b-done">E2E 동작</span></td>
+      <td>자체가입 → 로컬 자격증명 로그인까지 실 DB로 완결. 딥링크 경로는 DX Korea 인증 어댑터 대기</td>
+    </tr>
+    <tr>
+      <td class="mono">F-OP-001<br>(콘솔)</td><td>슈퍼어드민 콘솔<br>— 행사 CRUD</td>
+      <td class="c"><span class="badge b-done">E2E 동작</span></td>
+      <td>행사 생성·수정·정책 설정이 실 DB에 반영. 행사 스위처로 스코프 분리 동작</td>
+    </tr>
+    <tr>
+      <td class="mono">F-OP-001<br>(운영)</td><td>명단 업로드 · 통역사 관리 ·<br>서브어드민 부여</td>
+      <td class="c"><span class="badge b-done">E2E 동작</span></td>
+      <td>명단 멱등 업로드, 통역사 CRUD·기업 배정, 운영자 권한 부여·회수 전부 실 DB 동작</td>
+    </tr>
+    <tr>
+      <td class="mono">—</td><td>엑셀 Export · Import</td>
+      <td class="c"><span class="badge b-done">E2E 동작</span></td>
+      <td>3종 내보내기 + 명단 반입 실 DB 동작. 비공개 평가 필드 차단 검증 완료</td>
+    </tr>
+
+    <tr>
+      <td class="mono">F-MY-002</td><td>미팅 리뷰 · 회의록</td>
+      <td class="c"><span class="badge b-part">스위치 대기</span></td>
+      <td><strong>백엔드 완성.</strong> <code>NEXT_PUBLIC_REVIEW_API_BASE</code> 미설정 상태라
+          프런트엔드가 목업 클라이언트를 쓴다. 환경변수 설정만으로 전환</td>
+    </tr>
+    <tr>
+      <td class="mono">F-BM-001<br>F-BM-004</td><td>바이어 프로필 · 신청서</td>
+      <td class="c"><span class="badge b-part">스위치 대기<br>+ 인증 대기</span></td>
+      <td><strong>백엔드 완성.</strong> <code>NEXT_PUBLIC_BM_API_BASE</code> 미설정.
+          현재 작성 중 초안이 <code>localStorage</code>에 보관되므로 전환 시 초안 이관 정책 확인 필요.
+          <strong>E2E에서 확인</strong> — 환경변수를 설정해도 <code>/api/bm/*</code>는
+          Cognito 미구성으로 401(§8.3 ④). <strong>실 전환에는 Cognito 연동이 함께 필요</strong></td>
+    </tr>
+    <tr>
+      <td class="mono">F-BM-002<br>F-BM-005</td><td>참가사 프로필 · 신청서</td>
+      <td class="c"><span class="badge b-part">스위치 대기<br>+ 인증 대기</span></td>
+      <td><strong>백엔드 완성.</strong> 동일 환경변수·인증 조건.
+          <strong>점검 필요</strong> — 백엔드는 <strong>4단계</strong>, 프런트엔드 폼은 <strong>5단계</strong>로
+          표기되어 단계 구성이 어긋난다. 전환 전 정합 확인 요</td>
+    </tr>
+
+    <tr>
+      <td class="mono">F-OP-002</td><td>참가자 명단 · 신청서 관리</td>
+      <td class="c"><span class="badge b-part">부분 구현</span></td>
+      <td>업로드·조회는 동작. <strong>승인 심사 API와 삭제 API가 없다</strong>
+          (승인 심사는 §7.3 ②와 동일 사안)</td>
+    </tr>
+    <tr>
+      <td class="mono">F-OP-003</td><td>미팅 운영 관리</td>
+      <td class="c"><span class="badge b-part">부분 구현</span></td>
+      <td>조회만 가능. 운영 취소 API는 존재하나 미팅 도메인 API 부재로 생성 경로가 없어
+          실사용 흐름이 닫히지 않는다</td>
+    </tr>
+    <tr>
+      <td class="mono">F-NT-001</td><td>알림</td>
+      <td class="c"><span class="badge b-part">부분 구현</span></td>
+      <td>인박스 조회·읽음 처리와 리마인더 스케줄러는 <strong>살아 있다</strong>.
+          다만 <strong>미팅 사건발 트리거(신청/수락/취소)는 미팅 API가 없어 미배선</strong>.
+          SMS 채널은 v1 범위 밖(backlog)</td>
+    </tr>
+
+    <tr>
+      <td class="mono">F-MT-001</td><td>미팅 신청 · 수락 · 거절 · 취소</td>
+      <td class="c"><span class="badge b-todo">BE 미구현</span></td>
+      <td><code>meetings</code> 테이블만 존재하고 도메인 API 전체가 부재.
+          프런트엔드 화면·모달은 완성 상태 → §7.3 ①</td>
+    </tr>
+    <tr>
+      <td class="mono">F-OP-002<br>(심사)</td><td>조직 승인 심사 상태 전이</td>
+      <td class="c"><span class="badge b-todo">BE 미구현</span></td>
+      <td><code>submitted</code> → <code>approved</code>/<code>rejected</code> 전이 API 부재.
+          ADR-0009 매칭 노출 게이트의 전제 조건 → §7.3 ②</td>
+    </tr>
+    <tr>
+      <td class="mono">F-OP-005</td><td>AI 포화배정 · Forced 배정</td>
+      <td class="c"><span class="badge b-todo">BE 미구현</span></td>
+      <td>배정 엔진 미착수. fit score 정의 미확정이 선행 블로커 → §7.3 ③</td>
+    </tr>
+    <tr>
+      <td class="mono">F-HM-001<br>F-HM-002</td><td>홈 · 대시보드 집계</td>
+      <td class="c"><span class="badge b-todo">BE 미구현</span></td>
+      <td>집계 API 미구현. 화면은 목업 데이터로 렌더링</td>
+    </tr>
+    <tr>
+      <td class="mono">F-DV-001</td><td>기업 탐색(Discover)</td>
+      <td class="c"><span class="badge b-todo">BE 미구현</span></td>
+      <td>탐색 조회 API 미구현. 열람 범위 제한 규칙(§4.4 ①)은 FE·BE 양쪽에 이미 구현되어 있어
+          API 신설 시 즉시 적용 가능</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box">
+  <span class="lab">현황 요약</span>
+  <p>
+    <strong>운영자 업무 축(어드민 콘솔·명단·통역사·권한·엑셀)은 실 DB 기준으로 닫혀 있다.</strong>
+    반면 <strong>참가자 업무 축(프로필 제출 → 승인 → 탐색 → 미팅 → 리뷰)</strong>은
+    양 끝단(프로필 제출·리뷰)의 백엔드가 완성되어 환경변수 전환만 남았고,
+    <strong>중간 구간(승인 심사 → 탐색 → 미팅)의 백엔드가 비어 있다</strong>.
+    즉 남은 작업은 흩어진 다수의 결함이 아니라 <strong>연속된 한 구간</strong>이며,
+    그 구간을 채우면 참가자 플로우 전체가 한 번에 닫힌다.
+  </p>
+</div>
+
+<h2 class="sub"><span class="n">7.3</span>잔여 로드맵 — 다음 단계 최우선 3대 과제</h2>
+
+<p>
+§7.2에서 <span class="badge b-todo">BE 미구현</span>으로 분류된 항목 중, 다른 기능의 선행 조건이 되어
+착수 순서상 앞에 놓아야 하는 3건을 최우선 과제로 지정한다.
+</p>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 12] 잔여 로드맵 — 다음 단계 최우선 3대 과제</caption>
+  <thead>
+    <tr>
+      <th style="width:6%" class="c">순위</th>
+      <th style="width:22%">과제</th>
+      <th style="width:40%">범위</th>
+      <th style="width:32%">선행 조건 · 파급 효과</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="c" style="font-size:14pt;font-weight:800;color:var(--navy)">①</td>
+      <td><strong>미팅 도메인 API 전체</strong><br><span class="mono" style="font-size:8pt">F-MT-001</span></td>
+      <td>신청 · 수락 · 거절 · 취소의 상태 전이 API와 슬롯 가용성 조회.
+          현재 <code>meetings</code> 테이블과 프런트엔드 화면만 존재한다.
+          수락 모델은 ADR-0005(opt-out)에 이미 정의되어 있고 순수 규칙 모듈
+          <code>domain/acceptance_rule.py</code>도 구현·테스트 완료 상태다.</td>
+      <td>선행 조건 <strong>없음 — 즉시 착수 가능</strong>.<br>
+          완료 시 파급: F-OP-003(미팅 운영) 폐쇄, F-NT-001의 미팅발 트리거 4종 배선,
+          F-MY-002 리뷰의 실사용 진입 경로 확보</td>
+    </tr>
+    <tr>
+      <td class="c" style="font-size:14pt;font-weight:800;color:var(--navy)">②</td>
+      <td><strong>조직 승인 심사 상태 전이</strong><br><span class="mono" style="font-size:8pt">F-OP-002 (심사)</span></td>
+      <td><code>submitted</code> → <code>approved</code> / <code>rejected</code> /
+          <code>changes_requested</code> 전이 API. 상태 컬럼·검토 기록 컬럼
+          (<code>reviewed_at</code>·<code>reviewed_by</code>·<code>review_note</code>)은
+          이미 스키마에 존재한다.</td>
+      <td>선행 조건 <strong>없음 — 즉시 착수 가능</strong>.<br>
+          <strong>ADR-0009 매칭 노출 게이트의 전제</strong> —
+          <code>approved</code>부터 매칭에 노출되므로, 이것 없이는 탐색·매칭이 의미를 갖지 못한다</td>
+    </tr>
+    <tr>
+      <td class="c" style="font-size:14pt;font-weight:800;color:var(--navy)">③</td>
+      <td><strong>AI 포화배정 · Forced 배정 엔진</strong><br><span class="mono" style="font-size:8pt">F-OP-005</span></td>
+      <td>ADR-0006에 정의된 포화 배정 정책의 실행 엔진.
+          최소 보장 슬롯(<code>min_guaranteed_slots</code>) 등 운영 파라미터는 스키마에 준비되어 있다.</td>
+      <td>선행 조건 <strong>fit score(적합도) 정의 확정</strong> —
+          기술 작업이 아니라 <strong>발주자와의 의사결정 사안</strong>이다(§9 P0).
+          ①·②가 완료되어도 이 결정 없이는 착수 불가</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box ok">
+  <span class="lab">착수 순서 권고</span>
+  <p>
+    ①과 ②는 <strong>선행 조건이 없어 즉시 병렬 착수 가능</strong>하며, 두 과제를 합치면
+    참가자 플로우의 빈 구간이 메워진다. ③은 fit score 정의가 확정되어야 시작할 수 있으므로,
+    <strong>정의 확정 협의를 ①·②의 개발과 동시에 진행</strong>하여 대기 시간이 일정에
+    누적되지 않도록 하는 것을 권고한다. 홈·탐색·운영자 대시보드 집계 API는 ①·② 완료 후
+    데이터가 채워진 뒤에 착수하는 것이 자연스럽다.
+  </p>
+</div>
+
+
+<!-- ══════════════════════════ 8. E2E ══════════════════════════ -->
+<h1 class="sec"><span class="n">8.</span>E2E 검증</h1>
+
+<p>
+단위 테스트(§6.4)가 각 모듈의 내부 계약을 검증한다면, E2E 검증은 <strong>실제 브라우저에서
+실제 사용자 조작이 실 데이터베이스까지 도달하는지</strong>를 확인한다. 본 장은 그 실행 결과를
+기재한다.
+</p>
+
+<h2 class="sub"><span class="n">8.1</span>검증 환경과 시나리오</h2>
+
+<div class="t-wrap">
+<table class="t">
+  <thead>
+    <tr><th style="width:18%">구분</th><th style="width:82%">구성</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>데이터베이스</td><td><strong>실 PostgreSQL 17</strong> — 마이그레이션 head <code>orggrant0001</code> 적용 상태</td></tr>
+    <tr><td>백엔드</td><td><code>uvicorn app.main:app --port 8000</code> · <code>AUTH_BACKEND=demo</code> · <code>DEMO_SEED=true</code></td></tr>
+    <tr><td>프런트엔드</td><td><code>npm run dev</code> (:3000) · <code>NEXT_PUBLIC_AUTH_CLIENT=http</code> ·
+        <code>NABI_BACKEND_URL</code>/<code>NEXT_PUBLIC_BM_API_BASE</code>/<code>NEXT_PUBLIC_REVIEW_API_BASE</code> 설정</td></tr>
+    <tr><td>조작 방식</td><td>Playwright 브라우저 자동화(화면 조작) + <code>curl</code>(API 계약) + <code>psql</code>(DB 반영 확인)</td></tr>
+    <tr><td>대상 행사</td><td>KADEX with DX Korea 2026 (<code>slug=dx-korea-2026</code>, 신청기간 2026-08-26~09-11)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+검증은 <strong>슈퍼어드민이 존재하지 않는 상태에서 출발하여 운영 업무 한 바퀴를 도는</strong>
+단일 연속 시나리오(A→F)로 구성하였다. 각 단계에서 실 연동 구간과 목업 구간의 경계가 어디인지를
+함께 기록하는 것이 목적이다.
+</p>
+
+<ul style="font-size:9.8pt">
+  <li><strong>A. DB 슈퍼어드민 부트스트랩</strong> — API 경로가 없으므로 DB에 직접 행사·운영자·master 권한 행을 INSERT</li>
+  <li><strong>B. 회원가입 · 로그인</strong> — 브라우저에서 실제 가입, 중복 409, 로그인 및 약관 동의 게이트</li>
+  <li><strong>C. 어드민 API 권한 매트릭스</strong> — 행사 생성·정책 설정·운영자 부여/회수·엑셀·명단 임포트, 권한 경계 전수</li>
+  <li><strong>D. BM 프로필 실연동</strong> — 참가사 신청서가 브라우저에서 백엔드 API를 직접 호출하는지</li>
+  <li><strong>E. 알림 · 이메일</strong> — 알림 생성 → 이메일 발송 기록 → 조직 인박스 반영</li>
+  <li><strong>F. UI 스모크</strong> — 어드민 콘솔 8개 섹션, 행사 스위처, 탐색 정책, 로케일 토글</li>
+</ul>
+
+<h2 class="sub"><span class="n">8.2</span>단계별 결과표</h2>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 13] E2E 검증 단계별 결과</caption>
+  <thead>
+    <tr>
+      <th style="width:5%" class="c">#</th>
+      <th style="width:25%">단계</th>
+      <th style="width:11%" class="c">real / mock</th>
+      <th style="width:11%" class="c">결과</th>
+      <th style="width:48%">증적</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="c">A.①</td><td>행사 생성 (DB 직접)</td><td class="c">real</td>
+      <td class="c"><span class="badge b-done">pass</span></td>
+      <td><code>events</code> id=<code>…0000de</code>, name="KADEX with DX Korea 2026",
+          slug=<code>dx-korea-2026</code> — <code>psql</code> 확인</td>
+    </tr>
+    <tr>
+      <td class="c">A.②</td><td>슈퍼어드민 계정 생성</td><td class="c">real</td>
+      <td class="c"><span class="badge b-part">partial</span></td>
+      <td><code>organizers</code> <code>member_id=mbr-org-01</code>. README 템플릿의 <code>members</code>+bcrypt 대신
+          데모 인증 호환 식별자를 사용 — 사유는 <strong>한계 ⑤</strong></td>
+    </tr>
+    <tr>
+      <td class="c">A.③</td><td>master 권한 부여 (DB 직접)</td><td class="c">real</td>
+      <td class="c"><span class="badge b-done">pass</span></td>
+      <td><code>event_organizers.permission_level=master</code>.
+          추가로 네거티브 테스트용 <code>sub</code> 운영자(<code>mbr-trade-01</code>) 부트스트랩</td>
+    </tr>
+
+    <tr>
+      <td class="c">B.1</td><td>바이어 회원가입 (브라우저)</td><td class="c">real</td>
+      <td class="c"><span class="badge b-done">pass</span></td>
+      <td><code>e2e-01</code>·<code>e2e-02</code> — <code>members</code>·<code>organizations</code>(이순신마린테크)·
+          <code>organization_event_roles</code>(<code>registered</code>) 생성 DB 확인</td>
+    </tr>
+    <tr>
+      <td class="c">B.2</td><td>중복 가입 거부</td><td class="c">real</td>
+      <td class="c"><span class="badge b-done">pass</span></td>
+      <td><code>e2e-03</code> — <code>POST /api/auth/signup → 409</code> (Network 탭)</td>
+    </tr>
+    <tr>
+      <td class="c">B.3</td><td>로그인 + 약관 동의 게이트</td><td class="c">real (BE)</td>
+      <td class="c"><span class="badge b-part">pass(BE)</span></td>
+      <td><code>e2e-04</code>·<code>e2e-05</code> — <code>login/start</code>·<code>login/complete</code> 모두 200,
+          <code>role=buyer</code>·<code>route=/home</code> 정상 반환.
+          <strong>단, FE 착지 화면이 이 값을 소비하지 않음 — 결함 ③</strong></td>
+    </tr>
+
+    <tr>
+      <td class="c">C.1</td><td>행사 목록 조회 (master)</td><td class="c">real</td>
+      <td class="c"><span class="badge b-done">pass</span></td>
+      <td>200, 1건 반환</td>
+    </tr>
+    <tr>
+      <td class="c">C.2</td><td>행사 생성 — master / sub 대비</td><td class="c">real</td>
+      <td class="c"><span class="badge b-done">pass</span></td>
+      <td>master <strong>201</strong>("Vietnam Defence Expo 2026" 생성) /
+          sub <strong>403</strong>("행사 생성은 슈퍼어드민 권한입니다") — §3.3 가드 실동작 확인</td>
+    </tr>
+    <tr>
+      <td class="c">C.3</td><td>운영자 부여 · 목록 · 회수</td><td class="c">real</td>
+      <td class="c"><span class="badge b-done">pass</span></td>
+      <td>sub 부여 <strong>201</strong> / master 부여 시도 <strong>422</strong>("DB에서 직접 부여하세요") /
+          목록 3건 200 / master 회수 <strong>403</strong>("API로 회수할 수 없습니다")
+          — <strong>권한 매트릭스 전수 통과</strong></td>
+    </tr>
+    <tr>
+      <td class="c">C.4</td><td>행사별 정책 설정 변경</td><td class="c">real</td>
+      <td class="c"><span class="badge b-done">pass</span></td>
+      <td><code>slot_minutes=20</code>, <code>enabled_venue_types=[booth]</code> PATCH 200 → GET 재확인 일치</td>
+    </tr>
+    <tr>
+      <td class="c">C.5</td><td>엑셀 내보내기</td><td class="c">real</td>
+      <td class="c"><span class="badge b-done">pass</span></td>
+      <td><code>e2e-06-export-organizations.xlsx</code>(4.8KB, 시트 "기업목록").
+          데이터 0행은 <code>approved</code>/<code>submitted</code>만 반출하는 사양대로의 결과(등록기업 전부 <code>registered</code>) — 결함 아님</td>
+    </tr>
+    <tr>
+      <td class="c">C.6</td><td>명단 임포트</td><td class="c">real</td>
+      <td class="c"><span class="badge b-done">pass</span></td>
+      <td><code>{"added": 8}</code> — 8개 조직 생성 DB 확인</td>
+    </tr>
+
+    <tr>
+      <td class="c">D</td><td>BM 프로필 브라우저 실연동</td><td class="c">real 시도</td>
+      <td class="c"><span class="badge b-part">부분 해소</span></td>
+      <td><code>e2e-07</code> — 브라우저가 실제로 백엔드를 직접 호출하는 것까지는 확인.
+          <strong>CORS 차단(결함 ①)은 수리·재검증 완료</strong>. 그 아래
+          <strong>Cognito 미구성 401(한계 ④)</strong>은 실 연동 시 해소되는 구조적 대기 사항</td>
+    </tr>
+
+    <tr>
+      <td class="c">E</td><td>알림 생성 → 이메일 → 인박스</td><td class="c">real</td>
+      <td class="c"><span class="badge b-done">pass</span></td>
+      <td><code>notify_review_ready()</code> 호출로 미팅 1건 + 알림 1건 생성 →
+          <code>FakeEmailSender</code>에 <strong>이메일 1통</strong> 기록 →
+          <code>GET /api/notifications</code> 200, <code>unread_count=1</code> 반영 확인.
+          재현 스크립트 <code>notify_review_ready_smoke.py</code></td>
+    </tr>
+
+    <tr>
+      <td class="c">F.1</td><td>어드민 콘솔 8개 섹션</td><td class="c">real 데이터</td>
+      <td class="c"><span class="badge b-done">pass<br>(수리 후)</span></td>
+      <td><code>e2e-08</code>~<code>e2e-15</code> — 대시보드 수치(기업 10 / 참가사 9 · 바이어 1 / 미팅 1 / 알림 2)가
+          <strong>실 DB와 정확히 일치</strong>. <code>/admin/events</code>는 최초 500(결함 ②, <code>e2e-12</code>) →
+          <strong>수리 후 행사 2건 정상 렌더</strong>(<code>e2e-21</code>)</td>
+    </tr>
+    <tr>
+      <td class="c">F.2</td><td>행사 스위처 전환</td><td class="c">real</td>
+      <td class="c"><span class="badge b-done">pass<br>(수리 후)</span></td>
+      <td><code>e2e-16</code>(드롭다운 정상) · <code>e2e-17</code>(최초 전환 시 500) →
+          <strong>수리 후 전환 정상 · 콘솔 에러 0</strong>(<code>e2e-21</code>)</td>
+    </tr>
+    <tr>
+      <td class="c">F.3</td><td>탐색(discover) 열람 정책</td><td class="c">mock</td>
+      <td class="c"><span class="badge b-done">pass</span></td>
+      <td><code>e2e-18</code> — 참가사 로그인 시 <strong>바이어만 노출</strong>(동일 역할 차단 정상, §4.4 ①)</td>
+    </tr>
+    <tr>
+      <td class="c">F.4</td><td>홈 화면 + 로케일 토글</td><td class="c">mock / real</td>
+      <td class="c"><span class="badge b-done">pass</span></td>
+      <td><code>e2e-19</code>(EN) → <code>e2e-20</code>(KO) — 텍스트 전체 정상 전환, 레이아웃 이상 없음</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box ok">
+  <span class="lab">핵심 확인 사항</span>
+  <p>
+    <strong>운영자 업무 축 전 구간이 실 데이터베이스 위에서 동작함을 확인하였다</strong> —
+    행사 생성 · 정책 설정 · 명단 임포트(8건) · 운영자 권한 부여/회수 · 엑셀 반출 · 알림 발생과 인박스 반영.
+    특히 <strong>권한 매트릭스 전수 검증(C.2·C.3)</strong>은 §3.3에서 설계한 3계층 모델이
+    설계 의도대로 실동작함을 확인한 결과다 — 서브어드민의 행사 생성 403, master 부여 시도 422,
+    master 회수 403이 모두 기대대로 반환되었다. 어드민 콘솔 대시보드의 집계 수치가 실 DB 값과
+    정확히 일치한 것도 데이터 경로의 정합을 뒷받침한다.
+  </p>
+</div>
+
+<h2 class="sub"><span class="n">8.3</span>발견 결함 · 한계 및 조치</h2>
+
+<p>
+검증 과정에서 결함 2건과 구조적 한계 4건을 확인하였다. <strong>결함 2건은 수리 및 재검증이
+완료</strong>되었으며(아래 재검증 결과 참조), 나머지는 해소 조건과 함께 백로그에 등재하였다.
+</p>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 14] E2E에서 발견된 결함 · 한계 및 조치 상태</caption>
+  <thead>
+    <tr>
+      <th style="width:5%" class="c">#</th>
+      <th style="width:19%">항목</th>
+      <th style="width:44%">내용</th>
+      <th style="width:32%">조치</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="c">①</td>
+      <td><strong>CORS 자격증명 허용 설정<br>(<code style="word-break:normal">allow_credentials</code>) 누락</strong><br>
+          <span class="mono" style="font-size:8pt">app/main.py</span></td>
+      <td><code>CORSMiddleware</code> 설정에 <code>allow_credentials=True</code>가 빠져 있었다.
+          프런트엔드의 BM 클라이언트가 <code>credentials:"include"</code>로 크로스오리진 호출을 하는데,
+          응답에 <code>access-control-allow-credentials</code> 헤더가 없어 브라우저가 차단했다(<code>e2e-07</code>).
+          <code>curl</code>로 헤더 부재를 별도 확인.</td>
+      <td><span class="badge b-done">수리·재검증 완료</span>
+          <p style="margin:1.2mm 0 0;font-size:8.4pt;line-height:1.5">
+          <code>app/main.py</code>에 <code>allow_credentials=True</code> 추가.
+          프리플라이트 응답에 <code>access-control-allow-credentials: true</code>와
+          <strong>요청 origin 반사</strong>(와일드카드 아님 — credentials 모드와 안전 조합) 확인.
+          회귀 테스트 <code>tests/test_cors.py</code> 신설(허용 origin 통과 / 비허용 origin 거부 2건).</p></td>
+    </tr>
+    <tr>
+      <td class="c">②</td>
+      <td><strong>데모 운영자 디렉터리가 DB를 참조하지 않음</strong><br>
+          <span class="mono" style="font-size:8pt">auth/organizer_guard.py</span></td>
+      <td>데모 모드의 <code>InMemoryEventOperatorDirectory</code>가 실행 시점 in-memory dict만 조회하고
+          <code>organizers</code>·<code>event_organizers</code> <strong>테이블을 전혀 참조하지 않았다</strong>.
+          그 결과 DB로 부여한 권한이 인식되지 않아, 행사가 2개 이상이면
+          <strong><code>/admin/events</code>가 항상 500</strong>(모든 관할 행사의 설정을 순회 조회하다 403 발생).
+          행사 스위처 전환에서도 동일 증상 재현(<code>e2e-17</code>).</td>
+      <td><span class="badge b-done">수리·재검증 완료</span>
+          <p style="margin:1.2mm 0 0;font-size:8.4pt;line-height:1.5">
+          <strong>BE</strong> — <code>InMemoryEventOperatorDirectory</code>에 DB 폴백 추가
+          (<code>organizers ⋈ event_organizers</code> 조인). 하드코딩 dict 우선, dict 미스 시에만 DB 조회,
+          <strong>양쪽 다 없으면 여전히 <code>None</code></strong>(fail-closed 유지).<br>
+          <strong>FE</strong> — <code>/admin/events</code>가 개별 행사 설정 조회 실패를 페이지 전체 500으로
+          번지지 않도록 <code>getEventSettingsSafe()</code>로 강등.<br>
+          <strong>회귀 고정</strong> — 실 PG 테스트 5건("DB로만 grant된 master가 demo 가드 통과 · sub는 403 유지").</p></td>
+    </tr>
+    <tr>
+      <td class="c">③</td>
+      <td>실 로그인 결과를 FE 화면이 미소비</td>
+      <td><code>login/complete</code>가 실제 회원의 <code>access_token</code>·<code>role</code>·<code>route</code>를
+          정상 반환하지만, 착지 화면(<code>/welcome</code> 등)은 이 값을 쓰지 않고 개발용 mock 세션 쿠키의
+          고정 페르소나를 렌더링한다. <strong>인증 계약(BE)과 화면 상태(FE)가 이원화</strong>되어 있다.</td>
+      <td><span class="badge b-part">백로그 등재</span><br>
+          <span style="font-size:8.6pt">FE 세션 소비 배선 필요</span></td>
+    </tr>
+    <tr>
+      <td class="c">④</td>
+      <td><code>/api/bm/*</code> 상시 401 —<br>구조적 한계</td>
+      <td>참가자 인증 경로가 요구하는 Cognito 설정(<code>issuer</code>·<code>client_id</code>·<code>jwks</code>)이
+          전부 미설정이라, 어떤 토큰을 넣어도 "인증 미구성"으로 <strong>fail-closed</strong>된다.
+          운영자 라우트의 데모 스텁과는 별개 경로라 우회가 불가능하다.
+          <strong>결함이 아니라 설계된 안전장치</strong>이며, 실 Cognito 연동 시 자연 해소된다.</td>
+      <td><span class="badge b-na">해소 조건 명확</span><br>
+          <span style="font-size:8.6pt">Cognito 실연동(§9 P0)</span></td>
+    </tr>
+    <tr>
+      <td class="c">⑤</td>
+      <td>부트스트랩 절차와 문서의 편차</td>
+      <td><code>backend/README.md</code>의 절차는 <code>members</code>에 bcrypt 계정을 만들고
+          <code>organizers.member_id</code>를 그 UUID로 잇는 것을 전제하나, 데모 인증 환경에서는 그 방식으로
+          운영자 가드를 통과할 수 없어 리터럴 식별자를 사용하였다.</td>
+      <td><span class="badge b-part">문서 보완</span><br>
+          <span style="font-size:8.6pt">"데모 환경 한정 절차" 각주 권고</span></td>
+    </tr>
+    <tr>
+      <td class="c">⑥</td>
+      <td>(경미) 사전 잔존 테스트 데이터</td>
+      <td>이번 검증 이전부터 존재하던 테스트 조직 1건이 DB에 남아 있어, 어드민 대시보드
+          "참가사 9" 집계에 포함되어 있다. 이번 검증이 생성한 데이터가 아니다.</td>
+      <td><span class="badge b-na">정리 권고</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box ok">
+  <span class="lab">수리 후 재검증 결과 — 결함 ①② 해소 확인</span>
+  <p style="margin-bottom:1.4mm">
+    수리분에 대해 동일 시나리오를 재실행하여 다음을 확인하였다.
+  </p>
+  <ul style="margin-bottom:1.4mm">
+    <li><strong>CORS(①)</strong> — 프리플라이트 응답에
+        <code>access-control-allow-credentials: true</code> 및 요청 origin 반사 확인.
+        비허용 origin은 여전히 거부(fail-closed 유지).</li>
+    <li><strong>DB 권한 인식(②)</strong> — DB로만 master를 부여한 Vietnam 행사의
+        <code>organizations</code> 조회가 <strong>200</strong>(수정 전 403).</li>
+    <li><strong>멀티 행사 콘솔</strong> — <code>/admin/events</code>가
+        <strong>행사 2건을 정상 렌더</strong>하고 행사 스위처 전환도 정상 동작.
+        <strong>브라우저 콘솔 에러 0건</strong>. 증적 <code>e2e-21-admin-events-fixed.png</code>.</li>
+  </ul>
+  <p>
+    멀티 행사 운영은 본 사업의 핵심 전제이므로(§2.1), 행사가 2개 이상인 상태에서의 정상 동작 확인은
+    <strong>사업 요건 충족 여부에 직결되는 검증</strong>이었다.
+  </p>
+</div>
+
+<div class="box warn">
+  <span class="lab">증적 확보 방식에 관한 고지</span>
+  <p>
+    결함 ② 수리 이전에는 <strong>브라우저 실 로그인 경로로 어드민 콘솔에 도달할 수 없는 상태</strong>였다.
+    데모 인증이 인식하는 식별자를 회원가입·로그인 플로우가 발급하지 않기 때문이다.
+    따라서 F 단계 최초 스크린샷은 세션 쿠키를 직접 주입하여 확보하였으며, 이는 <strong>실 백엔드 응답과
+    실 DB 수치를 확인하기 위한 우회</strong>다. 결함 자체를 감추지 않기 위해 500 재현 스크린샷
+    (<code>e2e-12</code>·<code>e2e-17</code>)도 수리 후 증적(<code>e2e-21</code>)과 함께 보존하였다.
+  </p>
+</div>
+
+<h2 class="sub"><span class="n">8.4</span>증적 목록</h2>
+
+<p>
+스크린샷 21건과 반출 파일·재현 스크립트를 <code>scratchpad/e2e/</code>에 보존하였다.
+</p>
+
+<div class="t-wrap">
+<table class="t">
+  <thead>
+    <tr><th style="width:14%">단계</th><th style="width:86%">파일</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>B. 가입·로그인</td>
+        <td class="mono">e2e-01-signup-form-filled.png · e2e-02-signup-success.png ·
+            e2e-03-signup-duplicate-409.png · e2e-04-login-consent-gate.png ·
+            e2e-05-login-post-consent-landing.png</td></tr>
+    <tr><td>C. 엑셀</td>
+        <td class="mono">e2e-06-export-organizations.xlsx</td></tr>
+    <tr><td>D. BM 프로필</td>
+        <td class="mono">e2e-07-exhibitor-apply-cors-error.png</td></tr>
+    <tr><td>E. 알림</td>
+        <td class="mono">notify_review_ready_smoke.py (재현 스크립트)</td></tr>
+    <tr><td>F. 어드민 콘솔</td>
+        <td class="mono">e2e-08-admin-dashboard.png · e2e-09-admin-organizations.png ·
+            e2e-10-admin-meetings.png · e2e-11-admin-notifications.png ·
+            <strong>e2e-12-admin-events-500-bug.png</strong> · e2e-13-admin-organizers.png ·
+            e2e-14-admin-settings.png · e2e-15-admin-interpreters.png</td></tr>
+    <tr><td>F. 스위처·참가자</td>
+        <td class="mono">e2e-16-admin-event-switcher-open.png ·
+            <strong>e2e-17-admin-event-switch-to-vietnam-result.png</strong> ·
+            e2e-18-discover-exhibitor-view.png · e2e-19-home-buyer-ko.png ·
+            e2e-20-home-buyer-ko-toggled.png</td></tr>
+    <tr><td><strong>수리 후 재검증</strong></td>
+        <td class="mono"><strong>e2e-21-admin-events-fixed.png</strong>
+            — 결함 ②(멀티 행사 콘솔 500) 해소 확인: 행사 2건 렌더 + 스위처 전환 정상, 콘솔 에러 0</td></tr>
+  </tbody>
+</table>
+</div>
+
+
+<!-- ══════════════════════════ 9. 백로그 ══════════════════════════ -->
+<h1 class="sec"><span class="n">9.</span>미해결 과제 및 백로그</h1>
+
+<p>
+본 장은 <strong>현 시점에서 완료되지 않은 사항을 누락 없이 기재</strong>한다. 우선순위는 후속 마감
+일정(비즈매칭 신청기간 오픈, 전시회 당일 운영)에 대한 영향도를 기준으로 부여하였다.
+§7이 기능 단위의 통합 현황을 다루었다면, 본 장은 <strong>기능 경계를 가로지르는 기술 부채·미결정
+사항·정합성 과제</strong>를 다룬다.
+</p>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 15] 미해결 과제 및 백로그</caption>
+  <thead>
+    <tr>
+      <th style="width:7%" class="c">등급</th>
+      <th style="width:24%">항목</th>
+      <th style="width:47%">내용</th>
+      <th style="width:22%">필요 조치 · 선행 조건</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="c"><span class="badge b-todo">P0</span></td>
+      <td><strong>fit score(적합도) 정의 미확정</strong></td>
+      <td>매칭 점수의 정의가 결정되지 않아 <code>meetings.ai_score</code>·<code>ai_match_suggestions.ai_score</code> 등
+          점수 의존 컬럼을 nullable로 깔아만 둔 상태. <strong>매칭 엔진 착수의 선행 블로커</strong>다.</td>
+      <td>발주자와의 정의 확정(HITL 판단 필요). 확정 후 엔진 설계 착수</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-todo">P0</span></td>
+      <td><strong>매칭 엔진 · Smart Fill 백엔드 미착수</strong></td>
+      <td>서비스의 핵심 기능 두 건이 미착수 상태. Smart Fill(<code>/extract</code>)은
+          프런트엔드 seam만 존재하고 백엔드 구현이 없다.</td>
+      <td>fit score 정의 확정 후 순차 착수</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-todo">P0</span></td>
+      <td>DX Korea 인증 API 실 어댑터 · Cognito 실연동</td>
+      <td>인증 경로가 현재 스텁이다. 실 참가자가 딥링크로 진입하는 프로덕션 시나리오가
+          아직 검증 불가.</td>
+      <td>발주자 측 인증 API 명세·자격증명 수령</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-part">P1</span></td>
+      <td>PostgreSQL 15+ 의존 확인</td>
+      <td>알림 멱등 유니크가 <code>NULLS NOT DISTINCT</code>를 사용 — PG 15 미만에서는 구문 오류로
+          마이그레이션이 실패한다.</td>
+      <td>AWS RDS 인스턴스 엔진 버전 확인. 미달 시 대체 구현 필요</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-part">P1</span></td>
+      <td>FE <code>AdminOrganization</code> 목록 계약 미정합</td>
+      <td>어드민 콘솔의 기업 목록 타입과 백엔드 응답 스키마가 완전히 일치하지 않는다.
+          목업 동작 중에는 드러나지 않으나 실연동 시 즉시 문제가 된다.</td>
+      <td>실연동 전 FE/BE 계약 조율 필수</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-part">P1</span></td>
+      <td>실 로그인 결과의 FE 세션 미소비</td>
+      <td>E2E에서 확인된 사항(§8.3 ③). <code>login/complete</code>가 실 회원의 토큰·역할·라우트를 정상
+          반환하지만 착지 화면이 이를 소비하지 않고 개발용 mock 세션 페르소나를 렌더링한다.</td>
+      <td>FE 세션 저장·소비 경로 배선. 실연동 전환 시 필수</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-part">P1</span></td>
+      <td>참가자 화면 ↔ 어드민 이벤트 설정 스토어 통합</td>
+      <td>어드민 콘솔의 행사 설정과 참가자 화면이 참조하는 설정 소스가 아직 분리되어 있다.
+          콘솔에서 정책을 바꿔도 참가자 화면에 반영되지 않는다.</td>
+      <td>단일 설정 소스로 통합. 장소 유형 코드값 표기 통일 병행</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-part">P1</span></td>
+      <td>통역사 계정 · 회의록 작성 권한</td>
+      <td>통역사 테이블과 운영자 관리 기능은 구축되었으나, 통역사 본인의 로그인 계정 체계와
+          회의록 작성 권한 범위가 미정이다.</td>
+      <td>발주자 측 운영 정보 대기</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-na">P2</span></td>
+      <td>알림 어드민 이력 API</td>
+      <td>운영자용 알림 발송 이력 조회 기능의 확장(필터·기간·재발송)이 미구현.</td>
+      <td>운영 요구 확정 후 착수</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-na">P2</span></td>
+      <td><code>event_schedule_settings</code> 테이블 이중화</td>
+      <td><code>slot_minutes</code>가 <code>events</code>와 <code>event_schedule_settings</code> 양쪽에
+          존재한다. 현재는 어긋나지 않으나 구조적으로 드리프트 가능.</td>
+      <td>진실원천 일원화(§2.3 규약 적용)</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-na">P2</span></td>
+      <td>엑셀 내보내기 N+1 쿼리</td>
+      <td>현재 데이터 규모에서는 문제되지 않으나, 프로덕션 규모(수백 기업 × 수천 미팅)에서는
+          응답 지연 가능.</td>
+      <td>eager loading 또는 단일 조인 쿼리로 전환</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-na">P2</span></td>
+      <td>리스케줄 시 stale 리마인더 잔존</td>
+      <td>ADR-0010은 미팅 리스케줄 시 리마인더 행의 삭제+재생성을 요구하나, 판단 근거인
+          <code>meetings.updated_at</code> 컬럼이 스키마에 없다. 새 리마인더는 생성되지만 이전
+          시각의 행이 정리되지 않는다.</td>
+      <td><code>meetings</code> 슬라이스 소유자와 컬럼 추가 협의</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-na">P2</span></td>
+      <td>ERDCloud 수동 재임포트</td>
+      <td><code>docs/db/schema.sql</code> 갱신분이 ERD에 반영되지 않은 상태.</td>
+      <td>ERDCloud에 수동 임포트 (절차 문서화 완료)</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-na">P2</span></td>
+      <td>i18n 적용 범위 확장</td>
+      <td>참가자 주요 화면군(<code>/apply</code>, <code>/exhibitor/*</code>, <code>/discover</code>,
+          <code>/meetings</code>)과 어드민 콘솔이 국문 하드코딩 상태.</td>
+      <td>해외 바이어 사용 구간 우선 확장</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-na">P2</span></td>
+      <td>기존 organizer 목업의 실명 기업 데이터</td>
+      <td>운영자 목업 픽스처에 실명으로 보이는 기업 데이터가 포함되어 있다.
+          데모·시연 시 오해 소지가 있다.</td>
+      <td>합성 데이터로 교체 권고</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-na">P2</span></td>
+      <td>슈퍼어드민 부트스트랩 절차 문서 보완</td>
+      <td>E2E에서 확인된 사항(§8.3 ⑤). <code>backend/README.md</code>의 절차가 데모 인증 환경에서는
+          그대로 적용되지 않는다.</td>
+      <td>"데모 환경 한정 절차" 각주 추가. 실 Cognito 연동 시 절차 재작성</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-na">P2</span></td>
+      <td>검증 환경 잔존 테스트 데이터 정리</td>
+      <td>E2E 이전부터 존재하던 테스트 조직 1건이 집계에 포함되어 있다(§8.3 ⑥).</td>
+      <td>검증 DB 초기화 절차 정립</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+<!-- ══════════════════════════ 10. 결론 ══════════════════════════ -->
+<h1 class="sec"><span class="n">10.</span>결론 및 다음 단계</h1>
+
+<h2 class="sub"><span class="n">10.1</span>결론</h2>
+
+<p>
+2026년 8월 28일 사이클을 통해 NABI 비즈매칭 서비스는 <strong>운영자 도구 계층을 완비하고 배포
+가능한 상태</strong>에 도달하였다. 구체적으로,
+</p>
+
+<ul>
+  <li>7개 워크스트림을 병렬로 완주하여 알림·어드민·엑셀·회원가입 등 <strong>운영 필수 기능을
+      실 코드로 확보</strong>하였다.</li>
+  <li>발주기관의 멀티 행사 비즈니스 모델을 <code>events</code> 정책 컬럼과 행사 스위처로 구현하여,
+      <strong>다음 행사를 코드 변경 없이 수용</strong>할 수 있는 구조를 마련하였다.</li>
+  <li>Alembic 단일 head 수렴과 컨테이너 이미지 신규 작성으로 <strong>배포 차단 요인을 전량 해소</strong>하였고,
+      실 PostgreSQL 17에서 16개 리비전 클린 적용과 테스트 1,182건 전량 통과를 확인하였다.</li>
+  <li>이종 벤더 크로스리뷰 프로세스를 통해 <strong>단일 리뷰로는 검출되기 어려운 결함 3유형</strong>
+      (계약 불일치·동시성·정책 공백)을 사전 제거하였고, 실 DB 첫 구동에서 <strong>프로덕션 500 결함 1건</strong>을
+      배포 전에 잡아냈다.</li>
+  <li>실 환경 E2E 검증으로 <strong>운영자 업무 축 전 구간의 실동작을 확인</strong>하였고,
+      단위 테스트로는 드러나지 않는 <strong>통합 계층 결함 2건</strong>(CORS 자격증명 헤더,
+      운영자 디렉터리의 DB 미참조)을 추가 검출하여 <strong>수리·재검증까지 완료</strong>하였다.
+      후자는 행사가 2개 이상일 때 <strong>어드민 콘솔이 붕괴하는 결함</strong>으로,
+      멀티 행사 운영이라는 사업 전제에 직결되는 사안이었다 — 수리 후 행사 2건 상태에서
+      정상 동작을 확인하였다.</li>
+</ul>
+
+<p>
+동시에, 남은 개발 범위도 명확해졌다. §7에서 정리한 대로 <strong>운영자 업무 축은 실 DB 기준으로
+닫혀 있으나, 참가자 업무 축은 중간 구간(승인 심사 → 탐색 → 미팅)의 백엔드가 비어 있다</strong>.
+이는 이번 사이클의 미달이 아니라 애초에 <strong>이번 범위(개발계획서 §8 긴급 5건 + §7 일부) 밖에
+있던 잔여 로드맵</strong>이며, 개발기간이 2026년 12월 31일까지인 점을 고려하면 일정상 여유가 있다.
+다만 그중 <strong>매칭 엔진(F-OP-005)만은 fit score 정의가 확정되지 않아 착수 자체가 대기 상태</strong>이며,
+이는 기술적 준비 부족이 아니라 의사결정 대기이므로 최우선 해소 대상이다.
+</p>
+
+<h2 class="sub"><span class="n">10.2</span>다음 단계 권고</h2>
+
+<div class="t-wrap">
+<table class="t">
+  <thead>
+    <tr><th style="width:8%" class="c">순위</th><th style="width:32%">과제</th><th style="width:60%">근거 및 기대 효과</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="c">1</td><td><strong>fit score 정의 확정</strong></td>
+      <td>§7.3 ③ 매칭 엔진 착수의 유일한 블로커. <strong>기술 작업이 아니라 의사결정 사안</strong>이므로
+          별도 회의체를 열어 ①·②의 개발과 <strong>병행</strong>해야 대기 시간이 일정에 누적되지 않는다</td>
+    </tr>
+    <tr>
+      <td class="c">2</td><td><strong>미팅 도메인 API · 조직 승인 심사 API</strong></td>
+      <td>§7.3 ①·② — <strong>선행 조건 없이 즉시 병렬 착수 가능</strong>.
+          두 과제 완료 시 참가자 플로우의 빈 구간이 메워지고 F-OP-003·F-NT-001 트리거가 함께 닫힌다</td>
+    </tr>
+    <tr style="background:#eef6f0 !important">
+      <td class="c"><span class="badge b-done">완료</span></td>
+      <td><s>E2E 수리분 재검증</s></td>
+      <td>§8.3 결함 ①(CORS)·②(운영자 디렉터리) <strong>수리 및 재검증 완료</strong> —
+          행사 2건 상태에서 <code>/admin/events</code> 정상 렌더·스위처 전환 정상·콘솔 에러 0 확인,
+          회귀 테스트 7건으로 고정(<code>e2e-21</code>). <strong>추가 조치 불요</strong></td>
+    </tr>
+    <tr>
+      <td class="c">3</td><td>DX Korea 인증 API 명세 수령 및 Cognito 실연동</td>
+      <td>참가자 진입 경로 전체가 이 연동에 걸려 있다. §8.3 ④의 <code>/api/bm/*</code> 401도 이때 해소된다.
+          비즈매칭 신청기간 오픈 전 필수</td>
+    </tr>
+    <tr>
+      <td class="c">4</td><td>FE/BE 계약 정합 후 어드민 콘솔 실연동</td>
+      <td><code>AdminOrganization</code> 계약 조율 → mock seam 교체 및 FE 세션 소비 배선(§8.3 ③).
+          seam이 소수 파일로 수렴되어 있어 <strong>작업량 자체는 작다</strong></td>
+    </tr>
+    <tr>
+      <td class="c">5</td><td>RDS 엔진 버전 확인 (PG 15+)</td>
+      <td>미달 시 알림 멱등 구현을 변경해야 하며, 늦게 발견될수록 비용이 커진다.
+          <strong>확인 자체는 즉시 가능</strong></td>
+    </tr>
+    <tr>
+      <td class="c">6</td><td>실 DB 기반 테스트 및 E2E의 상시화</td>
+      <td>§6.3·§8이 모두 보여주듯 인메모리 단위 테스트는 DB 제약과 통합 계층 결함을 검증하지 못한다.
+          CI에 실 PostgreSQL 서비스 컨테이너와 E2E 스모크 도입 권고</td>
+    </tr>
+    <tr>
+      <td class="c">7</td><td>참가자 화면군 i18n 확장</td>
+      <td>해외 바이어가 실사용하는 구간(<code>/discover</code>, <code>/meetings</code>, <code>/apply</code>)
+          우선. 기반(next-intl·쿠키·메시지 구조)은 이미 구축되어 확장 비용이 낮다</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+<!-- ══════════════════════════ 부록 ══════════════════════════ -->
+<h1 class="sec">부록 A. 산출물 파일 인덱스</h1>
+
+<p>본 사이클에 신규 작성 또는 주요 변경된 디렉터리·파일이다. 경로는 저장소 루트 기준이다.</p>
+
+<div class="t-wrap">
+<table class="t long">
+  <thead>
+    <tr><th style="width:14%">영역</th><th style="width:38%">경로</th><th style="width:48%">내용</th></tr>
+  </thead>
+  <tbody>
+    <tr><td rowspan="4">백엔드<br>신규 슬라이스</td>
+      <td class="mono">backend/app/notifications/</td>
+      <td><code>service.py</code>(생성·조회·읽음, 트랜잭션 소유) · <code>channels.py</code>(포트+InApp/Email) ·
+          <code>email.py</code>(Smtp/Fake) · <code>scheduler.py</code>(리마인더 tick) ·
+          <code>schemas.py</code>(타입 드리프트 assert) · <code>router.py</code>(인박스 3개)</td></tr>
+    <tr><td class="mono">backend/app/admin/</td>
+      <td><code>router.py</code>(26 엔드포인트) · <code>service.py</code> · <code>schemas.py</code> ·
+          <code>guard.py</code>(master/sub 겸용 가드, 신원 브릿지, 행사 생성 가드)</td></tr>
+    <tr><td class="mono">backend/app/excel/</td>
+      <td><code>router.py</code>(export 3 + import 1) · <code>service.py</code>(행 조립·워크북 빌드)</td></tr>
+    <tr><td class="mono">backend/app/domain/visibility_rules.py</td>
+      <td>열람 범위 순수 규칙 — <code>can_view_organization()</code></td></tr>
+
+    <tr><td rowspan="2">백엔드<br>인증 확장</td>
+      <td class="mono">backend/app/auth/signup_{router,service,schemas}.py</td>
+      <td>자체가입 — bcrypt, 201/409/422/404</td></tr>
+    <tr><td class="mono">backend/app/auth/local_verify.py</td>
+      <td><code>LocalCredentialVerifier</code> — 검증 체인 최우선</td></tr>
+
+    <tr><td rowspan="2">프런트엔드<br>어드민</td>
+      <td class="mono">frontend/app/admin/ (8 페이지)</td>
+      <td>대시보드 · 기업 · 미팅 · 알림 · 행사 · 운영자 · 설정 · 통역사</td></tr>
+    <tr><td class="mono">frontend/lib/admin/</td>
+      <td><code>server.ts</code>(읽기 seam) · <code>admin-actions.ts</code>(쓰기 seam <code>dispatch()</code>) ·
+          <code>api-paths.ts</code> · <code>events.ts</code>(<code>nabi_admin_event</code> 쿠키) ·
+          <code>guard.ts</code>(fail-closed 등급 판정)</td></tr>
+
+    <tr><td rowspan="3">프런트엔드<br>정책 · i18n</td>
+      <td class="mono">frontend/lib/discover/visibility.ts</td>
+      <td><code>visibleOrgs()</code>·<code>canViewOrg()</code> — 데이터 계층 일괄 필터</td></tr>
+    <tr><td class="mono">frontend/lib/meeting/mock-availability.ts</td>
+      <td><code>venueOptions()</code> — <code>venueTypes</code> 설정 기반 필터</td></tr>
+    <tr><td class="mono">frontend/lib/i18n/ · frontend/messages/</td>
+      <td><code>config.ts</code>(<code>NEXT_LOCALE</code>) · <code>request.ts</code> · <code>actions.ts</code> ·
+          <code>ko.json</code>/<code>en.json</code>(각 134 문자열) · 대칭 검증 테스트</td></tr>
+
+    <tr><td rowspan="3">인프라</td>
+      <td class="mono">backend/Dockerfile</td>
+      <td>python:3.12-slim 2-stage · uv · non-root · uvicorn</td></tr>
+    <tr><td class="mono">frontend/Dockerfile</td>
+      <td>node:22-alpine 3-stage · Next standalone · non-root(uid 1001)</td></tr>
+    <tr><td class="mono">backend/migrations/versions/ (16)</td>
+      <td>head <code>orggrant0001</code> · merge 2건 · 단일 선형 체인</td></tr>
+  </tbody>
+</table>
+</div>
+
+
+<h1 class="sec">부록 B. 용어 정리</h1>
+
+<dl class="defs" style="font-size:9.6pt">
+  <dt>Organization (기업)</dt>
+  <dd>참가사와 바이어를 통합한 단일 엔티티(ADR-0001). 역할은 행사별로
+      <code>organization_event_roles</code>가 부여한다. 매칭의 단위이기도 하다(ADR-0002).</dd>
+
+  <dt>Organizer (운영자)</dt>
+  <dd>행사 운영 주체 계정. 행사 단위로 <code>master</code> 또는 <code>sub</code> 권한을 가진다(ADR-0012).
+      전역 master 개념은 없다.</dd>
+
+  <dt>관할 (Jurisdiction)</dt>
+  <dd>서브어드민이 볼 수 있는 범위. <code>managing_organizer_id</code>로 연결된 자신의 바이어에 한정된다.</dd>
+
+  <dt>행사별 정책 (Event Policy)</dt>
+  <dd><code>events</code> 테이블의 <code>slot_minutes</code>·<code>enabled_venue_types</code>·
+      <code>allow_same_role_discovery</code>. 행사마다 다른 운영 규칙을 코드 변경 없이 수용하는 장치.</dd>
+
+  <dt>mock seam</dt>
+  <dd>목업 구현과 실 API 구현을 교체하는 지점. 호출부를 수정하지 않고 파일 내부 또는 환경변수만으로
+      전환되도록 설계된 경계.</dd>
+
+  <dt>BFF 2-hop</dt>
+  <dd>브라우저 → Next.js 라우트 핸들러(same-origin) → FastAPI로 이어지는 2단 호출.
+      Next.js는 DB에 직접 접속하지 않는다(ADR-0008).</dd>
+
+  <dt>수직 슬라이스 (Vertical Slice)</dt>
+  <dd>계층이 아니라 기능 단위로 코드를 분할하는 구조.
+      각 슬라이스가 <code>router</code>·<code>service</code>·<code>schemas</code>를 자체 보유한다.</dd>
+
+  <dt>fail-closed</dt>
+  <dd>판단이 불확실하면 허용이 아니라 차단·실패 쪽으로 떨어지는 설계.
+      권한 등급 판정, SMTP 자격증명 검증, 어드민 쓰기 가드에 적용되었다.</dd>
+
+  <dt>멱등 (Idempotent)</dt>
+  <dd>같은 요청을 여러 번 수행해도 결과가 한 번 수행한 것과 같은 성질.
+      알림 생성과 명단 임포트에 적용되었다.</dd>
+
+  <dt>대리작성 (Proxy Profile)</dt>
+  <dd>명단만 반입되고 회원가입하지 않은 기업의 신청서를 운영자가 대신 작성하는 것.
+      <code>proxy_written_by_organizer_id</code>에 감사 기록이 남고,
+      <strong><code>application_status</code>는 <code>registered</code>(미신청)를 유지</strong>한다 —
+      대리작성은 제출이 아니다.</dd>
+
+  <dt>귀속 (Provenance)</dt>
+  <dd>미팅이 어떤 경로(AI 추천/직접 신청 등)로 성사되었는지의 출처 정보.
+      리뷰가 이 귀속에 묶인다(ADR-0004).</dd>
+</dl>
+
+<hr class="soft">
+<p style="font-size:8.6pt;color:var(--ink-faint);text-align:center;line-height:1.7">
+NABI 비즈매칭 서비스 개발 보고서 &nbsp;·&nbsp; 발주 마인즈그라운드(주) &nbsp;/&nbsp; 수행 중앙대학교<br>
+보고 기준일 2026-08-28 &nbsp;·&nbsp; 본 보고서의 수치·경로는 기준일 저장소 상태에서 직접 확인한 값이다.
+</p>
+
+</div><!-- /sheet -->
+</div><!-- /paper -->

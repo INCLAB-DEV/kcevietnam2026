@@ -1,0 +1,1031 @@
+<title>NABI 현황 보고서 요약본</title>
+
+<style>
+/* ============================================================
+   NABI 개발보고서 — A4 인쇄(PDF 변환) 전용 스타일시트
+   외부 리소스 없음(폰트·CSS·이미지 전부 인라인 또는 시스템)
+   ============================================================ */
+
+@page {
+  size: A4;
+  margin: 16mm 14mm 15mm 14mm;
+}
+@page :first {
+  margin: 0;
+}
+
+:root {
+  --ink:        #14181f;
+  --ink-soft:   #3d4653;
+  --ink-faint:  #6b7480;
+  --rule:       #c9d0d9;
+  --rule-soft:  #e3e8ee;
+  --navy:       #1b3a5c;
+  --navy-soft:  #2f5c86;
+  --accent:     #14507a;
+  --accent-bg:  #eef4f9;
+  --warn-bg:    #fdf4e7;
+  --warn-line:  #d19a3e;
+  --ok-bg:      #eef6f0;
+  --ok-line:    #4a8b62;
+  --grey-bg:    #f4f6f8;
+  --mono: "SFMono-Regular", "SF Mono", Menlo, Consolas, "D2Coding", monospace;
+  --sans: "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR",
+          "Malgun Gothic", "Helvetica Neue", Arial, sans-serif;
+}
+
+html { background: #ffffff; }
+
+body {
+  font-family: var(--sans);
+  color: var(--ink);
+  background: #ffffff;
+  font-size: 9.7pt;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+/* 화면에서 볼 때만 A4 폭을 흉내낸다(인쇄 시엔 @page가 지배) */
+.sheet {
+  max-width: 176mm;
+  margin: 0 auto;
+  padding: 12mm 0 20mm;
+}
+
+/* ---------- 표지 ---------- */
+.cover {
+  page-break-after: always;
+  break-after: page;
+  min-height: 252mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 26mm 20mm 20mm;
+  box-sizing: border-box;
+  border-top: 9mm solid var(--navy);
+}
+.cover-top { }
+.cover-kicker {
+  font-size: 9.6pt;
+  letter-spacing: .22em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 6mm;
+}
+.cover-title {
+  font-size: 27pt;
+  line-height: 1.32;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: var(--navy);
+  margin: 0 0 4mm;
+}
+.cover-sub {
+  font-size: 12.4pt;
+  color: var(--ink-soft);
+  font-weight: 500;
+  line-height: 1.6;
+  margin: 0;
+}
+.cover-rule {
+  height: 2px;
+  background: var(--navy);
+  margin: 8mm 0 6mm;
+  width: 42mm;
+}
+.cover-scope {
+  font-size: 10pt;
+  color: var(--ink-faint);
+  line-height: 1.8;
+}
+.cover-meta {
+  border-top: 1.5px solid var(--rule);
+  padding-top: 6mm;
+}
+.cover-meta table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+.cover-meta th {
+  text-align: left;
+  width: 32mm;
+  padding: 2.1mm 0;
+  color: var(--ink-faint);
+  font-weight: 600;
+  vertical-align: top;
+  white-space: nowrap;
+}
+.cover-meta td { padding: 2.1mm 0; color: var(--ink); font-weight: 500; vertical-align: top; }
+.cover-note {
+  margin-top: 6mm;
+  font-size: 8.8pt;
+  color: var(--ink-faint);
+  line-height: 1.6;
+}
+
+/* ---------- 목차 ---------- */
+.toc { page-break-after: always; break-after: page; }
+.toc h2 {
+  font-size: 16pt; font-weight: 800; color: var(--navy);
+  border-bottom: 2px solid var(--navy); padding-bottom: 3mm; margin: 0 0 6mm;
+}
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc > ol > li { margin-bottom: 1.2mm; }
+.toc-l1 {
+  display: flex; align-items: baseline; gap: 3mm;
+  font-weight: 700; font-size: 10.8pt; color: var(--ink);
+  padding: 1.4mm 0;
+}
+.toc-l2 {
+  display: flex; align-items: baseline; gap: 3mm;
+  font-size: 9.8pt; color: var(--ink-soft); padding: .7mm 0 .7mm 8mm;
+}
+.toc-num { flex: 0 0 auto; color: var(--accent); font-variant-numeric: tabular-nums; min-width: 9mm; }
+.toc-l2 .toc-num { min-width: 12mm; }
+.toc-dots { flex: 1 1 auto; border-bottom: 1px dotted var(--rule); transform: translateY(-1mm); }
+.toc-fig { margin-top: 8mm; font-size: 9.6pt; }
+.toc-fig h3 { font-size: 11pt; color: var(--navy); margin: 0 0 2mm; }
+.toc-fig ul { margin: 0; padding-left: 5mm; color: var(--ink-soft); }
+.toc-fig li { margin: .8mm 0; }
+
+/* ---------- 섹션 ---------- */
+h1.sec {
+  font-size: 15.5pt; font-weight: 800; color: var(--navy);
+  margin: 0 0 4mm; padding-bottom: 2.2mm;
+  border-bottom: 2px solid var(--navy);
+  page-break-before: always; break-before: page;
+  page-break-after: avoid; break-after: avoid;
+  letter-spacing: -.01em;
+}
+h1.sec .n { color: var(--accent); margin-right: 3mm; }
+h1.sec.first { page-break-before: auto; break-before: auto; }
+h1.sec.cont { page-break-before: auto; break-before: auto; margin-top: 7mm; }
+
+h2.sub {
+  font-size: 11.4pt; font-weight: 700; color: var(--navy);
+  margin: 5.4mm 0 2.2mm;
+  page-break-after: avoid; break-after: avoid;
+}
+h2.sub .n { color: var(--accent); margin-right: 2.4mm; font-variant-numeric: tabular-nums; }
+
+h3.sub3 {
+  font-size: 10pt; font-weight: 700; color: var(--ink);
+  margin: 3.4mm 0 1.3mm;
+  page-break-after: avoid; break-after: avoid;
+}
+h3.sub3::before { content: "▪ "; color: var(--accent); }
+
+p { margin: 0 0 2.3mm; }
+ul, ol { margin: 0 0 2.4mm; padding-left: 5.2mm; }
+li { margin: 0.8mm 0; }
+li > ul, li > ol { margin-top: 1.1mm; margin-bottom: 0; }
+
+strong { font-weight: 700; color: var(--ink); }
+code, .code {
+  font-family: var(--mono);
+  font-size: .88em;
+  background: var(--grey-bg);
+  border: 1px solid var(--rule-soft);
+  border-radius: 2px;
+  padding: 0 .35em;
+  color: #1f2d3d;
+  word-break: break-all;
+}
+
+/* ---------- 표 ---------- */
+table.t {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8.5pt;
+  line-height: 1.45;
+  margin: 2.4mm 0 3.4mm;
+  /* 표는 페이지를 넘길 수 있게 두되, 행은 쪼개지 않고 헤더는 매 페이지 반복한다.
+     (표 전체에 break-inside:avoid를 걸면 긴 표 앞에 빈 페이지가 생긴다) */
+  page-break-inside: auto; break-inside: auto;
+}
+table.t thead { display: table-header-group; }
+table.t tr { page-break-inside: avoid; break-inside: avoid; }
+table.t caption {
+  caption-side: top;
+  text-align: left;
+  font-size: 9pt;
+  font-weight: 700;
+  color: var(--accent);
+  padding-bottom: 1.6mm;
+}
+table.t th {
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+  text-align: left;
+  padding: 1.5mm 1.8mm;
+  border: 1px solid var(--navy);
+  vertical-align: middle;
+}
+table.t td {
+  padding: 1.4mm 1.8mm;
+  border: 1px solid var(--rule);
+  vertical-align: top;
+}
+table.t tbody tr:nth-child(even) td { background: #f7f9fb; }
+table.t td.c, table.t th.c { text-align: center; }
+table.t td.mono { font-family: var(--mono); font-size: 8.4pt; word-break: break-all; }
+table.t td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.t-wrap { overflow-x: auto; }
+
+/* 큰 표는 페이지를 넘겨도 되게 */
+table.t.long { page-break-inside: auto; break-inside: auto; }
+table.t.long tr { page-break-inside: avoid; break-inside: avoid; }
+table.t.long thead { display: table-header-group; }
+
+/* 상태 기호 칸 */
+table.t td.st { text-align: center; white-space: nowrap; font-size: 9.6pt; line-height: 1.2; }
+table.t td.id { font-weight: 700; color: var(--navy); white-space: nowrap; }
+
+/* ---------- 그림 ---------- */
+figure.fig {
+  margin: 3.6mm 0 4.4mm;
+  page-break-inside: avoid; break-inside: avoid;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: #fcfdfe;
+  padding: 3mm 3mm 2.4mm;
+}
+figure.fig svg { display: block; width: 100%; height: auto; }
+figure.fig figcaption {
+  margin-top: 2.2mm;
+  padding-top: 1.8mm;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 8.3pt;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+figure.fig figcaption b { color: var(--navy); }
+
+/* ---------- 박스 ---------- */
+.box {
+  border-left: 3.5px solid var(--accent);
+  background: var(--accent-bg);
+  padding: 2.6mm 3.2mm;
+  margin: 2.8mm 0 3.2mm;
+  font-size: 8.9pt;
+  line-height: 1.55;
+  page-break-inside: avoid; break-inside: avoid;
+  border-radius: 0 3px 3px 0;
+}
+.box .lab {
+  display: block;
+  font-size: 8.4pt; font-weight: 800; letter-spacing: .1em;
+  color: var(--accent); margin-bottom: 1.4mm;
+}
+.box p:last-child, .box ul:last-child { margin-bottom: 0; }
+.box.warn { border-left-color: var(--warn-line); background: var(--warn-bg); }
+.box.warn .lab { color: #8a5c14; }
+.box.ok { border-left-color: var(--ok-line); background: var(--ok-bg); }
+.box.ok .lab { color: #2f6644; }
+
+/* ---------- 지표 카드 ---------- */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2.2mm;
+  margin: 3mm 0 3.6mm;
+  page-break-inside: avoid; break-inside: avoid;
+}
+.kpi {
+  border: 1px solid var(--rule);
+  border-top: 2.4px solid var(--accent);
+  border-radius: 2px;
+  padding: 2.3mm 2mm;
+  text-align: center;
+  background: #fff;
+}
+.kpi .v {
+  font-size: 14pt; font-weight: 800; color: var(--navy);
+  line-height: 1.15; font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+}
+.kpi .u { font-size: 8.2pt; font-weight: 700; color: var(--accent); }
+.kpi .l { font-size: 8.2pt; color: var(--ink-faint); margin-top: 1.2mm; line-height: 1.4; }
+
+/* ---------- 정의형 리스트 ---------- */
+dl.defs { margin: 1.6mm 0 2.4mm; font-size: 9.1pt; }
+dl.defs dt { font-weight: 700; color: var(--navy); margin-top: 1.9mm; }
+dl.defs dd { margin: .6mm 0 0 0; padding-left: 4mm; color: var(--ink-soft); }
+
+/* ---------- 배지 ---------- */
+.badge {
+  display: inline-block;
+  font-size: 7.8pt; font-weight: 700; letter-spacing: .04em;
+  padding: .3mm 1.6mm; border-radius: 2px; vertical-align: .8mm;
+  border: 1px solid currentColor;
+}
+.b-done { color: #2f6644; background: var(--ok-bg); }
+.b-part { color: #8a5c14; background: var(--warn-bg); }
+.b-todo { color: #7a3b3b; background: #fbeeee; }
+.b-na   { color: var(--ink-faint); background: var(--grey-bg); }
+
+/* ---------- 각주/출처 ---------- */
+.src {
+  font-size: 8pt; color: var(--ink-faint); font-family: var(--mono);
+  margin: -1.4mm 0 2.6mm; line-height: 1.45; word-break: break-all;
+}
+.src::before { content: "출처 "; font-family: var(--sans); font-weight: 700; }
+
+hr.soft { border: none; border-top: 1px solid var(--rule-soft); margin: 4mm 0; }
+
+.keep { page-break-inside: avoid; break-inside: avoid; }
+.newpage { page-break-before: always; break-before: page; }
+
+.note { font-size: 8.4pt; color: var(--ink-faint); line-height: 1.5; margin: -1.6mm 0 3mm; }
+
+/* 화면 미리보기에서만 종이 느낌 */
+@media screen {
+  html { background: #eceff3; }
+  .paper {
+    background: #fff;
+    max-width: 210mm;
+    margin: 0 auto;
+    box-shadow: 0 1px 10px rgba(0,0,0,.13);
+  }
+  .sheet { padding-left: 17mm; padding-right: 17mm; max-width: none; }
+}
+@media print {
+  .paper { box-shadow: none; max-width: none; }
+  .sheet { padding: 0; max-width: none; }
+}
+</style>
+
+<div class="paper">
+
+<!-- ══════════════════════════ 표지 ══════════════════════════ -->
+<section class="cover">
+  <div class="cover-top">
+    <div class="cover-kicker">PROGRESS SUMMARY</div>
+    <h1 class="cover-title">NABI 개발 현황 보고서<br>— 요약본</h1>
+    <p class="cover-sub">기획·운영진용<br>기술 상세는 8월 보고서 원본 참조</p>
+    <div class="cover-rule"></div>
+    <div class="cover-scope">
+      1. 한눈에 보는 현황 &nbsp;· &nbsp;2. 사용자별로 지금 되는 것 &nbsp;· &nbsp;3. 직접 체험하는 방법<br>
+      4. 아직 안 되는 것과 다음 단계 &nbsp;· &nbsp;5. 기획팀의 결정이 필요한 사항<br>
+      6. 품질과 신뢰성 &nbsp;· &nbsp;7. 일정과 리스크
+    </div>
+  </div>
+
+  <div class="cover-meta">
+    <table>
+      <tr><th>사&nbsp;업&nbsp;명</th><td>NABI — 비즈매칭 서비스 구축</td></tr>
+      <tr><th>발주기관</th><td>마인즈그라운드(주) <span style="color:var(--ink-faint)">— MICE 전문 대행사</span></td></tr>
+      <tr><th>수행기관</th><td>중앙대학교</td></tr>
+      <tr><th>사업기간</th><td>2026. 08. 21. &ndash; 2026. 12. 31.</td></tr>
+      <tr><th>보고 기준일</th><td><strong>2026. 09. 03.</strong> <span style="color:var(--ink-faint)">(개발 현황은 09. 02. 기준)</span></td></tr>
+      <tr><th>대상 행사</th><td>KADEX with DX Korea 2026 외 (멀티 행사 운영 전제)</td></tr>
+      <tr><th>읽는&nbsp;분</th><td>기획·사업 담당자 <span style="color:var(--ink-faint)">— 개발 지식이 없어도 읽히도록 작성</span></td></tr>
+    </table>
+    <p class="cover-note">
+      이 문서는 2026년 8월 31일자 <b>「NABI 비즈매칭 서비스 개발 보고서」</b>를 기획·운영 관점으로 다시 쓴
+      요약본이다. 개발 용어를 걷어내고 <b>“사용자가 지금 무엇을 할 수 있는가”</b>를 기준으로 정리했으며,
+      8월 31일 이후 추가된 작업까지 반영했다. 설계 근거·검증 절차·기술 부채의 상세는 원본 보고서를 참조.
+    </p>
+  </div>
+</section>
+
+
+<div class="sheet">
+
+<!-- ══════════════════════════ 1. 한눈에 보는 현황 ══════════════════════════ -->
+<h1 class="sec first"><span class="n">1.</span>한눈에 보는 현황</h1>
+
+<h2 class="sub"><span class="n">1.1</span>지금 이 서비스가 하는 일</h2>
+
+<p>
+해외 바이어가 로그인해 참가사를 찾아보고, 서로 비어 있는 시간과 미팅 장소를 골라 1:1 미팅을 신청하면,
+참가사가 그 요청을 받아 수락하고, 양쪽 홈 화면과 알림에 확정이 뜨는 <strong>전 과정이 처음부터 끝까지
+실제로 동작</strong>한다.
+</p>
+<p>
+운영자는 별도의 관리 화면에서 행사를 만들고, 운영시간·점심시간·미팅 단위 시간을 정하고, 참가기업을
+관리하고, 미팅 장소와 통역사를 등록하고, 문제가 생긴 미팅을 대신 취소할 수 있다. 참가자 화면은
+<strong>한국어와 영어로 즉시 전환</strong>된다. 행사에 따라 달라지는 값(시간·정책·장소)은 전부 행사
+정보에서 읽어오므로, <strong>다음 행사는 코드를 고치지 않고 받아들일 수 있다.</strong>
+</p>
+
+<div class="box warn">
+  <span class="lab">중요 — 완성도에 대한 정확한 표현</span>
+  <p>
+    위의 모든 기능은 <strong>지금 개발자 컴퓨터 안에서만 동작한다.</strong> 인터넷 주소를 눌러 누구나
+    접속하는 상태(실서버 배포)는 아직이며, 실제 DX Korea 회원 아이디로 들어오는 로그인 연동도 남아 있다.
+    직접 확인하고 싶으시면 <strong>개발자에게 화면공유 시연을 요청</strong>하시는 편이 가장 빠르다(§3).
+  </p>
+</div>
+
+<div class="kpis" style="grid-template-columns:repeat(5,1fr)">
+  <div class="kpi"><div class="v">1,620</div><div class="u">자동 점검 통과</div><div class="l">서버 781 + 화면 839<br>실패 0건</div></div>
+  <div class="kpi"><div class="v">3</div><div class="u">사용자 유형</div><div class="l">바이어·참가사·운영자<br>전원 실동작</div></div>
+  <div class="kpi"><div class="v">10</div><div class="u">체험 계정</div><div class="l">지금 바로<br>로그인해 볼 수 있음</div></div>
+  <div class="kpi"><div class="v">2</div><div class="u">화면 언어</div><div class="l">한국어 ↔ 영어<br>버튼 하나로 전환</div></div>
+  <div class="kpi"><div class="v">D-8</div><div class="u">신청기간 종료</div><div class="l">비즈매칭 신청<br>2026-09-11 마감</div></div>
+</div>
+
+<h2 class="sub"><span class="n">1.2</span>이 문서의 상태 표기</h2>
+
+<div class="box">
+  <p style="margin-bottom:0">
+    <strong style="font-size:11pt">✅ 완료</strong> — 화면에서 눌러 실제로 되는 것 &nbsp;&nbsp;/&nbsp;&nbsp;
+    <strong style="font-size:11pt">🔶 부분 완료</strong> — 절반은 되지만 남은 조건이 있는 것 &nbsp;&nbsp;/&nbsp;&nbsp;
+    <strong style="font-size:11pt">⬜ 예정</strong> — 아직 만들지 않은 것
+  </p>
+</div>
+
+<h2 class="sub"><span class="n">1.3</span>일정 대비 지금 위치</h2>
+
+<div class="t-wrap">
+<table class="t">
+  <caption>[표 1] 핵심 마감 일정과 현재 위치</caption>
+  <thead>
+    <tr>
+      <th style="width:20%">시점</th>
+      <th style="width:26%">해야 할 일</th>
+      <th style="width:10%" class="c">상태</th>
+      <th style="width:44%">지금 상황</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>2026-06-17</td><td>정부·주관사 대상 컨셉 데모</td>
+      <td class="st">✅</td>
+      <td>완료된 마감</td>
+    </tr>
+    <tr>
+      <td><strong>2026-08-26 ~ 09-11</strong></td><td><strong>비즈매칭 신청기간<br>서비스 오픈</strong></td>
+      <td class="st">🔶</td>
+      <td>기능은 동작하나 <strong>실서버에 올라가 있지 않다.</strong> 실제 참가자가 접속하려면
+          실서버 배포와 DX Korea 로그인 연동이 선행돼야 한다</td>
+    </tr>
+    <tr>
+      <td>2026-09 중순<br><span style="color:var(--ink-faint)">(시연 데이터 기준 9/16~19)</span></td>
+      <td>전시회 당일 운영</td>
+      <td class="st">⬜</td>
+      <td>남은 준비: 실서버 배포 · 실제 로그인 연동 · AI 매칭 · 참가 승인 심사</td>
+    </tr>
+    <tr>
+      <td>2026-12-31</td><td>개발기간 종료</td>
+      <td class="st">⬜</td>
+      <td>전시회 이후에도 개발기간이 남아 있어, 당일 운영에 꼭 필요한 것과 이후로 미룰 것을
+          나눠 배치할 여지가 있다</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box ok">
+  <span class="lab">한 문장 요약</span>
+  <p>
+    <strong>바이어–참가사의 미팅 루프와 운영자 관리 도구는 닫혔다. 남은 것은 서비스를 인터넷에 올리는 일,
+    실제 회원으로 들어오게 하는 일, 그리고 AI 매칭이라는 핵심 차별점을 채우는 일 세 가지다</strong> —
+    이 중 세 번째는 개발이 아니라 <strong>기획 결정(§5 Q1)</strong>에 달려 있다.
+  </p>
+</div>
+
+
+<!-- ══════════════════════════ 2. 사용자별 ══════════════════════════ -->
+<h1 class="sec"><span class="n">2.</span>사용자별로 지금 되는 것</h1>
+
+<p>
+아래 세 표는 “무엇을 만들었나”가 아니라 <strong>“그 사람이 화면에서 무엇을 끝까지 할 수 있나”</strong>를
+사용 순서대로 적은 것이다.
+</p>
+
+<h2 class="sub"><span class="n">2.1</span>해외 바이어의 여정</h2>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 2] 바이어가 지금 할 수 있는 일</caption>
+  <thead>
+    <tr>
+      <th style="width:5%" class="c">#</th><th style="width:22%">하는 일</th>
+      <th style="width:8%" class="c">상태</th><th style="width:65%">설명</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="c">1</td><td>로그인</td><td class="st">✅</td>
+      <td>처음 들어오면 약관 동의를 한 번 거친다. 다음부터는 바로 홈으로 들어온다</td></tr>
+    <tr><td class="c">2</td><td>기업 탐색</td><td class="st">✅</td>
+      <td>참가사 카드만 보인다 — <strong>바이어끼리는 서로 보이지 않는다.</strong> 카드를 누르면 기업 상세로 이동한다</td></tr>
+    <tr><td class="c">3</td><td>관심기업 담기</td><td class="st">✅</td>
+      <td>마음에 드는 기업을 따로 모아둘 수 있다</td></tr>
+    <tr><td class="c">4</td><td>추천 목록·적합도 점수</td><td class="st">🔶</td>
+      <td>추천 탭과 점수가 화면에 뜬다. 다만 <strong>이 점수는 화면에서 임시로 계산한 값</strong>이고,
+          서버의 AI 매칭은 아직 없다(§4-1, §5 Q1)</td></tr>
+    <tr><td class="c">5</td><td>미팅 신청</td><td class="st">✅</td>
+      <td>시간 → 장소 → 확인의 3단계. <strong>양쪽 모두 비어 있는 시간만</strong> 고를 수 있고,
+          점심시간과 참가사가 막아둔 시간은 아예 선택되지 않는다. 마지막에 신청 사유를 적는다</td></tr>
+    <tr><td class="c">6</td><td>신청 결과 확인</td><td class="st">✅</td>
+      <td><strong>초청 바이어</strong>가 받은 신청은 상대 수락 없이 즉시 확정된다. 그 외에는 상대가 수락할 때까지 대기 상태로 남는다</td></tr>
+    <tr><td class="c">7</td><td>알림 확인</td><td class="st">✅</td>
+      <td>화면 위 종 아이콘에 안 읽은 개수가 뜨고, 알림함에서 전체 목록을 본다. 알림을 누르면 해당 미팅으로 바로 이동한다</td></tr>
+    <tr><td class="c">8</td><td>미팅 취소</td><td class="st">✅</td>
+      <td>사유를 골라 취소한다. 대기 중이면 신청한 쪽만, 확정된 뒤에는 양쪽 누구나 취소할 수 있다</td></tr>
+    <tr><td class="c">9</td><td>미팅 후 회의록</td><td class="st">🔶</td>
+      <td>녹음 → 자동 요약 → PDF·Word 내보내기까지 <strong>서버 기능은 이미 완성</strong>돼 있다. 화면에 연결하는 작업만 남았다</td></tr>
+    <tr><td class="c">10</td><td>영어로 보기</td><td class="st">🔶</td>
+      <td>화면 뼈대·탐색·미팅·알림·홈·로그인은 영어로 바뀐다. <strong>신청서 입력 폼과 기업 소개 본문은 아직 한국어</strong>다(§5 Q5)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 class="sub"><span class="n">2.2</span>참가사(국내 기업)의 여정</h2>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 3] 참가사가 지금 할 수 있는 일</caption>
+  <thead>
+    <tr>
+      <th style="width:5%" class="c">#</th><th style="width:22%">하는 일</th>
+      <th style="width:8%" class="c">상태</th><th style="width:65%">설명</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="c">1</td><td>가입·로그인</td><td class="st">✅</td>
+      <td>이메일로 직접 가입할 수 있다. 첫 로그인에서 약관 동의를 거친다</td></tr>
+    <tr><td class="c">2</td><td>비즈매칭 신청서 작성</td><td class="st">✅</td>
+      <td>여러 단계로 나뉜 신청서를 <strong>단계마다 임시저장</strong>하고 나중에 이어 쓸 수 있다. 필수 항목을 채워야 최종 제출된다</td></tr>
+    <tr><td class="c">3</td><td>받은 미팅요청 확인</td><td class="st">✅</td>
+      <td>미팅 화면 상단의 “받은 미팅요청”에서 확인하고, 누르면 해당 일정으로 이동한다</td></tr>
+    <tr><td class="c">4</td><td>수락</td><td class="st">✅</td>
+      <td>같은 시간에 두 건이 동시에 들어와도 <strong>먼저 누른 쪽만 확정</strong>되고 나머지는 막힌다 — 이중 예약이 생기지 않는다</td></tr>
+    <tr><td class="c">5</td><td>거절</td><td class="st">✅</td>
+      <td>사유를 골라 거절한다. <strong style="color:#8a5c14">다만 거절해도 상대에게 알림이 가지 않는다</strong> — 기획 결정 필요(§5 Q2)</td></tr>
+    <tr><td class="c">6</td><td>취소</td><td class="st">✅</td>
+      <td>확정된 미팅도 사유를 골라 취소할 수 있다. “거절”과 “취소”는 서로 다른 개념으로 구분해 기록된다</td></tr>
+    <tr><td class="c">7</td><td>우리 측 참석자 지정</td><td class="st">✅</td>
+      <td>미팅에 누가 들어갈지 명단을 바꿀 수 있다</td></tr>
+    <tr><td class="c">8</td><td>미팅 불가능한 시간 지정</td><td class="st">🔶</td>
+      <td>기능은 동작하지만 참가사가 직접 넣는 화면이 없어, <strong>지금은 운영자가 대신 설정</strong>한다</td></tr>
+    <tr><td class="c">9</td><td>회의록 작성</td><td class="st">🔶</td>
+      <td>바이어와 동일 — 서버는 완성, 화면 연결이 남았다</td></tr>
+    <tr><td class="c">10</td><td>영문 기업 소개</td><td class="st">⬜</td>
+      <td>기업 <strong>이름</strong>은 영문 칸이 있어 영어 화면에서 바뀐다. <strong>소개문·강점 같은 긴 글은 영문 칸 자체가 없다</strong>(§5 Q5)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 class="sub"><span class="n">2.3</span>운영자·주최사의 여정</h2>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 4] 운영자 관리 화면에서 지금 할 수 있는 일</caption>
+  <thead>
+    <tr>
+      <th style="width:27%">하는 일</th><th style="width:8%" class="c">상태</th><th style="width:65%">설명</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>행사 만들기 · 전환</td><td class="st">✅</td>
+      <td>행사를 새로 만들고, 관리 화면 위쪽에서 행사를 갈아 끼운다. <strong>행사끼리 데이터가 완전히 분리</strong>된다</td></tr>
+    <tr><td>행사 정책 설정</td><td class="st">✅</td>
+      <td>미팅 단위 시간(30분 등), 운영시간, 점심시간, 누가 누구를 볼 수 있는지 —
+          <strong>행사마다 다르게 설정</strong>할 수 있어 다음 행사에 코드 수정이 필요 없다</td></tr>
+    <tr><td>참가기업 관리</td><td class="st">✅</td>
+      <td>참가사·바이어 목록과 상세를 보고, 역할(참가사/바이어)을 바꾸고, 프로필을 수정한다</td></tr>
+    <tr><td>신청서 대리작성</td><td class="st">✅</td>
+      <td>전화·메일로 받은 내용을 운영자가 기업 대신 입력할 수 있다</td></tr>
+    <tr><td>미팅 장소 등록</td><td class="st">✅</td>
+      <td>부스 · 비즈매칭존 테이블 · 비즈니스룸을 등록·수정·삭제한다. <strong>이미 미팅이 잡힌 장소는 삭제되지 않는다</strong></td></tr>
+    <tr><td>참가사 불가시간 설정</td><td class="st">✅</td>
+      <td>“이 참가사는 이 시간에 미팅 불가”를 운영자가 지정한다</td></tr>
+    <tr><td>통역사 관리</td><td class="st">✅</td>
+      <td>통역사를 등록하고 기업에 배정·해제한다</td></tr>
+    <tr><td>전체 미팅 조회 · 강제 취소</td><td class="st">✅</td>
+      <td>행사 전체 미팅을 보고, 문제가 생긴 미팅을 운영자가 대신 취소한다. 양측에 취소 알림이 나간다</td></tr>
+    <tr><td>엑셀 내려받기</td><td class="st">✅</td>
+      <td>기업 목록 · 미팅 목록 · 회의록 현황 3종을 엑셀로 받는다</td></tr>
+    <tr><td>참가자 명단 올리기</td><td class="st">✅</td>
+      <td>주최사 명단 엑셀을 올린다. <strong>같은 파일을 두 번 올려도 중복이 생기지 않고</strong>, 실제 반영 전에 미리보기로 확인할 수 있다</td></tr>
+    <tr><td>운영자 계정 부여·회수</td><td class="st">✅</td>
+      <td>권한은 <strong>총괄 운영자 / 부운영자</strong> 2단계다. 부운영자는 조회는 되지만 설정 변경은 막힌다</td></tr>
+    <tr><td>알림 발송 이력 · 재발송</td><td class="st">✅</td>
+      <td>나간 알림을 확인하고 다시 보낼 수 있다</td></tr>
+    <tr><td>이메일 실제 발송</td><td class="st">🔶</td>
+      <td>발송 기능은 완성돼 있으나 <strong>지금은 “보낸 것으로 기록만” 하는 상태</strong>다. 발신 메일 계정 정보를 받으면 켤 수 있다</td></tr>
+    <tr><td>미팅 리마인더 자동 발송</td><td class="st">🔶</td>
+      <td>미팅 전 알림, 시간이 지난 미팅의 자동 종료 처리, 회의록 작성 요청까지 만들어져 있으나 <strong>지금은 꺼둔 상태</strong>다</td></tr>
+    <tr><td>참가 신청 승인 심사</td><td class="st">⬜</td>
+      <td>기업이 신청서를 <strong>제출하는 것까지는 되지만</strong>, 운영자가 승인·반려·보완요청을 처리하는 화면이 없다(§4-2)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box">
+  <span class="lab">지금 자동으로 나가는 알림 6종</span>
+  <p style="margin-bottom:0">
+    ① 미팅 신청이 도착함 &nbsp;· &nbsp;② 미팅이 수락됨 &nbsp;· &nbsp;③ 미팅이 취소됨 &nbsp;· &nbsp;
+    ④ 미팅 시작 전 리마인더 &nbsp;· &nbsp;⑤ 회의록 작성 요청 &nbsp;· &nbsp;⑥ 회의록 준비 완료<br>
+    <strong>“거절됨”은 이 목록에 없다</strong> — 이것이 §5 Q2의 배경이다.
+  </p>
+</div>
+
+
+<!-- ══════════════════════════ 3. 체험 방법 ══════════════════════════ -->
+<h1 class="sec"><span class="n">3.</span>직접 체험하는 방법</h1>
+
+<div class="box warn">
+  <span class="lab">먼저 알아두실 것</span>
+  <p>
+    서비스는 아직 <strong>개발자 컴퓨터에서만 뜬다</strong> — 링크로 접속할 수 있는 상태가 아니므로,
+    <strong>개발자에게 화면공유 시연을 요청</strong>하시는 편이 가장 빠르다. 아래는 시연 중
+    “무엇을 눌러 달라”고 요청하기 위한 참고 자료다.
+  </p>
+</div>
+
+<h2 class="sub"><span class="n">3.1</span>체험 계정 — 어떤 계정이 어떤 입장인가</h2>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 5] 체험 계정 10개</caption>
+  <thead>
+    <tr>
+      <th style="width:22%">아이디</th><th style="width:11%">비밀번호</th>
+      <th style="width:30%">로그인하면 나는 누구인가</th><th style="width:37%">이 계정으로 볼 것</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="id">buyer</td><td class="mono">demo1234</td>
+      <td>베트남 국방조달청 담당자<br><span style="color:var(--ink-faint)">초청 해외 바이어 · 첫 방문</span></td>
+      <td>첫 진입의 <strong>약관 동의 흐름</strong>. 초청 바이어라 이 회사로 온 신청은 바로 확정된다</td></tr>
+    <tr><td class="id">buyer-old</td><td class="mono">demo1234</td>
+      <td>Global Marine Systems 담당자<br><span style="color:var(--ink-faint)">일반 해외 바이어 · 재방문</span></td>
+      <td><strong>주 시연 계정</strong> — 탐색 → 신청 → 홈 한 바퀴</td></tr>
+    <tr><td class="id">buyer-wip</td><td class="mono">demo1234</td>
+      <td>Asia Aero Partners 담당자 <span style="color:var(--ink-faint)">(신청서 작성 중)</span></td>
+      <td>중간까지 쓴 신청서를 이어 쓰는 화면</td></tr>
+    <tr><td class="id">exhibitor</td><td class="mono">demo1234</td>
+      <td>한빛디펜스 담당자 <span style="color:var(--ink-faint)">(참가사 · 7홀 A-12)</span></td>
+      <td>받은 미팅요청을 <strong>수락 / 거절</strong>하는 화면</td></tr>
+    <tr><td class="id">exhibitor-old</td><td class="mono">demo1234</td>
+      <td>동해마린시스템 담당자 <span style="color:var(--ink-faint)">(참가사 · 7홀 B-05)</span></td>
+      <td>이미 끝난 미팅과 회의록 흐름</td></tr>
+    <tr><td class="id">organizer</td><td class="mono">demo1234</td>
+      <td>마인즈그라운드 <strong>총괄 운영자</strong></td>
+      <td>관리 화면 <strong>전 기능</strong></td></tr>
+    <tr><td class="id">trade-office</td><td class="mono">demo1234</td>
+      <td><strong>부운영자</strong>(권한 제한)</td>
+      <td>같은 화면에서 총괄 전용 기능이 막히는 것</td></tr>
+    <tr><td class="id">ghost</td><td class="mono">demo1234</td>
+      <td>참가자 명단에 없는 사람</td>
+      <td>명단에 없을 때의 안내 화면</td></tr>
+    <tr><td class="id">buyer-test@nabi.demo</td><td class="mono">nabi1234</td>
+      <td>나비테스트무역 (바이어) <span style="color:var(--ink-faint)">— 실가입</span></td>
+      <td>갓 가입한 사람이 처음 보는 <strong>빈 화면</strong></td></tr>
+    <tr><td class="id">exhibitor-test@nabi.demo</td><td class="mono">nabi1234</td>
+      <td>나비테스트디펜스 (참가사) <span style="color:var(--ink-faint)">— 실가입</span></td>
+      <td>위와 동일 — 참가사 입장</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p class="note">※ 위 8개는 시연용으로 미리 심어둔 계정, 아래 2개는 실제 가입 절차를 거친 계정이다. <strong>운영자는 직접 가입이 불가능하도록 설계</strong>돼 있어 시연용 계정만 존재한다.</p>
+
+<h2 class="sub"><span class="n">3.2</span>추천 시연 순서 (약 10분)</h2>
+
+<ol style="font-size:8.9pt;line-height:1.5">
+  <li><code>buyer-old</code>로 로그인 → 홈 화면</li>
+  <li><strong>기업 탐색</strong> — 참가사만 보이는지 확인</li>
+  <li>한빛디펜스 카드 → 기업 상세 → <strong>미팅 신청</strong></li>
+  <li><strong>시간 고르기</strong> — 9/16 오전 두 칸은 참가사가 막아둬 선택되지 않는 것을 확인</li>
+  <li><strong>장소 고르기</strong> → 신청 사유 입력 → 신청 완료 (수락 대기)</li>
+  <li>로그아웃 → <code>exhibitor</code>로 로그인</li>
+  <li><strong>내 미팅</strong> → “받은 미팅요청” → <strong>수락</strong></li>
+  <li>로그아웃 → <code>buyer-old</code>로 재로그인 → 홈에서 <strong>확정 상태와 알림 배지</strong> 확인</li>
+</ol>
+
+<div class="box ok">
+  <span class="lab">시연 팁 · 화면이 안 열릴 때</span>
+  <p style="margin-bottom:1.4mm">
+    <strong>즉시 확정 경로</strong>를 보시려면 방향을 뒤집는다 — <code>exhibitor</code>로 로그인해
+    초청 바이어(Vietnam Defense Procurement)에게 신청하면 수락 단계 없이 바로 확정된다.
+    같은 두 회사 사이에 <strong>살아 있는 미팅은 1건만</strong> 허용되므로, 시연을 반복하려면
+    앞 미팅을 취소하거나 다른 상대를 고른다.
+  </p>
+  <p style="margin-bottom:0">
+    <strong>“요청이 너무 많다/크다” 오류가 뜨거나 갑자기 로그인이 풀렸을 때</strong> — 브라우저 주소창에
+    <code>http://localhost:3000/api/auth/logout</code> 을 입력한다. 저장된 접속 정보가 초기화되고
+    로그인 화면으로 돌아간다.
+  </p>
+</div>
+
+
+<!-- ══════════════════════════ 4. 아직 안 되는 것 ══════════════════════════ -->
+<h1 class="sec"><span class="n">4.</span>아직 안 되는 것 / 다음 단계</h1>
+
+<p>
+아래는 <strong>지금 시점에 완료되지 않은 항목 전부</strong>다. 대부분은 “못 만든 것”이 아니라
+<strong>이번 단계의 범위 밖이었거나, 정해져야 시작할 수 있는 것</strong>이다. 개발기간은 2026년
+12월 31일까지 남아 있다.
+</p>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 7] 미완료 항목과 착수 조건</caption>
+  <thead>
+    <tr>
+      <th style="width:4%" class="c">#</th><th style="width:20%">항목</th>
+      <th style="width:7%" class="c">상태</th>
+      <th style="width:41%">지금 무슨 일이 생기나</th>
+      <th style="width:28%">착수 조건</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="c">1</td><td><strong>AI 매칭 추천 엔진</strong></td><td class="st">⬜</td>
+      <td>추천 탭의 적합도 점수가 화면에서 임시로 만든 값이다. <strong>서비스의 핵심 차별점이 아직 비어 있다</strong></td>
+      <td><strong>적합도 기준 확정(§5 Q1)이 유일한 걸림돌.</strong> 기술적 준비는 끝나 있다</td>
+    </tr>
+    <tr>
+      <td class="c">2</td><td><strong>참가 신청 승인 심사</strong></td><td class="st">⬜</td>
+      <td>기업이 신청서를 제출해도 운영자가 승인·반려·보완요청을 화면에서 처리할 수 없다.
+          승인된 기업만 매칭에 노출한다는 원칙이 실제로는 작동하지 못한다</td>
+      <td>선행 조건 없음 — <strong>즉시 착수 가능</strong></td>
+    </tr>
+    <tr>
+      <td class="c">3</td><td>바이어의 불가능 시간 저장</td><td class="st">⬜</td>
+      <td>참가사만 “이 시간은 안 됩니다”를 지정할 수 있다. <strong>초청 바이어의 항공·숙박 일정과 겹치는
+          시간에도 미팅이 잡힐 수 있다</strong></td>
+      <td>저장 방식 결정(§5 Q6) 후 착수</td>
+    </tr>
+    <tr>
+      <td class="c">4</td><td>실제 로그인 연동</td><td class="st">⬜</td>
+      <td>지금은 체험용 계정과 자체 가입만 된다. 실제 DX Korea 회원 아이디로 들어오는 경로가 없다</td>
+      <td>발주처로부터 인증 규격·접속 정보 수령</td>
+    </tr>
+    <tr>
+      <td class="c">5</td><td>실서버 배포</td><td class="st">⬜</td>
+      <td>인터넷 주소로 접속할 수 없다. 외부 시연·실사용이 불가능하다</td>
+      <td>AWS 서버 환경·계정 확정</td>
+    </tr>
+    <tr>
+      <td class="c">6</td><td>남은 한/영 번역</td><td class="st">🔶</td>
+      <td>화면 뼈대·탐색·미팅·알림·홈·로그인은 영어로 전환된다.
+          <strong>남은 곳: 신청서 입력 폼, 추천 사유 문장, 미팅 장소·전시홀 이름, 약관 영문판, 기업 소개 본문</strong></td>
+      <td>§5 Q5·Q7 확정 후 마무리</td>
+    </tr>
+    <tr>
+      <td class="c">7</td><td>회의록 화면 연결</td><td class="st">🔶</td>
+      <td>녹음 → 자동 요약 → PDF·Word 내보내기까지 서버는 완성. 사용자가 쓰는 화면 연결이 남았다</td>
+      <td>선행 조건 없음 — 즉시 착수 가능</td>
+    </tr>
+    <tr>
+      <td class="c">8</td><td>단독 페이지 일부</td><td class="st">🔶</td>
+      <td>팝업으로 보는 프로필·미팅 상세는 실제 데이터다. 주소를 직접 입력해 들어가는 페이지는 일부가 예시 데이터로 뜬다</td>
+      <td>선행 조건 없음 — 즉시 착수 가능</td>
+    </tr>
+    <tr>
+      <td class="c">9</td><td>이메일 실제 발송</td><td class="st">🔶</td>
+      <td>지금은 “보낸 것으로 기록만” 남긴다. 실제 메일은 나가지 않는다</td>
+      <td>발신 메일 계정 정보 수령 후 켜기</td>
+    </tr>
+    <tr>
+      <td class="c">10</td><td>자동 리마인더</td><td class="st">🔶</td>
+      <td>미팅 전 알림·자동 종료 처리·회의록 요청이 만들어져 있으나 꺼둔 상태다</td>
+      <td>실서버 배포 시 함께 켬</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box">
+  <span class="lab">착수 순서 권고</span>
+  <p style="margin-bottom:0">
+    <strong>2·7·8번은 지금 당장 시작할 수 있다.</strong> 1·3·6번은 §5의 결정이 먼저다.
+    4·5번은 발주처·인프라 쪽 정보가 들어와야 한다. 따라서 <strong>§5의 결정을 빨리 내려주실수록
+    개발이 대기 없이 이어진다.</strong>
+  </p>
+</div>
+
+
+<!-- ══════════════════════════ 5. 결정 필요 ══════════════════════════ -->
+<h1 class="sec"><span class="n">5.</span>기획팀의 결정이 필요한 사항</h1>
+
+<div class="box ok">
+  <span class="lab">이 장을 읽는 법</span>
+  <p style="margin-bottom:0">
+    아래 9건은 <strong>개발이 막혀서가 아니라 “무엇이 맞는지”를 정해야 진행되는 것</strong>들이다.
+    9건을 한 번에 정하실 필요는 없다 — <strong>Q1·Q2·Q5 세 건만 먼저 회신</strong>해 주셔도 막혀 있는
+    개발이 대부분 풀린다. 나머지는 전시회 전까지 순차 확정하면 된다.
+  </p>
+</div>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 8] 결정 대기 항목 — 질문 · 선택지 · 미결 시 영향</caption>
+  <thead>
+    <tr>
+      <th style="width:4%" class="c">#</th>
+      <th style="width:23%">질문</th>
+      <th style="width:27%">지금 상태 / 배경</th>
+      <th style="width:27%">선택지</th>
+      <th style="width:19%">정하지 않으면</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="c"><span class="badge b-todo">Q1</span></td>
+      <td><strong>미팅 추천의 “적합도”를 무엇으로 계산할 것인가?</strong></td>
+      <td>추천 탭의 점수는 화면에서 임시로 만든 값이다. 무엇을 얼마나 반영할지 정해지지 않아 진짜
+          계산 로직을 만들 수 없다. <strong>기술이 아니라 사업 판단</strong></td>
+      <td>반영 항목과 비중 — 관심 품목 / 예산 / 도입 시기 / 국가 / 규모 등. 더불어 <strong>숫자 vs 등급(상·중·하)</strong> 표기</td>
+      <td><strong>AI 매칭 엔진 착수 자체가 불가능</strong>. 핵심 차별점이 전시 당일까지 비게 된다</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-todo">Q2</span></td>
+      <td><strong>미팅을 거절당했을 때 상대에게 알릴 것인가?</strong></td>
+      <td>거절해도 알림이 가지 않아, 신청한 쪽이 앱에 다시 들어오지 않으면 <strong>거절 사실을 영영
+          모른다</strong>. 기능정의서는 “거절 알림”을 전제로 쓰였으나 알림 설계는 6종만 두어
+          <strong>문서끼리 어긋나 있다</strong></td>
+      <td>① 거절 알림을 7번째 종류로 추가<br>② 지금처럼 알리지 않고 기능정의서 문구를
+          “앱에서만 확인”으로 정정</td>
+      <td>신청자가 응답을 기다리다 이탈한다. 문서 간 모순도 남는다</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-part">Q3</span></td>
+      <td>답이 없는 미팅 신청을 언제까지 살려둘 것인가?</td>
+      <td>만료 규칙이 없어 무기한 남는다. 같은 상대에게 살아 있는 미팅은 1건만 허용되므로
+          <strong>응답 없는 신청 1건이 재신청을 계속 막는다</strong></td>
+      <td>① 일정 시간(예: 72시간) 뒤 자동 만료 — 이때 <strong>만료 시간·알림 여부</strong>도 함께<br>
+          ② 만료 없이 재촉 알림만 발송<br>③ 현행 유지</td>
+      <td>시간이 촉박한 전시 기간에 재신청이 막혀 미팅 성사 수가 줄어든다</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-part">Q4</span></td>
+      <td>같은 역할끼리 서로 보게 할 일이 있는가?<br>(참가사↔참가사, 바이어↔바이어)</td>
+      <td>행사 설정에 옵션은 있으나 <strong>켜면 목록엔 보이는데 신청 버튼에서 오류가 난다</strong>
+          — 미팅 구조가 참가사–바이어 조합 전용이기 때문</td>
+      <td>① 쓰지 않는다(현재 행사 기준 무관)<br>② 신청까지 되게 구조 변경<br>
+          ③ “보기만 가능”으로 명문화하고 버튼을 감춤</td>
+      <td>켜는 순간 “보이는데 잡을 수 없는” 상태가 노출된다</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-part">Q5</span></td>
+      <td><strong>기업 소개문의 영문은 누가 쓰는가?</strong></td>
+      <td>기업 <strong>이름</strong>은 영문 칸이 있어 영어 화면에서 바뀐다. 그러나 <strong>소개문·강점 같은
+          긴 글은 영문 칸 자체가 없어</strong> 한국어가 그대로 남는다</td>
+      <td>① 신청서에 영문 입력칸 추가 — 참가사가 직접 작성<br>② AI 자동 번역(검수 표시 여부 결정)<br>
+          ③ 자동 번역 초안 + 참가사 수정</td>
+      <td><strong>신청서 폼 설계가 여기서 갈린다.</strong> 신청기간 중이라 빠른 결정이 유리</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-part">Q6</span></td>
+      <td>초청 바이어의 체류 일정을 미팅 불가시간으로 반영할 것인가?</td>
+      <td>참가사만 불가시간을 지정할 수 있고 바이어 쪽은 저장할 자리가 없다. 초청 바이어는 항공·숙박
+          일정이 확정돼 실제로 불가능한 시간대가 있다</td>
+      <td>① 항공·호텔 일정에서 <strong>자동 생성</strong><br>② 바이어가 <strong>직접</strong> 선택<br>
+          ③ 운영자가 대신 입력</td>
+      <td>도착 전·출발 후에 미팅이 잡혀 <strong>당일 노쇼가 발생</strong>할 수 있다</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-part">Q7</span></td>
+      <td>영문 제공 범위 — 약관과 관리 화면</td>
+      <td>(가) 약관·개인정보 처리방침이 국문만 있다 — 해외 바이어가 <strong>첫 로그인에서 반드시 거치는
+          화면</strong>. (나) 운영자 관리 화면은 국문 전용</td>
+      <td>(가) 영문판 제공 여부 — <strong>법무 확인 필요</strong><br>
+          (나) 관리 화면 번역 포함 여부 — 내부 전용이면 제외가 일정에 유리</td>
+      <td>해외 바이어가 이해하지 못하는 약관에 동의하게 된다(법적 리스크)</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-na">Q8</span></td>
+      <td>거절·취소 사유 문구를 확정해 주실 것</td>
+      <td>임시 값 — <strong>거절</strong>: 관심 분야 불일치 / 시간 불가 / 기타.
+          <strong>취소</strong>: 일정 충돌 / 상대 요청 / 내부 사정 / 기타. (각각 자유 입력란 병기)</td>
+      <td>실제 운영에서 쓸 <strong>문구와 개수</strong>, 자유 입력란 유지 여부</td>
+      <td>임시 문구가 전시 당일 그대로 노출된다. 사후 집계도 이 문구에 묶인다</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="badge b-na">Q9</span></td>
+      <td>통역사에게 로그인 계정을 줄 것인가?</td>
+      <td>등록·배정까지는 된다. <strong>통역사 본인이 로그인해 무엇을 할 수 있는지</strong>(예: 회의록 작성)가 미정</td>
+      <td>① 계정 없이 운영자 관리 대상으로만 둠<br>② 로그인 계정 부여 + 담당 미팅만 열람<br>
+          ③ ② + 회의록 작성 권한</td>
+      <td>전시 당일 통역사 운영 방식이 확정되지 않은 채 남는다</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ══════════════════════════ 6. 품질 ══════════════════════════ -->
+<h1 class="sec"><span class="n">6.</span>품질과 신뢰성</h1>
+
+<p>
+“된다고 보고했는데 실제로는 안 되더라”를 막기 위해 아래 네 가지를 상시 적용한다.
+</p>
+
+<div class="t-wrap">
+<table class="t">
+  <caption>[표 9] 품질 확보 방법과 결과</caption>
+  <thead>
+    <tr><th style="width:26%">방법</th><th style="width:74%">결과</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>자동 점검</strong></td>
+      <td><strong>1,620건 전부 통과, 실패 0건</strong> (서버 781 + 화면 839 / 94개 파일). 코드를 고칠 때마다
+          전부 다시 돌려, 되던 기능이 망가지면 즉시 잡힌다.
+          <span style="color:var(--ink-faint)">— 2026-09-03 직접 실행해 확인한 값</span></td>
+    </tr>
+    <tr>
+      <td><strong>실제 DB로 전 과정 재현</strong></td>
+      <td>가짜 데이터가 아니라 <strong>실제 데이터베이스 위에서</strong> 가입 → 로그인 → 운영자 업무 → 엑셀 →
+          알림까지 한 바퀴를 돌리고 증적 21건을 남겼다. 실서버 연결 상태와 화면만 보는 체험 모드
+          <strong>양쪽 모두</strong>에서 시연 절차가 고정돼 있다</td>
+    </tr>
+    <tr>
+      <td><strong>배포 전 결함 사전 검출</strong></td>
+      <td>결함 <strong>3건을 실서버에 올리기 전에 발견해 수리</strong>했다. 그중 하나는 <strong>“운영자를 추가하려 하면
+          오류가 나는”</strong> 결함으로, 배포 후였다면 그대로 운영 장애가 됐을 사안이다</td>
+    </tr>
+    <tr>
+      <td><strong>서로 다른 회사의 AI가 교차 검토</strong></td>
+      <td>만든 쪽과 검토하는 쪽에 <strong>다른 회사의 AI</strong>를 배치한다 — 같은 종류끼리는 같은 실수를
+          함께 놓치기 때문이다. 혼자서는 잘 안 잡히는 유형(문서 간 불일치, 같은 시간의 동시 예약,
+          정책 공백)을 사전에 제거했다</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box warn">
+  <span class="lab">이 방법이 보장하지 못하는 것</span>
+  <p style="margin-bottom:0">
+    자동 점검은 <strong>“만든 대로 동작하는가”</strong>를 확인할 뿐 <strong>“기획 의도대로인가”</strong>는
+    확인하지 못한다. 화면 문구·흐름 검토는 사람의 몫이므로 <strong>기획팀의 직접 시연 검토를 권한다.</strong>
+  </p>
+</div>
+
+
+<!-- ══════════════════════════ 7. 일정과 리스크 ══════════════════════════ -->
+<h1 class="sec cont"><span class="n">7.</span>일정과 리스크</h1>
+
+<div class="t-wrap">
+<table class="t long">
+  <caption>[표 10] 주요 리스크와 필요한 조치</caption>
+  <thead>
+    <tr>
+      <th style="width:24%">리스크</th><th style="width:9%" class="c">영향도</th>
+      <th style="width:34%">내용</th><th style="width:33%">필요한 조치</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>AI 매칭 엔진 미착수</strong></td><td class="c"><span class="badge b-todo">높음</span></td>
+      <td>핵심 차별점이 비어 있다. 개발 여력이 아니라 <strong>결정 대기</strong>로 멈춰 있다</td>
+      <td><strong>§5 Q1 확정 — 가장 시급.</strong> 다른 개발과 병행하면 대기가 쌓이지 않는다</td>
+    </tr>
+    <tr>
+      <td>실서버 배포 미완</td><td class="c"><span class="badge b-todo">높음</span></td>
+      <td>외부 시연·실사용이 불가능하다</td>
+      <td>AWS 서버 환경·계정 확정 후 착수</td>
+    </tr>
+    <tr>
+      <td>실제 로그인 연동 미완</td><td class="c"><span class="badge b-todo">높음</span></td>
+      <td>실 참가자의 진입 경로 전체가 여기에 걸려 있다</td>
+      <td>발주처 인증 규격·접속 정보 수령 — <strong>오픈 전 필수</strong></td>
+    </tr>
+    <tr>
+      <td>참가 승인 심사 부재</td><td class="c"><span class="badge b-part">중간</span></td>
+      <td>승인된 기업만 노출한다는 원칙이 작동하지 못한다</td>
+      <td>선행 조건 없음 — 즉시 착수 가능</td>
+    </tr>
+    <tr>
+      <td>번역 잔여</td><td class="c"><span class="badge b-part">중간</span></td>
+      <td>해외 바이어가 신청서 폼·기업 소개 본문에서 한국어를 만난다</td>
+      <td>§5 Q5·Q7 확정 후 마무리</td>
+    </tr>
+    <tr>
+      <td>바이어 불가시간 미반영</td><td class="c"><span class="badge b-part">중간</span></td>
+      <td>체류 일정과 충돌하는 시간에 미팅이 배정될 수 있다</td>
+      <td>§5 Q6 확정 후 착수</td>
+    </tr>
+    <tr>
+      <td>이메일·리마인더 꺼짐</td><td class="c"><span class="badge b-na">낮음</span></td>
+      <td>완성돼 있고 켜기만 하면 된다</td>
+      <td>발신 메일 계정 정보 수령 후 켬</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="box ok">
+  <span class="lab">맺음</span>
+  <p style="margin-bottom:0">
+    기능 축으로 보면 <strong>운영자가 쓰는 관리 도구와 바이어–참가사의 미팅 루프는 닫혔다.</strong>
+    남은 것은 크게 세 가지 — <strong>(가)</strong> 서비스를 인터넷에 올리는 일,
+    <strong>(나)</strong> 실제 회원 계정으로 들어오게 하는 일, <strong>(다)</strong> AI 매칭이라는
+    핵심 차별점을 채우는 일이다. 이 중 <strong>(다)는 개발 여력이 아니라 §5 Q1의 결정에 달려 있으므로</strong>,
+    (가)·(나)를 개발하는 동안 병행해 결정해 주시는 것이 일정상 가장 유리하다.
+  </p>
+  <p style="margin:2mm 0 0;padding-top:1.8mm;border-top:1px solid var(--rule-soft);font-size:8.2pt;color:var(--ink-faint)">
+    본 요약본의 기능·수치·계정 정보는 2026-09-02까지 저장소에 반영된 내용이며, 자동 점검 수치는
+    09-03 직접 실행해 확인했다. 기술 상세는 8월 31일자 개발보고서 원본 참조.
+  </p>
+</div>
+
+</div><!-- /.sheet -->
+</div><!-- /.paper -->

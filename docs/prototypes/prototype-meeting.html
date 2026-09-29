@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NABI - 미팅 신청 프로토타입 (MT-001, THROWAWAY)</title>
+<link rel="stylesheet" href="nabi-ui.css?v=20260607">
+<!-- PROTOTYPE: 3 variants of MT-001 meeting request modal -->
+<!-- Variant A: 바텀시트 3스텝 — 모바일 최적. 슬라이드업 모달, 스텝별 전환 -->
+<!-- Variant B: 풀스크린 3스텝 — 캘린더 그리드 넓게. 시간 선택에 최적 -->
+<!-- Variant C: 컴팩트 1스크롤 — 스텝 없이 한 화면에 장소+시간+메시지 -->
+<style>
+  /* 토큰·리셋·크롬·variant-bar·view-toggle 는 nabi-ui.css(단일 소스)에서 상속 */
+  body { background: var(--bg-primary); }
+
+  /* ── 단일 셸 반응형 ──
+     meeting 은 #meeting-root(=.app-content) 하나에만 렌더한다.
+     배경(behind-page)은 셸을 채우고, 모달/시트/오버레이는 .app-shell(=쿼리 컨테이너,
+     container-type 으로 containing block)에 position:absolute inset:0 로 앵커된다.
+     좁음(폰/프리뷰) = 바텀시트 / 넓음(데스크톱) = 중앙 다이얼로그. */
+
+  /* ========== BEHIND PAGE (DV-001 상세보기 배경) ========== */
+  .behind-page {
+    display: flex; flex-direction: column; min-height: 100%;
+    background: var(--bg-primary);
+  }
+  .behind-header {
+    padding: 16px 20px 16px; background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-default); flex-shrink: 0;
+  }
+  .behind-back { font-size: 13px; color: var(--accent-primary); font-weight: 600; margin-bottom: 12px; cursor: pointer; }
+  .behind-company { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .behind-booth { font-size: 13px; color: var(--text-tertiary); font-weight: 600; }
+  .behind-body { flex: 1; overflow-y: auto; padding: 20px; }
+  .behind-match { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .behind-match-score {
+    padding: 4px 10px; background: var(--accent-subtle); color: var(--accent-primary);
+    border-radius: var(--radius-full); font-size: 13px; font-weight: 700;
+  }
+  .behind-match-text { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
+  .behind-section { margin-bottom: 20px; }
+  .behind-section-title { font-size: 12px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .behind-section-text { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+  .behind-keywords { display: flex; flex-wrap: wrap; gap: 6px; }
+  .behind-keyword {
+    padding: 5px 12px; background: var(--bg-secondary); color: var(--text-secondary);
+    border-radius: var(--radius-full); font-size: 12px; font-weight: 600;
+  }
+  .behind-cta {
+    padding: 16px 20px; background: var(--bg-elevated);
+    border-top: 1px solid var(--border-default); flex-shrink: 0;
+  }
+  .behind-cta-btn {
+    width: 100%; padding: 15px; border-radius: var(--radius-md);
+    background: var(--accent-primary); color: white;
+    font-size: 16px; font-weight: 700; border: none; cursor: pointer;
+    font-family: var(--font-stack); transition: opacity 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .behind-cta-btn:hover { opacity: 0.9; }
+
+  /* ========== MODAL OVERLAY ==========
+     position:absolute inset:0 → .app-shell(쿼리 컨테이너=containing block)에 앵커 */
+  .modal-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.4);
+    z-index: 100; display: none; transition: opacity 0.3s;
+  }
+  .modal-overlay.show { display: block; }
+  /* 데스크톱 중앙 다이얼로그 규칙은 베이스 모달 정의 아래에 둔다(소스 순서상 베이스를 이겨야 함). */
+
+  /* ========== VARIANT A: BOTTOM SHEET ========== */
+  .sheet-modal {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: var(--bg-elevated); border-radius: 20px 20px 0 0;
+    z-index: 101; display: none; flex-direction: column;
+    max-height: 85%; box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
+    transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .sheet-modal.show { display: flex; transform: translateY(0); }
+  .sheet-handle {
+    width: 36px; height: 4px; background: #d4d1cd; border-radius: 2px;
+    margin: 10px auto 6px; flex-shrink: 0;
+  }
+  .sheet-header {
+    padding: 4px 20px 16px; flex-shrink: 0;
+    border-bottom: 1px solid var(--border-default);
+  }
+  .sheet-header-row { display: flex; align-items: center; justify-content: space-between; }
+  .sheet-title { font-size: 18px; font-weight: 800; }
+  .sheet-close {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--bg-secondary);
+    border: none; cursor: pointer; font-size: 16px; color: var(--text-tertiary);
+    display: flex; align-items: center; justify-content: center;
+  }
+  /* Step indicator */
+  .sheet-steps {
+    display: flex; gap: 8px; margin-top: 14px;
+  }
+  .sheet-step {
+    flex: 1; height: 3px; border-radius: 2px; background: var(--border-default);
+    transition: background 0.3s;
+  }
+  .sheet-step.done { background: var(--accent-primary); }
+  .sheet-step.current { background: var(--accent-primary); }
+
+  .sheet-body {
+    flex: 1; overflow-y: auto; padding: 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sheet-footer {
+    padding: 16px 20px; border-top: 1px solid var(--border-default);
+    flex-shrink: 0; display: flex; gap: 10px;
+  }
+  .sheet-btn {
+    flex: 1; padding: 14px; border-radius: var(--radius-md);
+    font-size: 15px; font-weight: 700; border: none; cursor: pointer;
+    font-family: var(--font-stack); transition: all 0.15s;
+  }
+  .sheet-btn-secondary {
+    background: var(--bg-secondary); color: var(--text-secondary);
+  }
+  .sheet-btn-primary {
+    background: var(--accent-primary); color: white;
+  }
+  .sheet-btn:hover { opacity: 0.9; }
+  .sheet-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ========== VARIANT B: FULLSCREEN MODAL ========== */
+  .full-modal {
+    position: absolute; inset: 0; background: var(--bg-primary);
+    z-index: 101; display: none; flex-direction: column;
+    transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .full-modal.show { display: flex; transform: translateY(0); }
+  .full-header {
+    padding: 16px 20px 0; flex-shrink: 0;
+    background: var(--bg-elevated);
+  }
+  .full-header-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .full-header-back {
+    font-size: 13px; color: var(--accent-primary); font-weight: 600;
+    cursor: pointer; border: none; background: none; font-family: var(--font-stack);
+    padding: 4px 0;
+  }
+  .full-header-step {
+    font-size: 13px; color: var(--text-tertiary); font-weight: 600;
+  }
+  .full-title { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .full-subtitle { font-size: 14px; color: var(--text-tertiary); margin-bottom: 16px; line-height: 1.4; }
+  /* Tabs for step nav */
+  .full-tabs {
+    display: flex; border-bottom: 1px solid var(--border-default);
+  }
+  .full-tab {
+    flex: 1; padding: 12px 0; text-align: center; font-size: 13px; font-weight: 600;
+    color: var(--text-tertiary); cursor: pointer; border: none; background: none;
+    font-family: var(--font-stack); border-bottom: 2px solid transparent; transition: all 0.2s;
+  }
+  .full-tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+  .full-tab.done { color: var(--accent-green); }
+  .full-tab.done::after { content: ' ✓'; }
+  .full-tab:disabled { opacity: 0.4; cursor: not-allowed; }
+  .full-body {
+    flex: 1; overflow-y: auto; padding: 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .full-footer {
+    padding: 16px 20px; border-top: 1px solid var(--border-default);
+    flex-shrink: 0; background: var(--bg-elevated);
+    display: flex; gap: 10px;
+  }
+
+  /* ========== VARIANT C: COMPACT SINGLE SCROLL ========== */
+  .compact-modal {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: var(--bg-elevated); border-radius: 20px 20px 0 0;
+    z-index: 101; display: none; flex-direction: column;
+    max-height: 92%; box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
+    transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .compact-modal.show { display: flex; transform: translateY(0); }
+
+  /* ── 데스크톱(≥720cqi): 바텀시트 → 중앙 다이얼로그 ──
+     이 블록은 위 베이스 .sheet-modal/.full-modal/.compact-modal 정의 뒤에 와야
+     같은 특이도에서 소스 순서로 베이스(bottom:0 / translateY)를 덮어쓴다. */
+  @container shell (min-width: 720px) {
+    .sheet-modal, .compact-modal {
+      top: 50%; bottom: auto; left: 50%; right: auto;
+      width: 100%; max-width: 480px;
+      max-height: 85%; border-radius: var(--radius-xl);
+      transform: translate(-50%, -50%) scale(0.96);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.24);
+    }
+    .sheet-modal.show, .compact-modal.show { transform: translate(-50%, -50%) scale(1); }
+    .full-modal {
+      inset: auto; top: 50%; left: 50%; right: auto; bottom: auto;
+      width: 100%; max-width: 480px; height: auto; max-height: 88%;
+      border-radius: var(--radius-xl); overflow: hidden;
+      transform: translate(-50%, -50%) scale(0.96);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.24);
+    }
+    .full-modal.show { transform: translate(-50%, -50%) scale(1); }
+    .full-header { padding-top: 16px; }
+  }
+
+  .compact-body {
+    flex: 1; overflow-y: auto; padding: 0 20px 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .compact-section {
+    padding: 20px 0; border-bottom: 1px solid var(--border-default);
+  }
+  .compact-section:last-child { border-bottom: none; }
+  .compact-section-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%; background: var(--accent-primary);
+    color: white; font-size: 12px; font-weight: 700; margin-right: 8px;
+  }
+  .compact-section-title {
+    font-size: 16px; font-weight: 700; margin-bottom: 12px;
+    display: flex; align-items: center;
+  }
+
+  /* ========== SHARED: VENUE SELECTION ========== */
+  .venue-grid { display: flex; flex-direction: column; gap: 10px; }
+  .venue-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px; border-radius: var(--radius-md);
+    border: 1.5px solid var(--border-default); background: var(--bg-elevated);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .venue-card:hover { border-color: var(--accent-primary); background: var(--accent-subtle); }
+  .venue-card.selected { border-color: var(--accent-primary); background: var(--accent-subtle); }
+  .venue-card.unavailable { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+  .venue-icon {
+    width: 44px; height: 44px; border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .venue-icon.booth { background: #dbeafe; }
+  .venue-icon.matching { background: #dcfce7; }
+  .venue-icon.business { background: #fef3c7; }
+  .venue-info { flex: 1; }
+  .venue-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+  .venue-desc { font-size: 12px; color: var(--text-tertiary); line-height: 1.4; }
+  .venue-avail {
+    font-size: 11px; font-weight: 600; padding: 3px 8px;
+    border-radius: var(--radius-full); flex-shrink: 0;
+  }
+  .venue-avail.open { background: var(--accent-green-subtle); color: var(--accent-green); }
+  .venue-avail.limited { background: #fff7ed; color: var(--accent-amber); }
+  .venue-avail.full { background: #fef2f2; color: var(--accent-red); }
+  .venue-check {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border-default);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .venue-card.selected .venue-check {
+    border-color: var(--accent-primary); background: var(--accent-primary); color: white;
+  }
+
+  /* Sub-venue (room/table picker) */
+  .venue-sub {
+    display: none; padding: 10px 0 0 58px;
+    animation: stepFadeIn 0.2s ease-out;
+  }
+  .venue-card.selected + .venue-sub { display: block; }
+  .venue-sub-label {
+    font-size: 12px; font-weight: 600; color: var(--text-tertiary);
+    margin-bottom: 8px;
+  }
+  .venue-sub-grid {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .venue-sub-chip {
+    padding: 8px 14px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border-default); background: var(--bg-elevated);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: var(--font-stack); transition: all 0.15s;
+  }
+  .venue-sub-chip:hover { border-color: var(--accent-primary); }
+  .venue-sub-chip.selected { border-color: var(--accent-primary); background: var(--accent-primary); color: white; }
+  .venue-sub-chip.unavailable { opacity: 0.3; cursor: not-allowed; pointer-events: none; text-decoration: line-through; }
+
+  /* ========== STEP TRANSITIONS ========== */
+  .step-content {
+    animation: stepFadeIn 0.25s ease-out;
+  }
+  @keyframes stepFadeIn {
+    from { opacity: 0; transform: translateX(12px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* ========== SHARED: TIME SLOT SELECTION ========== */
+  .date-picker {
+    display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto;
+    -webkit-overflow-scrolling: touch; padding-bottom: 4px;
+    position: sticky; top: 0; z-index: 5;
+    background: var(--bg-elevated); padding-top: 4px;
+  }
+  .date-chip {
+    padding: 10px 14px; border-radius: var(--radius-md);
+    border: 1.5px solid var(--border-default); background: var(--bg-elevated);
+    cursor: pointer; font-family: var(--font-stack);
+    text-align: center; flex-shrink: 0; transition: all 0.15s;
+    min-width: 70px;
+  }
+  .date-chip:hover { border-color: var(--accent-primary); }
+  .date-chip.selected { border-color: var(--accent-primary); background: var(--accent-subtle); }
+  .date-day { font-size: 11px; color: var(--text-tertiary); font-weight: 600; margin-bottom: 2px; }
+  .date-num { font-size: 16px; font-weight: 800; }
+  .date-slots { font-size: 10px; color: var(--accent-green); font-weight: 600; margin-top: 2px; }
+
+  .slot-label {
+    font-size: 12px; font-weight: 700; color: var(--text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 10px; margin-top: 4px;
+  }
+  .slot-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    margin-bottom: 16px;
+  }
+  .slot-chip {
+    padding: 10px 4px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border-default); background: var(--bg-elevated);
+    text-align: center; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; font-family: var(--font-stack);
+  }
+  .slot-chip:hover { border-color: var(--accent-primary); }
+  .slot-chip.selected { border-color: var(--accent-primary); background: var(--accent-primary); color: white; }
+  .slot-chip.unavailable {
+    opacity: 0.3; cursor: not-allowed; pointer-events: none;
+    text-decoration: line-through;
+  }
+  .slot-chip .slot-time { display: block; }
+  .slot-chip .slot-dur {
+    display: none; font-size: 10px; font-weight: 700; opacity: 0.85; margin-top: 1px;
+  }
+  .slot-chip.selected .slot-dur { display: block; }
+  .slot-chip.range-mid {
+    border-color: var(--accent-primary); background: var(--accent-subtle); color: var(--accent-primary);
+  }
+  .slot-chip.range-start {
+    border-color: var(--accent-primary); background: var(--accent-primary); color: white;
+  }
+  .slot-chip.range-end {
+    border-color: var(--accent-primary); background: var(--accent-primary); color: white;
+  }
+  .slot-chip.range-single {
+    border-color: var(--accent-primary); background: var(--accent-primary); color: white;
+  }
+
+  .slot-duration-label {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: var(--radius-full);
+    background: var(--accent-subtle); color: var(--accent-primary);
+    font-size: 12px; font-weight: 700; margin-top: 8px;
+  }
+
+  .slot-legend {
+    display: flex; gap: 16px; margin-top: 8px; font-size: 11px; color: var(--text-tertiary);
+  }
+  .slot-legend-item { display: flex; align-items: center; gap: 4px; }
+  .slot-legend-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .slot-legend-dot.available { background: var(--accent-primary); }
+  .slot-legend-dot.taken { background: var(--border-default); }
+
+  .no-slots-msg {
+    padding: 32px 16px; text-align: center;
+    background: #fff7ed; border-radius: var(--radius-md);
+    border: 1px solid #fed7aa; margin-top: 8px;
+  }
+  .no-slots-icon { font-size: 32px; margin-bottom: 10px; }
+  .no-slots-text { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px; }
+  .no-slots-action {
+    padding: 12px 24px; border-radius: var(--radius-full);
+    background: var(--accent-primary); color: white;
+    font-size: 14px; font-weight: 700; border: none; cursor: pointer;
+    font-family: var(--font-stack); transition: opacity 0.15s;
+  }
+  .no-slots-action:hover { opacity: 0.9; }
+  .no-slots-sub {
+    font-size: 12px; color: var(--text-tertiary); margin-top: 10px;
+    line-height: 1.4;
+  }
+
+  /* ========== SHARED: CONFIRM + MESSAGE ========== */
+  .confirm-summary {
+    background: var(--bg-secondary); border-radius: var(--radius-md);
+    padding: 16px; margin-bottom: 20px;
+  }
+  .confirm-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; font-size: 14px;
+  }
+  .confirm-row + .confirm-row { border-top: 1px solid var(--border-default); }
+  .confirm-label { color: var(--text-tertiary); font-weight: 600; }
+  .confirm-value { font-weight: 700; text-align: right; }
+
+  .message-area { margin-top: 0; }
+  .message-label {
+    font-size: 14px; font-weight: 700; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .message-ai-badge {
+    font-size: 10px; font-weight: 700; padding: 2px 8px;
+    background: var(--accent-primary);
+    color: white; border-radius: var(--radius-full);
+  }
+  .message-textarea {
+    width: 100%; min-height: 100px; padding: 14px;
+    border: 1.5px solid var(--border-default); border-radius: var(--radius-md);
+    font-family: var(--font-stack); font-size: 14px; line-height: 1.6;
+    resize: vertical; color: var(--text-primary); background: var(--bg-elevated);
+    transition: border-color 0.15s;
+  }
+  .message-textarea:focus { outline: none; border-color: var(--accent-primary); }
+  .message-hint {
+    font-size: 12px; color: var(--text-tertiary); margin-top: 6px;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  /* Sent confirmation */
+  .sent-confirm {
+    display: none; flex-direction: column; align-items: center;
+    justify-content: center; padding: 40px 20px; text-align: center;
+    height: 100%;
+  }
+  .sent-confirm.show { display: flex; animation: sentPop 0.4s ease-out; }
+  @keyframes sentPop {
+    0% { opacity: 0; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .sent-icon { font-size: 56px; margin-bottom: 16px; }
+  .sent-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+  .sent-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px; }
+  .sent-summary-card {
+    width: 100%; background: var(--bg-secondary); border-radius: var(--radius-md);
+    padding: 16px; text-align: left; margin-bottom: 24px;
+  }
+  .sent-btn {
+    padding: 14px 32px; border-radius: var(--radius-full);
+    background: var(--accent-primary); color: white;
+    font-size: 15px; font-weight: 700; border: none; cursor: pointer;
+    font-family: var(--font-stack);
+  }
+
+  /* ========== MEETING TARGET CARD ========== */
+  .target-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; background: var(--bg-secondary); border-radius: var(--radius-md);
+    margin-bottom: 20px;
+  }
+  .target-avatar {
+    width: 40px; height: 40px; border-radius: var(--radius-sm);
+    background: #dbeafe; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .target-name { font-size: 15px; font-weight: 700; }
+  .target-meta { font-size: 12px; color: var(--text-tertiary); }
+
+  /* ========== STEP CONTENT VISIBILITY ========== */
+  .step-content { display: none; }
+  .step-content.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ===================== VARIANT BAR ===================== -->
+<div class="variant-bar">
+  <span class="variant-label">MT-001</span>
+  <div class="variant-sep"></div>
+  <button class="variant-btn active" onclick="switchVariant('A')">A 바텀시트</button>
+  <div class="variant-sep"></div>
+  <button class="variant-btn" onclick="switchVariant('B')">B 풀스크린</button>
+  <div class="variant-sep"></div>
+  <button class="variant-btn" onclick="switchVariant('C')">C 컴팩트</button>
+  <div class="variant-sep"></div>
+  <div class="view-toggle">
+    <button class="view-toggle-btn" onclick="setPreview('mobile')">Mobile</button>
+    <button class="view-toggle-btn active" onclick="setPreview('desktop')">Desktop</button>
+  </div>
+</div>
+
+<!-- 글로벌 nav(app-bar + 드로어)는 nabi-nav.js가 .app-shell 상단에 주입 -->
+
+<!-- ===================== 단일 반응형 셸 ===================== -->
+<div class="app-shell">
+  <main class="app-main">
+    <div class="app-content" id="meeting-root">
+  <!-- Behind page: DV-002 기업 상세 (셸 배경) -->
+  <div class="behind-page" id="behindPage">
+    <div class="behind-header">
+      <div class="behind-back">← 기업 탐색 <span style="font-size:11px;color:var(--text-tertiary);font-weight:400;margin-left:4px;">(DV-002)</span></div>
+      <div class="behind-company">한화에어로스페이스</div>
+      <div class="behind-booth">부스 A-12 · 경기도 성남시</div>
+    </div>
+    <div class="behind-body">
+      <div class="behind-match">
+        <span class="behind-match-score">적합도 92%</span>
+      </div>
+      <div class="behind-section">
+        <div class="behind-section-title">AI 추천 이유</div>
+        <div class="behind-match-text">귀하가 관심 있는 항공 엔진 부품의 정밀 가공 기술과 한화에어로스페이스의 핵심 역량이 높은 시너지를 보입니다. 특히 티타늄 합금 가공 분야에서 국내 최고 수준의 기술력을 보유하고 있습니다.</div>
+      </div>
+      <div class="behind-section">
+        <div class="behind-section-title">전시 품목</div>
+        <div class="behind-keywords">
+          <span class="behind-keyword">항공 엔진 부품</span>
+          <span class="behind-keyword">정밀 가공</span>
+          <span class="behind-keyword">티타늄 합금</span>
+          <span class="behind-keyword">우주발사체</span>
+          <span class="behind-keyword">복합소재</span>
+        </div>
+      </div>
+      <div class="behind-section">
+        <div class="behind-section-title">회사 소개</div>
+        <div class="behind-section-text">항공, 우주, 방산 분야 글로벌 리더. 항공 엔진 부품 제조부터 우주발사체 개발까지 통합 솔루션을 제공합니다. 40년 이상의 정밀 가공 노하우와 국제 인증(AS9100, NADCAP)을 보유하고 있습니다.</div>
+      </div>
+      <div class="behind-section">
+        <div class="behind-section-title">차별점</div>
+        <div class="behind-section-text">티타늄 합금 5축 가공 분야 국내 유일의 특수 공정 인증 보유. 미 국방부 공급업체 등록. 연간 매출 2조원 이상의 안정적 경영 기반.</div>
+      </div>
+    </div>
+    <div class="behind-cta">
+      <button class="behind-cta-btn" onclick="openModal()">
+        📅 미팅 신청하기
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal Overlay -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+
+  <!-- ============ VARIANT A: BOTTOM SHEET ============ -->
+  <div class="sheet-modal" id="sheetModal">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-header-row">
+        <div class="sheet-title" id="sheetTitle">장소 선택</div>
+        <button class="sheet-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="sheet-steps">
+        <div class="sheet-step current" id="sheetStep1"></div>
+        <div class="sheet-step" id="sheetStep2"></div>
+        <div class="sheet-step" id="sheetStep3"></div>
+      </div>
+    </div>
+
+    <!-- Target card -->
+    <div class="sheet-target" style="padding: 16px 20px 0;">
+      <div class="target-card">
+        <div class="target-avatar">🏢</div>
+        <div>
+          <div class="target-name">한화에어로스페이스</div>
+          <div class="target-meta">부스 A-12 · 적합도 92%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sheet-body" id="sheetBody">
+      <!-- Step 1: Time -->
+      <div class="step-content active" id="sheetTime">
+        <div class="no-slots-msg" id="sheetNoSlots" style="display:none;">
+          <div class="no-slots-icon">📅</div>
+          <div class="no-slots-text">겹치는 빈 시간이 없습니다.<br>관심기업으로 등록하면 빈 시간이 생길 때 알려드릴게요.</div>
+          <button class="no-slots-action" onclick="closeModal()">⭐ 관심기업으로 등록</button>
+          <div class="no-slots-sub">상대방이 일정을 변경하면 다시 신청할 수 있습니다.</div>
+        </div>
+        <div class="date-picker">
+          <div class="date-chip selected" onclick="selectDate(this)">
+            <div class="date-day">화</div>
+            <div class="date-num">9/16</div>
+            <div class="date-slots">8 슬롯</div>
+          </div>
+          <div class="date-chip" onclick="selectDate(this)">
+            <div class="date-day">수</div>
+            <div class="date-num">9/17</div>
+            <div class="date-slots">5 슬롯</div>
+          </div>
+          <div class="date-chip" onclick="selectDate(this)">
+            <div class="date-day">목</div>
+            <div class="date-num">9/18</div>
+            <div class="date-slots">6 슬롯</div>
+          </div>
+          <div class="date-chip" onclick="selectDate(this)">
+            <div class="date-day">금</div>
+            <div class="date-num">9/19</div>
+            <div class="date-slots">3 슬롯</div>
+          </div>
+        </div>
+        <div class="slot-label">오전</div>
+        <div class="slot-grid">
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">09:00</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">09:30</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">10:00</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">10:30</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">11:00</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">11:30</span></div>
+        </div>
+        <div class="slot-label">오후</div>
+        <div class="slot-grid">
+          <div class="slot-chip unavailable"><span class="slot-time">12:00</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">12:30</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">13:00</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">13:30</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">14:00</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">14:30</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">15:00</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">15:30</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">16:00</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">16:30</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">17:00</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">17:30</span></div>
+        </div>
+        <div class="slot-legend">
+          <div class="slot-legend-item"><div class="slot-legend-dot available"></div> 양쪽 모두 가능</div>
+          <div class="slot-legend-item"><div class="slot-legend-dot taken"></div> 일정 겹침</div>
+        </div>
+      </div>
+
+      <!-- Step 2: Venue -->
+      <div class="step-content" id="sheetVenue">
+        <div style="margin-bottom:12px;">
+          <div style="font-size:13px;color:var(--text-tertiary);line-height:1.4;">선택한 시간에 이용 가능한 장소입니다.</div>
+        </div>
+        <div class="venue-grid">
+          <div class="venue-card" onclick="selectVenue(this, 'A')">
+            <div class="venue-icon booth">🏢</div>
+            <div class="venue-info">
+              <div class="venue-name">상대방 부스</div>
+              <div class="venue-desc">A-12 · 한화에어로스페이스 부스에서 직접 미팅</div>
+            </div>
+            <span class="venue-avail open">가능</span>
+            <div class="venue-check"></div>
+          </div>
+
+          <div class="venue-card" onclick="selectVenue(this, 'A')">
+            <div class="venue-icon matching">🤝</div>
+            <div class="venue-info">
+              <div class="venue-name">비즈매칭존 테이블</div>
+              <div class="venue-desc">2층 비즈매칭존 · 주최측 지정 테이블</div>
+            </div>
+            <span class="venue-avail open">가능</span>
+            <div class="venue-check"></div>
+          </div>
+          <div class="venue-sub">
+            <div class="venue-sub-label">테이블 선택</div>
+            <div class="venue-sub-grid">
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'A')">T-01</div>
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'A')">T-02</div>
+              <div class="venue-sub-chip unavailable">T-03</div>
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'A')">T-04</div>
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'A')">T-05</div>
+              <div class="venue-sub-chip unavailable">T-06</div>
+            </div>
+          </div>
+
+          <div class="venue-card" onclick="selectVenue(this, 'A')">
+            <div class="venue-icon business">🚪</div>
+            <div class="venue-info">
+              <div class="venue-name">비즈니스 룸</div>
+              <div class="venue-desc">3층 프라이빗 회의실 · 사전 예약 필요</div>
+            </div>
+            <span class="venue-avail limited">잔여 2석</span>
+            <div class="venue-check"></div>
+          </div>
+          <div class="venue-sub">
+            <div class="venue-sub-label">룸 선택</div>
+            <div class="venue-sub-grid">
+              <div class="venue-sub-chip unavailable">Room A</div>
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'A')">Room B</div>
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'A')">Room C</div>
+              <div class="venue-sub-chip unavailable">Room D</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Confirm + Message -->
+      <div class="step-content" id="sheetConfirm">
+        <div class="confirm-summary">
+          <div class="confirm-row">
+            <span class="confirm-label">일시</span>
+            <span class="confirm-value" id="confirmTimeA">-</span>
+          </div>
+          <div class="confirm-row">
+            <span class="confirm-label">장소</span>
+            <span class="confirm-value" id="confirmVenueA">-</span>
+          </div>
+        </div>
+        <div class="message-area">
+          <div class="message-label">
+            미팅 메시지
+            <span class="message-ai-badge">AI 초안</span>
+          </div>
+          <textarea class="message-textarea">안녕하세요, 한화에어로스페이스 담당자님.
+
+저희는 항공 엔진 부품의 정밀 가공 기술에 큰 관심이 있으며, 특히 티타늄 합금 가공 분야에서 귀사의 기술력에 대해 더 자세히 알고 싶습니다.
+
+DX Korea에서 직접 뵙고 이야기 나눌 수 있기를 기대합니다.</textarea>
+          <div class="message-hint">✨ 프로필 기반으로 자동 생성된 메시지입니다. 자유롭게 수정하세요.</div>
+        </div>
+      </div>
+
+      <!-- Sent confirmation -->
+      <div class="sent-confirm" id="sheetSent">
+        <div class="sent-icon">✅</div>
+        <div class="sent-title">미팅을 신청했습니다!</div>
+        <div class="sent-desc">한화에어로스페이스에 미팅 요청을 보냈습니다.<br>상대방이 수락하면 알림을 보내드릴게요.</div>
+        <div class="sent-summary-card">
+          <div class="confirm-row">
+            <span class="confirm-label">장소</span>
+            <span class="confirm-value sent-venue-a">-</span>
+          </div>
+          <div class="confirm-row">
+            <span class="confirm-label">일시</span>
+            <span class="confirm-value sent-datetime-a">-</span>
+          </div>
+          <div class="confirm-row">
+            <span class="confirm-label">상태</span>
+            <span class="confirm-value" style="color:var(--accent-amber)">⏳ 대기 중</span>
+          </div>
+        </div>
+        <button class="sent-btn" onclick="closeModal()">내 미팅에서 확인</button>
+      </div>
+    </div>
+
+    <div class="sheet-footer" id="sheetFooter">
+      <button class="sheet-btn sheet-btn-secondary" id="sheetBack" onclick="sheetPrev()" style="display:none">이전</button>
+      <button class="sheet-btn sheet-btn-primary" id="sheetNext" onclick="sheetNext()" disabled>다음</button>
+    </div>
+  </div>
+
+  <!-- ============ VARIANT B: FULLSCREEN ============ -->
+  <div class="full-modal" id="fullModal">
+    <div class="full-header">
+      <div class="full-header-row">
+        <button class="full-header-back" id="fullBack" onclick="fullPrev()">← 뒤로</button>
+        <span class="full-header-step" id="fullStepLabel">1 / 3</span>
+      </div>
+      <div class="full-title">미팅 신청</div>
+      <div class="full-subtitle">한화에어로스페이스 · 부스 A-12</div>
+      <div class="full-tabs">
+        <button class="full-tab active" id="fullTab1" onclick="fullGoStep(1)">시간</button>
+        <button class="full-tab" id="fullTab2" onclick="fullGoStep(2)" disabled>장소</button>
+        <button class="full-tab" id="fullTab3" onclick="fullGoStep(3)" disabled>확인</button>
+      </div>
+    </div>
+
+    <div class="full-body" id="fullBody">
+      <!-- Step 1: Time -->
+      <div class="step-content active" id="fullTime">
+        <div style="margin-bottom: 12px;">
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px;">시간을 선택하세요</div>
+          <div style="font-size:13px;color:var(--text-tertiary);">양쪽 모두 가능한 슬롯만 표시됩니다. 연속 선택 가능.</div>
+        </div>
+        <div class="date-picker">
+          <div class="date-chip selected" onclick="selectDate(this)">
+            <div class="date-day">화</div>
+            <div class="date-num">9/16</div>
+            <div class="date-slots">8 슬롯</div>
+          </div>
+          <div class="date-chip" onclick="selectDate(this)">
+            <div class="date-day">수</div>
+            <div class="date-num">9/17</div>
+            <div class="date-slots">5 슬롯</div>
+          </div>
+          <div class="date-chip" onclick="selectDate(this)">
+            <div class="date-day">목</div>
+            <div class="date-num">9/18</div>
+            <div class="date-slots">6 슬롯</div>
+          </div>
+          <div class="date-chip" onclick="selectDate(this)">
+            <div class="date-day">금</div>
+            <div class="date-num">9/19</div>
+            <div class="date-slots">3 슬롯</div>
+          </div>
+        </div>
+        <div class="slot-label">오전</div>
+        <div class="slot-grid">
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">09:00</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">09:30</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">10:00</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">10:30</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">11:00</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">11:30</span></div>
+        </div>
+        <div class="slot-label">오후</div>
+        <div class="slot-grid">
+          <div class="slot-chip unavailable"><span class="slot-time">12:00</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">12:30</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">13:00</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">13:30</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">14:00</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">14:30</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">15:00</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">15:30</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">16:00</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">16:30</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">17:00</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">17:30</span></div>
+        </div>
+        <div class="slot-legend">
+          <div class="slot-legend-item"><div class="slot-legend-dot available"></div> 양쪽 모두 가능</div>
+          <div class="slot-legend-item"><div class="slot-legend-dot taken"></div> 일정 겹침</div>
+        </div>
+      </div>
+
+      <!-- Step 2: Venue -->
+      <div class="step-content" id="fullVenue">
+        <div style="margin-bottom: 16px;">
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px;">미팅 장소를 선택하세요</div>
+          <div style="font-size:13px;color:var(--text-tertiary);">선택한 시간에 이용 가능한 장소입니다.</div>
+        </div>
+        <div class="venue-grid">
+          <div class="venue-card" onclick="selectVenue(this, 'B')">
+            <div class="venue-icon booth">🏢</div>
+            <div class="venue-info">
+              <div class="venue-name">상대방 부스</div>
+              <div class="venue-desc">A-12 · 한화에어로스페이스 부스에서 직접 미팅</div>
+            </div>
+            <span class="venue-avail open">가능</span>
+            <div class="venue-check"></div>
+          </div>
+
+          <div class="venue-card" onclick="selectVenue(this, 'B')">
+            <div class="venue-icon matching">🤝</div>
+            <div class="venue-info">
+              <div class="venue-name">비즈매칭존 테이블</div>
+              <div class="venue-desc">2층 비즈매칭존 · 주최측 지정 테이블</div>
+            </div>
+            <span class="venue-avail open">가능</span>
+            <div class="venue-check"></div>
+          </div>
+          <div class="venue-sub">
+            <div class="venue-sub-label">테이블 선택</div>
+            <div class="venue-sub-grid">
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'B')">T-01</div>
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'B')">T-02</div>
+              <div class="venue-sub-chip unavailable">T-03</div>
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'B')">T-04</div>
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'B')">T-05</div>
+              <div class="venue-sub-chip unavailable">T-06</div>
+            </div>
+          </div>
+
+          <div class="venue-card" onclick="selectVenue(this, 'B')">
+            <div class="venue-icon business">🚪</div>
+            <div class="venue-info">
+              <div class="venue-name">비즈니스 룸</div>
+              <div class="venue-desc">3층 프라이빗 회의실 · 사전 예약 필요</div>
+            </div>
+            <span class="venue-avail limited">잔여 2석</span>
+            <div class="venue-check"></div>
+          </div>
+          <div class="venue-sub">
+            <div class="venue-sub-label">룸 선택</div>
+            <div class="venue-sub-grid">
+              <div class="venue-sub-chip unavailable">Room A</div>
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'B')">Room B</div>
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'B')">Room C</div>
+              <div class="venue-sub-chip unavailable">Room D</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Confirm -->
+      <div class="step-content" id="fullConfirm">
+        <div style="margin-bottom: 16px;">
+          <div style="font-size:15px;font-weight:700;margin-bottom:4px;">미팅 내용을 확인하세요</div>
+          <div style="font-size:13px;color:var(--text-tertiary);">메시지를 수정하거나 그대로 보낼 수 있습니다.</div>
+        </div>
+        <div class="confirm-summary">
+          <div class="confirm-row">
+            <span class="confirm-label">상대방</span>
+            <span class="confirm-value">한화에어로스페이스</span>
+          </div>
+          <div class="confirm-row">
+            <span class="confirm-label">일시</span>
+            <span class="confirm-value" id="confirmTimeB">-</span>
+          </div>
+          <div class="confirm-row">
+            <span class="confirm-label">장소</span>
+            <span class="confirm-value" id="confirmVenueB">-</span>
+          </div>
+        </div>
+        <div class="message-area">
+          <div class="message-label">
+            미팅 메시지
+            <span class="message-ai-badge">AI 초안</span>
+          </div>
+          <textarea class="message-textarea">안녕하세요, 한화에어로스페이스 담당자님.
+
+저희는 항공 엔진 부품의 정밀 가공 기술에 큰 관심이 있으며, 특히 티타늄 합금 가공 분야에서 귀사의 기술력에 대해 더 자세히 알고 싶습니다.
+
+DX Korea에서 직접 뵙고 이야기 나눌 수 있기를 기대합니다.</textarea>
+          <div class="message-hint">✨ 프로필 기반으로 자동 생성된 메시지입니다. 자유롭게 수정하세요.</div>
+        </div>
+      </div>
+
+      <!-- Sent -->
+      <div class="sent-confirm" id="fullSent">
+        <div class="sent-icon">✅</div>
+        <div class="sent-title">미팅을 신청했습니다!</div>
+        <div class="sent-desc">한화에어로스페이스에 미팅 요청을 보냈습니다.<br>상대방이 수락하면 알림을 보내드릴게요.</div>
+        <div class="sent-summary-card">
+          <div class="confirm-row">
+            <span class="confirm-label">장소</span>
+            <span class="confirm-value sent-venue-b">-</span>
+          </div>
+          <div class="confirm-row">
+            <span class="confirm-label">일시</span>
+            <span class="confirm-value sent-datetime-b">-</span>
+          </div>
+          <div class="confirm-row">
+            <span class="confirm-label">상태</span>
+            <span class="confirm-value" style="color:var(--accent-amber)">⏳ 대기 중</span>
+          </div>
+        </div>
+        <button class="sent-btn" onclick="closeModal()">내 미팅에서 확인</button>
+      </div>
+    </div>
+
+    <div class="full-footer" id="fullFooter">
+      <button class="sheet-btn sheet-btn-secondary" id="fullBackBtn" onclick="fullPrev()" style="display:none">이전</button>
+      <button class="sheet-btn sheet-btn-primary" id="fullNextBtn" onclick="fullNext()" disabled>다음</button>
+    </div>
+  </div>
+
+  <!-- ============ VARIANT C: COMPACT SINGLE SCROLL ============ -->
+  <div class="compact-modal" id="compactModal">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-header-row">
+        <div class="sheet-title">미팅 신청</div>
+        <button class="sheet-close" onclick="closeModal()">✕</button>
+      </div>
+    </div>
+
+    <div class="compact-target" style="padding: 12px 20px 0;">
+      <div class="target-card">
+        <div class="target-avatar">🏢</div>
+        <div>
+          <div class="target-name">한화에어로스페이스</div>
+          <div class="target-meta">부스 A-12 · 적합도 92%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="compact-body" id="compactBody">
+      <!-- Section 1: Time -->
+      <div class="compact-section">
+        <div class="compact-section-title">
+          <span class="compact-section-num">1</span>
+          시간 선택
+        </div>
+        <div class="date-picker">
+          <div class="date-chip selected" onclick="selectDate(this)">
+            <div class="date-day">화</div>
+            <div class="date-num">9/16</div>
+            <div class="date-slots">8 슬롯</div>
+          </div>
+          <div class="date-chip" onclick="selectDate(this)">
+            <div class="date-day">수</div>
+            <div class="date-num">9/17</div>
+            <div class="date-slots">5 슬롯</div>
+          </div>
+          <div class="date-chip" onclick="selectDate(this)">
+            <div class="date-day">목</div>
+            <div class="date-num">9/18</div>
+            <div class="date-slots">6 슬롯</div>
+          </div>
+          <div class="date-chip" onclick="selectDate(this)">
+            <div class="date-day">금</div>
+            <div class="date-num">9/19</div>
+            <div class="date-slots">3 슬롯</div>
+          </div>
+        </div>
+        <div class="slot-label">오전</div>
+        <div class="slot-grid">
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">09:00</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">09:30</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">10:00</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">10:30</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">11:00</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">11:30</span></div>
+        </div>
+        <div class="slot-label">오후</div>
+        <div class="slot-grid">
+          <div class="slot-chip unavailable"><span class="slot-time">12:00</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">12:30</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">13:00</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">13:30</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">14:00</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">14:30</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">15:00</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">15:30</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">16:00</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">16:30</span></div>
+          <div class="slot-chip unavailable"><span class="slot-time">17:00</span></div>
+          <div class="slot-chip" onclick="selectSlot(this)"><span class="slot-time">17:30</span></div>
+        </div>
+        <div class="slot-legend">
+          <div class="slot-legend-item"><div class="slot-legend-dot available"></div> 양쪽 모두 가능</div>
+          <div class="slot-legend-item"><div class="slot-legend-dot taken"></div> 일정 겹침</div>
+        </div>
+      </div>
+
+      <!-- Section 2: Venue -->
+      <div class="compact-section">
+        <div class="compact-section-title">
+          <span class="compact-section-num">2</span>
+          장소 선택
+        </div>
+        <div class="venue-grid">
+          <div class="venue-card" onclick="selectVenue(this, 'C')">
+            <div class="venue-icon booth">🏢</div>
+            <div class="venue-info">
+              <div class="venue-name">상대방 부스</div>
+              <div class="venue-desc">A-12</div>
+            </div>
+            <span class="venue-avail open">가능</span>
+            <div class="venue-check"></div>
+          </div>
+
+          <div class="venue-card" onclick="selectVenue(this, 'C')">
+            <div class="venue-icon matching">🤝</div>
+            <div class="venue-info">
+              <div class="venue-name">비즈매칭존</div>
+              <div class="venue-desc">2층</div>
+            </div>
+            <span class="venue-avail open">가능</span>
+            <div class="venue-check"></div>
+          </div>
+          <div class="venue-sub">
+            <div class="venue-sub-label">테이블 선택</div>
+            <div class="venue-sub-grid">
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'C')">T-01</div>
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'C')">T-02</div>
+              <div class="venue-sub-chip unavailable">T-03</div>
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'C')">T-04</div>
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'C')">T-05</div>
+              <div class="venue-sub-chip unavailable">T-06</div>
+            </div>
+          </div>
+
+          <div class="venue-card" onclick="selectVenue(this, 'C')">
+            <div class="venue-icon business">🚪</div>
+            <div class="venue-info">
+              <div class="venue-name">비즈니스 룸</div>
+              <div class="venue-desc">3층</div>
+            </div>
+            <span class="venue-avail limited">잔여 2</span>
+            <div class="venue-check"></div>
+          </div>
+          <div class="venue-sub">
+            <div class="venue-sub-label">룸 선택</div>
+            <div class="venue-sub-grid">
+              <div class="venue-sub-chip unavailable">Room A</div>
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'C')">Room B</div>
+              <div class="venue-sub-chip" onclick="selectSubVenue(this, 'C')">Room C</div>
+              <div class="venue-sub-chip unavailable">Room D</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Message -->
+      <div class="compact-section">
+        <div class="compact-section-title">
+          <span class="compact-section-num">3</span>
+          메시지
+        </div>
+        <div class="message-area">
+          <div class="message-label">
+            <span class="message-ai-badge">AI 초안</span>
+          </div>
+          <textarea class="message-textarea" style="min-height:80px;">안녕하세요, 한화에어로스페이스 담당자님.
+
+저희는 항공 엔진 부품의 정밀 가공 기술에 큰 관심이 있으며, 특히 티타늄 합금 가공 분야에서 귀사의 기술력에 대해 더 자세히 알고 싶습니다.
+
+DX Korea에서 직접 뵙고 이야기 나눌 수 있기를 기대합니다.</textarea>
+          <div class="message-hint">✨ 프로필 기반 자동 생성. 자유롭게 수정하세요.</div>
+        </div>
+      </div>
+
+      <!-- Sent confirmation for C -->
+      <div class="sent-confirm" id="compactSent">
+        <div class="sent-icon">✅</div>
+        <div class="sent-title">미팅을 신청했습니다!</div>
+        <div class="sent-desc">한화에어로스페이스에 미팅 요청을 보냈습니다.<br>상대방이 수락하면 알림을 보내드릴게요.</div>
+        <div class="sent-summary-card">
+          <div class="confirm-row">
+            <span class="confirm-label">장소</span>
+            <span class="confirm-value sent-venue-c">-</span>
+          </div>
+          <div class="confirm-row">
+            <span class="confirm-label">일시</span>
+            <span class="confirm-value sent-datetime-c">-</span>
+          </div>
+          <div class="confirm-row">
+            <span class="confirm-label">상태</span>
+            <span class="confirm-value" style="color:var(--accent-amber)">⏳ 대기 중</span>
+          </div>
+        </div>
+        <button class="sent-btn" onclick="closeModal()">내 미팅에서 확인</button>
+      </div>
+    </div>
+
+    <div class="sheet-footer" id="compactFooter">
+      <button class="sheet-btn sheet-btn-primary" id="compactSubmit" onclick="compactSubmit()" disabled style="flex:1">
+        미팅 신청하기
+      </button>
+    </div>
+  </div>
+    </div><!-- /.app-content#meeting-root -->
+  </main>
+</div><!-- /.app-shell -->
+
+<script>
+// ============ STATE ============
+let currentVariant = 'A';
+let sheetStep = 1;
+let fullStep = 1;
+let venueSelectedA = false;
+let venueSelectedB = false;
+let venueSelectedC = false;
+let slotSelectedA = false;
+let slotSelectedB = false;
+let slotSelectedC = false;
+
+// ============ VARIANT SWITCHING ============
+function switchVariant(v) {
+  currentVariant = v;
+  document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  closeModal();
+  resetAll();
+}
+
+// 개발용 미리보기 토글 — 셸 폭만 제약(컨테이너 쿼리가 reflow). 별도 DOM 이동 없음.
+function setPreview(mode) {
+  document.body.classList.toggle('preview-mobile', mode === 'mobile');
+  document.querySelectorAll('.view-toggle-btn').forEach(function (b) {
+    b.classList.toggle('active', b.textContent.trim().toLowerCase().indexOf(mode) !== -1);
+  });
+}
+
+// ============ MODAL OPEN / CLOSE ============
+// transform 은 CSS 클래스(.show)가 담당 — 좁음=슬라이드업, 넓음=중앙 다이얼로그.
+// (인라인 style.transform 을 쓰면 데스크톱 중앙 정렬 transform 을 덮어써 깨진다)
+function openModal() {
+  document.getElementById('modalOverlay').classList.add('show');
+  const id = currentVariant === 'A' ? 'sheetModal' : currentVariant === 'B' ? 'fullModal' : 'compactModal';
+  document.getElementById(id).classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  ['sheetModal', 'fullModal', 'compactModal'].forEach(id => {
+    document.getElementById(id).classList.remove('show');
+  });
+  // Reset after animation
+  setTimeout(() => resetAll(), 400);
+}
+
+function resetAll() {
+  sheetStep = 1;
+  fullStep = 1;
+  venueSelectedA = venueSelectedB = venueSelectedC = false;
+  slotSelectedA = slotSelectedB = slotSelectedC = false;
+
+  // Reset sheet
+  updateSheetStep();
+  selectedSlots = { A: new Set(), B: new Set(), C: new Set() };
+  selectedSubVenue = {};
+  document.querySelectorAll('.venue-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.venue-sub-chip').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.slot-chip:not(.unavailable)').forEach(c => {
+    c.classList.remove('selected', 'range-start', 'range-mid', 'range-end', 'range-single');
+  });
+  document.querySelectorAll('.slot-duration-label').forEach(el => el.remove());
+  document.getElementById('sheetNext').disabled = true;
+  document.getElementById('fullNextBtn').disabled = true;
+  document.getElementById('compactSubmit').disabled = true;
+
+  // Hide sent confirmations
+  document.querySelectorAll('.sent-confirm').forEach(s => s.classList.remove('show'));
+  document.getElementById('sheetFooter').style.display = 'flex';
+  document.getElementById('fullFooter').style.display = 'flex';
+  document.getElementById('compactFooter').style.display = 'flex';
+
+  // Reset full tabs
+  document.querySelectorAll('.full-tab').forEach((t, i) => {
+    t.classList.remove('active', 'done');
+    if (i === 0) t.classList.add('active');
+    if (i > 0) t.disabled = true;
+  });
+
+  // Restore hidden elements after submit
+  const sheetHeader = document.querySelector('#sheetModal .sheet-header');
+  if (sheetHeader) sheetHeader.style.display = '';
+  const sheetTarget = document.querySelector('#sheetModal .sheet-target');
+  if (sheetTarget) sheetTarget.style.display = '';
+  const fullHeader = document.querySelector('#fullModal .full-header');
+  if (fullHeader) fullHeader.style.display = '';
+  const compactTarget = document.querySelector('#compactModal .compact-target');
+  if (compactTarget) compactTarget.style.display = '';
+  document.querySelectorAll('#compactBody .compact-section').forEach(s => s.style.display = '');
+
+  // Show step contents
+  updateFullStep();
+}
+
+// ============ SELECTION STATE ============
+let selectedVenueName = {};  // per-variant
+let selectedSubVenue = {};   // per-variant (room/table name)
+let selectedDate = {};
+let selectedTime = {};
+
+// ============ VENUE SELECTION ============
+function hasSubVenue(venueCard) {
+  return venueCard.nextElementSibling && venueCard.nextElementSibling.classList.contains('venue-sub');
+}
+
+function selectVenue(el, variant) {
+  const parent = el.closest('.venue-grid');
+  parent.querySelectorAll('.venue-card').forEach(c => c.classList.remove('selected'));
+  // Clear all sub-venue selections in this grid
+  parent.querySelectorAll('.venue-sub-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+
+  const name = el.querySelector('.venue-name').textContent;
+  const desc = el.querySelector('.venue-desc').textContent;
+  selectedSubVenue[variant] = null;
+
+  const needsSub = hasSubVenue(el);
+
+  if (needsSub) {
+    // Don't mark as complete yet -- need sub-venue selection
+    selectedVenueName[variant] = name;
+    setVenueSelected(variant, false);
+  } else {
+    // Booth -- no sub-selection needed
+    selectedVenueName[variant] = name + ' (' + desc.split('·')[0].trim() + ')';
+    setVenueSelected(variant, true);
+  }
+}
+
+function selectSubVenue(el, variant) {
+  const subGrid = el.closest('.venue-sub-grid');
+  subGrid.querySelectorAll('.venue-sub-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+
+  const subName = el.textContent;
+  selectedSubVenue[variant] = subName;
+  selectedVenueName[variant] = selectedVenueName[variant].split(' (')[0] + ' (' + subName + ')';
+  setVenueSelected(variant, true);
+}
+
+function setVenueSelected(variant, isComplete) {
+  if (variant === 'A') {
+    venueSelectedA = isComplete;
+    if (sheetStep === 2) document.getElementById('sheetNext').disabled = !isComplete;
+  } else if (variant === 'B') {
+    venueSelectedB = isComplete;
+    if (fullStep === 2) document.getElementById('fullNextBtn').disabled = !isComplete;
+  } else {
+    venueSelectedC = isComplete;
+    checkCompactReady();
+  }
+}
+
+// ============ DATE SELECTION ============
+function selectDate(el) {
+  const picker = el.closest('.date-picker');
+  picker.querySelectorAll('.date-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+
+  const day = el.querySelector('.date-day').textContent;
+  const num = el.querySelector('.date-num').textContent;
+  const variant = currentVariant;
+  selectedDate[variant] = num + ' (' + day + ')';
+}
+
+// ============ SLOT SELECTION (consecutive multi-select) ============
+// selectedSlots[variant] = Set of time strings, e.g. {"10:00","10:30"}
+let selectedSlots = { A: new Set(), B: new Set(), C: new Set() };
+
+function getTimeMinutes(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+function minutesToTime(min) {
+  return String(Math.floor(min/60)).padStart(2,'0') + ':' + String(min%60).padStart(2,'0');
+}
+
+function getAllSlotChips(container) {
+  // Get all slot chips in order (across both AM/PM grids)
+  return Array.from(container.querySelectorAll('.slot-chip:not(.unavailable)'));
+}
+
+function getSlotOrder(container) {
+  // Returns ordered array of time strings for available slots
+  return getAllSlotChips(container).map(c => c.querySelector('.slot-time').textContent);
+}
+
+function areConsecutive(timeSet, newTime, container) {
+  if (timeSet.size === 0) return true;
+  const ordered = getSlotOrder(container);
+  const allTimes = [...timeSet, newTime].sort((a,b) => getTimeMinutes(a) - getTimeMinutes(b));
+  // Check that adding newTime keeps all selected times consecutive (30min apart each)
+  for (let i = 1; i < allTimes.length; i++) {
+    if (getTimeMinutes(allTimes[i]) - getTimeMinutes(allTimes[i-1]) !== 30) return false;
+    // Also check no unavailable slot sits between them
+  }
+  return true;
+}
+
+function isEdgeSlot(timeSet, time) {
+  const sorted = [...timeSet].sort((a,b) => getTimeMinutes(a) - getTimeMinutes(b));
+  return time === sorted[0] || time === sorted[sorted.length - 1];
+}
+
+function selectSlot(el) {
+  const v = currentVariant;
+  const container = el.closest('.step-content, .compact-section');
+  const time = el.querySelector('.slot-time').textContent;
+  const set = selectedSlots[v];
+
+  if (set.has(time)) {
+    // Deselect: only allow removing from edges
+    if (isEdgeSlot(set, time)) {
+      set.delete(time);
+    } else {
+      return; // can't deselect middle slots
+    }
+  } else {
+    if (areConsecutive(set, time, container)) {
+      set.add(time);
+    } else {
+      // Not consecutive: start new selection
+      set.clear();
+      set.add(time);
+    }
+  }
+
+  // Update visual
+  renderSlotSelection(container, v);
+
+  // Update time string
+  if (set.size > 0) {
+    const sorted = [...set].sort((a,b) => getTimeMinutes(a) - getTimeMinutes(b));
+    const startTime = sorted[0];
+    const lastSlot = sorted[sorted.length - 1];
+    const endMin = getTimeMinutes(lastSlot) + 30;
+    const endStr = minutesToTime(endMin);
+    const durationMin = set.size * 30;
+    const durLabel = durationMin >= 60
+      ? (durationMin % 60 === 0 ? `${durationMin/60}시간` : `${Math.floor(durationMin/60)}시간 ${durationMin%60}분`)
+      : `${durationMin}분`;
+    selectedTime[v] = startTime + ' - ' + endStr + ' (' + durLabel + ')';
+  }
+
+  const hasSelection = set.size > 0;
+  if (v === 'A') {
+    slotSelectedA = hasSelection;
+    document.getElementById('sheetNext').disabled = !hasSelection;
+  } else if (v === 'B') {
+    slotSelectedB = hasSelection;
+    document.getElementById('fullNextBtn').disabled = !hasSelection;
+  } else {
+    slotSelectedC = hasSelection;
+    checkCompactReady();
+  }
+}
+
+function renderSlotSelection(container, v) {
+  const set = selectedSlots[v];
+  const chips = getAllSlotChips(container);
+  const sorted = [...set].sort((a,b) => getTimeMinutes(a) - getTimeMinutes(b));
+
+  chips.forEach(chip => {
+    const t = chip.querySelector('.slot-time').textContent;
+    chip.classList.remove('selected', 'range-start', 'range-mid', 'range-end', 'range-single');
+    if (!set.has(t)) return;
+
+    if (sorted.length === 1) {
+      chip.classList.add('selected', 'range-single');
+    } else if (t === sorted[0]) {
+      chip.classList.add('selected', 'range-start');
+    } else if (t === sorted[sorted.length - 1]) {
+      chip.classList.add('selected', 'range-end');
+    } else {
+      chip.classList.add('selected', 'range-mid');
+    }
+  });
+
+  // Show duration label
+  let durEl = container.querySelector('.slot-duration-label');
+  if (sorted.length > 1) {
+    const durationMin = sorted.length * 30;
+    const durLabel = durationMin >= 60
+      ? (durationMin % 60 === 0 ? `${durationMin/60}시간` : `${Math.floor(durationMin/60)}시간 ${durationMin%60}분`)
+      : `${durationMin}분`;
+    const startTime = sorted[0];
+    const endMin = getTimeMinutes(sorted[sorted.length - 1]) + 30;
+    const endStr = minutesToTime(endMin);
+    if (!durEl) {
+      durEl = document.createElement('div');
+      durEl.className = 'slot-duration-label';
+      const legend = container.querySelector('.slot-legend');
+      if (legend) container.insertBefore(durEl, legend);
+      else container.appendChild(durEl);
+    }
+    durEl.textContent = '⏱ ' + startTime + ' - ' + endStr + ' · ' + durLabel;
+    durEl.style.display = '';
+  } else if (durEl) {
+    durEl.style.display = 'none';
+  }
+}
+
+function updateConfirmValues(variant) {
+  const suffix = variant === 'A' ? 'A' : 'B';
+  const venueEl = document.getElementById('confirmVenue' + suffix);
+  const timeEl = document.getElementById('confirmTime' + suffix);
+  if (venueEl && selectedVenueName[variant]) venueEl.textContent = selectedVenueName[variant];
+  if (timeEl && selectedDate[variant] && selectedTime[variant]) {
+    timeEl.textContent = selectedDate[variant] + ' ' + selectedTime[variant];
+  }
+}
+
+function updateSentValues(variant) {
+  const key = variant.toLowerCase();
+  const venueEl = document.querySelector('.sent-venue-' + key);
+  const dtEl = document.querySelector('.sent-datetime-' + key);
+  if (venueEl && selectedVenueName[variant]) venueEl.textContent = selectedVenueName[variant];
+  if (dtEl && selectedDate[variant] && selectedTime[variant]) {
+    dtEl.textContent = selectedDate[variant] + ' ' + selectedTime[variant];
+  }
+}
+
+// ============ VARIANT A: SHEET NAVIGATION ============
+function updateSheetStep() {
+  const titles = ['시간 선택', '장소 선택', '확인 및 전송'];
+  const steps = ['sheetStep1', 'sheetStep2', 'sheetStep3'];
+  const contents = ['sheetTime', 'sheetVenue', 'sheetConfirm'];
+
+  document.getElementById('sheetTitle').textContent = titles[sheetStep - 1];
+
+  steps.forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('current', 'done');
+    if (i < sheetStep - 1) el.classList.add('done');
+    if (i === sheetStep - 1) el.classList.add('current');
+  });
+
+  contents.forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.classList.toggle('active', i === sheetStep - 1);
+  });
+
+  document.getElementById('sheetBack').style.display = sheetStep > 1 ? 'block' : 'none';
+  document.getElementById('sheetNext').textContent = sheetStep === 3 ? '미팅 신청하기' : '다음';
+
+  // Enable/disable next based on selection state
+  if (sheetStep === 1) document.getElementById('sheetNext').disabled = !slotSelectedA;
+  else if (sheetStep === 2) document.getElementById('sheetNext').disabled = !venueSelectedA;
+  else document.getElementById('sheetNext').disabled = false;
+}
+
+function sheetNext() {
+  if (sheetStep < 3) {
+    sheetStep++;
+    if (sheetStep === 3) updateConfirmValues('A');
+    updateSheetStep();
+  } else {
+    // Submit
+    updateSentValues('A');
+    document.querySelectorAll('#sheetBody .step-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('sheetSent').classList.add('show');
+    document.getElementById('sheetFooter').style.display = 'none';
+    document.querySelector('#sheetModal .sheet-header').style.display = 'none';
+    document.querySelector('#sheetModal .sheet-target').style.display = 'none';
+  }
+}
+
+function sheetPrev() {
+  if (sheetStep > 1) {
+    sheetStep--;
+    updateSheetStep();
+  }
+}
+
+// ============ VARIANT B: FULL NAVIGATION ============
+function updateFullStep() {
+  const contents = ['fullTime', 'fullVenue', 'fullConfirm'];
+  const tabs = ['fullTab1', 'fullTab2', 'fullTab3'];
+
+  contents.forEach((id, i) => {
+    document.getElementById(id).classList.toggle('active', i === fullStep - 1);
+  });
+
+  tabs.forEach((id, i) => {
+    const tab = document.getElementById(id);
+    tab.classList.remove('active', 'done');
+    if (i < fullStep - 1) { tab.classList.add('done'); tab.disabled = false; }
+    if (i === fullStep - 1) { tab.classList.add('active'); tab.disabled = false; }
+    if (i > fullStep - 1 && i > 0) tab.disabled = true;
+  });
+
+  document.getElementById('fullStepLabel').textContent = `${fullStep} / 3`;
+  document.getElementById('fullBackBtn').style.display = fullStep > 1 ? 'block' : 'none';
+  document.getElementById('fullBack').textContent = fullStep === 1 ? '← 닫기' : '← 이전';
+  document.getElementById('fullNextBtn').textContent = fullStep === 3 ? '미팅 신청하기' : '다음';
+
+  if (fullStep === 1) document.getElementById('fullNextBtn').disabled = !slotSelectedB;
+  else if (fullStep === 2) document.getElementById('fullNextBtn').disabled = !venueSelectedB;
+  else document.getElementById('fullNextBtn').disabled = false;
+}
+
+function fullNext() {
+  if (fullStep < 3) {
+    fullStep++;
+    if (fullStep === 3) updateConfirmValues('B');
+    updateFullStep();
+  } else {
+    updateSentValues('B');
+    document.querySelectorAll('#fullBody .step-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('fullSent').classList.add('show');
+    document.getElementById('fullFooter').style.display = 'none';
+    document.querySelector('#fullModal .full-header').style.display = 'none';
+  }
+}
+
+function fullPrev() {
+  if (fullStep > 1) {
+    fullStep--;
+    updateFullStep();
+  } else {
+    closeModal();
+  }
+}
+
+function fullGoStep(step) {
+  if (step <= fullStep) {
+    fullStep = step;
+    updateFullStep();
+  }
+}
+
+// ============ VARIANT C: COMPACT ============
+function checkCompactReady() {
+  document.getElementById('compactSubmit').disabled = !(venueSelectedC && slotSelectedC);
+}
+
+function compactSubmit() {
+  updateSentValues('C');
+  document.querySelectorAll('#compactBody .compact-section').forEach(s => s.style.display = 'none');
+  document.querySelector('#compactModal .compact-target').style.display = 'none';
+  document.getElementById('compactSent').classList.add('show');
+  document.getElementById('compactFooter').style.display = 'none';
+}
+
+// ============ DEFAULT DATE ============
+// Pre-select 9/16 as default for all variants
+selectedDate['A'] = selectedDate['B'] = selectedDate['C'] = '9/16 (화)';
+
+// ============ URL PARAMS ============
+const params = new URLSearchParams(window.location.search);
+if (params.get('v')) {
+  const v = params.get('v').toUpperCase();
+  if (['A','B','C'].includes(v)) {
+    currentVariant = v;
+    document.querySelectorAll('.variant-btn').forEach(b => {
+      b.classList.toggle('active', b.textContent.includes(v));
+    });
+  }
+}
+// ?noslots=true — show "겹치는 빈 시간 없음" fallback
+if (params.get('noslots') === 'true') {
+  document.getElementById('sheetNoSlots').style.display = 'block';
+}
+// ?open=true — auto-open modal
+if (params.get('open') === 'true') {
+  setTimeout(() => openModal(), 300);
+}
+
+// ============ INIT ============
+updateSheetStep();
+updateFullStep();
+</script>
+
+<script>
+  window.NABI_NAV_ACTIVE = 'discover';
+  window.NABI_NAV_USER = { name: '김민수', avatar: '김' };
+</script>
+<script src="nabi-nav.js?v=20260607"></script>
+<script>
+/* 기본 = 데스크톱(셸 전체폭). ?view=mobile 로 폰 프리뷰 시작 가능. */
+(function () {
+  if (new URLSearchParams(location.search).get('view') === 'mobile') setPreview('mobile');
+})();
+</script>
+</body>
+</html>

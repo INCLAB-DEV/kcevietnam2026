@@ -1,0 +1,2646 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NABI - 참가사 프로필 작성 프로토타입 (BM-002, THROWAWAY)</title>
+<link rel="stylesheet" href="nabi-ui.css?v=20260607">
+<!-- PROTOTYPE: 3 variants of BM-002 seller apply flow. Same structure as BM-001 buyer. Data: 에어빌리티 주식회사 -->
+<style>
+  /* 디자인 토큰은 nabi-ui.css 에서 상속 (로컬 :root 제거). */
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* 레이아웃/배경은 nabi-ui.css 의 body + .app-shell 에서 상속 (단일 셸) */
+  body { background: var(--bg-primary); }
+
+  /* ========== VARIANT SWITCHER ========== */
+  .variant-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: center;
+    background: #1a1a1a;
+    z-index: 9999;
+    padding: 0;
+    gap: 0;
+    border-top: 1px solid #333;
+  }
+  .variant-btn {
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: var(--font-stack);
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .variant-btn:hover { color: #ccc; }
+  .variant-btn.active { color: #fff; border-bottom: 2px solid var(--accent-primary); }
+  .variant-sep {
+    width: 1px;
+    background: #333;
+    margin: 8px 0;
+  }
+  .variant-label {
+    padding: 12px 16px;
+    font-size: 11px;
+    color: #555;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: var(--font-stack);
+  }
+
+  /* Role badge */
+  .role-badge {
+    position: fixed;
+    top: 68px;        /* 글로벌 앱바(56px) 아래로 — nav 우측 유저와 겹침 방지 */
+    right: 16px;
+    padding: 6px 14px;
+    background: #ea580c;
+    color: white;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 700;
+    z-index: 9999;
+    letter-spacing: 0.5px;
+  }
+  .role-badge a {
+    color: white;
+    text-decoration: underline;
+    margin-left: 8px;
+    font-weight: 500;
+  }
+
+  /* ========== VIEW TOGGLE (in variant bar) ========== */
+  .view-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-left: auto;
+    background: #333;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-right: 12px;
+  }
+  .view-toggle-btn {
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: var(--font-stack);
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .view-toggle-btn:hover { color: #ccc; }
+  .view-toggle-btn.active { color: #fff; background: var(--accent-primary); }
+  .view-toggle-icon { font-size: 14px; }
+
+  /* ========== SINGLE-SHELL FLOW (was desktop card overrides) ========== */
+  /* 단일 DOM 트리: 변형/스텝이 .app-content(content-form) 안에서 자연 높이로 흐른다.
+     좁음(폰 프리뷰)·넓음 모두 동일 DOM, 컨테이너 쿼리가 reflow. */
+  .variant { height: auto; overflow: visible; }
+  .va-step { height: auto; }
+  .va-graph { display: none; }
+  .va-content { flex: unset; min-height: unset; }
+  .va-fields { overflow: visible; flex: unset; }
+  .vb-container { height: auto; }
+  .vb-steps { overflow: visible; flex: unset; }
+  .vc-container { height: auto; }
+  .vc-messages { overflow: visible; flex: unset; }
+
+  /* ========== VARIANT CONTAINERS ========== */
+  .variant { display: none; }
+  .variant.active { display: flex; flex-direction: column; }
+
+  /* ========================================
+     COMMON COMPONENTS
+     ======================================== */
+  .btn-primary {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font-stack);
+    transition: opacity 0.2s;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 14px;
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1.5px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-stack);
+  }
+
+  .input-group { margin-bottom: 20px; }
+  .input-label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .input-hint {
+    font-size: 12px;
+    color: var(--accent-primary);
+    margin-top: 6px;
+    line-height: 1.5;
+    background: var(--accent-subtle);
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+  }
+  .input-field {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1.5px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-family: var(--font-stack);
+    outline: none;
+    transition: border-color 0.2s;
+    background: var(--bg-elevated);
+  }
+  .input-field:focus { border-color: var(--accent-primary); }
+  .input-field.readonly {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    pointer-events: none;
+  }
+  textarea.input-field { min-height: 80px; resize: vertical; line-height: 1.6; }
+  textarea.input-field.prefilled { min-height: 120px; }
+
+  .keyword-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .keyword-chip {
+    padding: 10px 16px;
+    border: 1.5px solid var(--border-default);
+    border-radius: var(--radius-full);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--bg-elevated);
+  }
+  .keyword-chip:hover { border-color: var(--accent-primary); }
+  .keyword-chip.selected {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+  }
+
+  /* DART auto-lookup result */
+  .dart-result {
+    padding: 14px; background: #f0fdf4; border: 1px solid #bbf7d0;
+    border-radius: var(--radius-md); margin-top: 4px;
+  }
+  .dart-result-header {
+    font-size: 12px; font-weight: 700; color: var(--accent-green);
+    margin-bottom: 10px;
+  }
+  .dart-result-body { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+  .dart-result-row { display: flex; gap: 6px; font-size: 13px; min-width: 45%; }
+  .dart-label { color: var(--text-tertiary); font-weight: 600; }
+  .dart-value { color: var(--text-primary); font-weight: 600; }
+  .dart-result-note {
+    font-size: 11px; color: var(--text-tertiary); margin-top: 8px; line-height: 1.4;
+  }
+
+  /* Exhibit card (product + spec pair) */
+  .exhibit-card {
+    padding: 14px; margin-bottom: 10px;
+    background: var(--bg-secondary); border-radius: var(--radius-md);
+    border: 1px solid var(--border-default);
+  }
+  .exhibit-card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .exhibit-card-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent-primary); color: white;
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .exhibit-card .input-field { background: var(--bg-elevated); }
+  .exhibit-name-input { font-weight: 600; margin-bottom: 8px; }
+  .exhibit-spec-input { min-height: 48px; font-size: 13px; }
+  .exhibit-remove-btn {
+    width: 28px; height: 28px; border-radius: 50%; border: none;
+    background: var(--bg-elevated); color: var(--text-tertiary);
+    font-size: 16px; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-stack); transition: all 0.15s;
+  }
+  .exhibit-remove-btn:hover { background: var(--accent-red-subtle); color: var(--accent-red); }
+  .exhibit-add-btn {
+    display: inline-block; padding: 8px 16px; margin-top: 2px;
+    background: none; border: 1px dashed var(--border-default);
+    border-radius: var(--radius-full); font-size: 13px; font-weight: 600;
+    color: var(--accent-primary); cursor: pointer;
+    font-family: var(--font-stack); transition: all 0.15s;
+  }
+  .exhibit-add-btn:hover { background: var(--accent-subtle); border-color: var(--accent-primary); }
+
+  /* Achievement multi-input row */
+  .exhibit-input-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+  }
+  .exhibit-input-row .input-field { flex: 1; margin-bottom: 0; }
+
+  .ai-suggest {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: #f0f7ff;
+    border: 1px dashed var(--accent-primary);
+    border-radius: var(--radius-md);
+    animation: fadeIn 0.3s ease;
+  }
+  .ai-suggest-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ai-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--accent-primary);
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    color: var(--accent-primary);
+    cursor: pointer;
+    margin: 4px;
+  }
+  .ai-chip:hover { background: var(--accent-subtle); }
+  .ai-chip.added { background: var(--accent-primary); color: white; }
+
+  .inline-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 14px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    color: var(--status-error);
+    font-weight: 500;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    animation: fadeIn 0.2s ease;
+  }
+  .inline-alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fillGraph { from { width: 0; } }
+
+  /* ========================================
+     VARIANT A - TOSS STYLE
+     ======================================== */
+  .va-step { display: none; flex-direction: column; height: 100%; animation: fadeIn 0.3s ease; }
+  .va-step.active { display: flex; }
+
+  .va-progress {
+    display: flex;
+    align-items: center;
+    padding: 20px 24px 16px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .va-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--border-default);
+    transition: all 0.3s;
+  }
+  .va-dot.done { background: var(--accent-primary); }
+  .va-dot.current {
+    background: var(--accent-primary);
+    width: 28px;
+    border-radius: 5px;
+  }
+  .va-graph {
+    display: none;
+  }
+  .va-graph-fill {
+    height: 100%;
+    background: var(--accent-primary);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+    animation: fillGraph 0.5s ease;
+  }
+
+  .va-content {
+    flex: 1;
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .va-step-label {
+    font-size: 13px;
+    color: var(--accent-primary);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .va-title {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+  .va-desc {
+    font-size: 14px;
+    color: var(--text-tertiary);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .va-fields { flex: 1; overflow-y: auto; padding-bottom: 16px; }
+  .va-bottom {
+    padding: 16px 24px 32px;
+    flex-shrink: 0;
+  }
+  .va-bottom-row {
+    display: flex;
+    gap: 10px;
+  }
+  .va-btn-prev {
+    padding: 16px 20px;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border: 1.5px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-stack);
+    white-space: nowrap;
+  }
+  .va-btn-prev:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+
+  .va-info-card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .va-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-default);
+    font-size: 15px;
+  }
+  .va-info-row:last-child { border-bottom: none; }
+  .va-info-label { color: var(--text-tertiary); font-weight: 500; }
+  .va-info-value { font-weight: 600; }
+
+  .va-complete {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 24px;
+    flex: 1;
+  }
+  .va-check {
+    width: 64px; height: 64px;
+    background: var(--status-success);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: white;
+    margin-bottom: 20px;
+  }
+
+  /* ========================================
+     VARIANT B - STEPPER FORM
+     ======================================== */
+  .vb-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .vb-header {
+    padding: 20px 20px 16px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-default);
+    flex-shrink: 0;
+  }
+  .vb-header-title { font-size: 18px; font-weight: 800; }
+  .vb-header-sub { font-size: 13px; color: var(--text-tertiary); margin-top: 4px; }
+
+  .vb-steps {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 0 100px;
+  }
+  .vb-step {
+    border-bottom: 1px solid var(--border-default);
+  }
+  .vb-step-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .vb-step-header:hover { background: var(--bg-secondary); }
+  .vb-step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--border-default);
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .vb-step.active .vb-step-num {
+    background: var(--accent-primary);
+    color: white;
+  }
+  .vb-step.done .vb-step-num {
+    background: var(--status-success);
+    color: white;
+  }
+  .vb-step-title { font-size: 15px; font-weight: 600; }
+  .vb-step-badge {
+    margin-left: auto;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-weight: 600;
+  }
+  .vb-step.done .vb-step-badge {
+    background: #dcfce7;
+    color: var(--status-success);
+  }
+  .vb-step.active .vb-step-badge {
+    background: var(--accent-subtle);
+    color: var(--accent-primary);
+  }
+  .vb-step-body {
+    display: none;
+    padding: 0 20px 20px 60px;
+    animation: fadeIn 0.2s ease;
+  }
+  .vb-step.active .vb-step-body { display: block; }
+  .vb-step-action {
+    margin-top: 12px;
+  }
+
+  .vb-progress-bar {
+    height: 3px;
+    background: var(--bg-secondary);
+    position: relative;
+  }
+  .vb-progress-fill {
+    height: 100%;
+    background: var(--accent-primary);
+    transition: width 0.5s ease;
+  }
+
+  /* ========================================
+     VARIANT C - CONVERSATIONAL
+     ======================================== */
+  .vc-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary);
+  }
+  .vc-header {
+    padding: 16px 20px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-default);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .vc-avatar {
+    width: 36px; height: 36px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .vc-header-text { font-size: 15px; font-weight: 700; }
+  .vc-header-sub { font-size: 12px; color: var(--text-tertiary); }
+  .vc-step-pills {
+    margin-left: auto;
+    display: flex;
+    gap: 4px;
+  }
+  .vc-pill {
+    width: 20px; height: 6px;
+    border-radius: 3px;
+    background: var(--border-default);
+  }
+  .vc-pill.done { background: var(--accent-primary); }
+  .vc-pill.current { background: var(--accent-primary); width: 32px; }
+
+  .vc-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .vc-msg {
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    animation: fadeIn 0.3s ease;
+  }
+  .vc-msg.bot {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-bottom-left-radius: 4px;
+    align-self: flex-start;
+  }
+  .vc-msg.user {
+    background: var(--accent-primary);
+    color: white;
+    border-bottom-right-radius: 4px;
+    align-self: flex-end;
+  }
+  .vc-msg.info {
+    background: var(--accent-subtle);
+    border: 1px solid #dbeafe;
+    border-radius: var(--radius-md);
+    align-self: stretch;
+    max-width: 100%;
+    text-align: center;
+    font-size: 13px;
+    color: var(--accent-primary);
+    font-weight: 500;
+  }
+
+  .vc-input-area {
+    padding: 12px 16px 28px;
+    background: var(--bg-elevated);
+    border-top: 1px solid var(--border-default);
+    flex-shrink: 0;
+  }
+  .vc-input-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .vc-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1.5px solid var(--border-default);
+    border-radius: 24px;
+    font-size: 14px;
+    font-family: var(--font-stack);
+    outline: none;
+    resize: none;
+    max-height: 80px;
+  }
+  .vc-input:focus { border-color: var(--accent-primary); }
+  .vc-send {
+    width: 40px; height: 40px;
+    background: var(--accent-primary);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .vc-quick-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 0 0;
+  }
+  .vc-quick-tag {
+    padding: 8px 14px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    cursor: pointer;
+    font-family: var(--font-stack);
+    transition: all 0.15s;
+  }
+  .vc-quick-tag:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+  }
+  .vc-quick-tag.selected {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+  }
+
+  .vc-action-area {
+    padding: 0 4px;
+    animation: fadeIn 0.3s ease;
+  }
+  .vc-action-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font-stack);
+    transition: opacity 0.2s;
+    animation: fadeIn 0.2s ease;
+  }
+  .vc-action-btn:hover { opacity: 0.9; }
+  .vc-action-btn.secondary {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1.5px solid var(--border-default);
+  }
+
+  .vc-summary-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    align-self: stretch;
+    max-width: 100%;
+  }
+  .vc-summary-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .vc-summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--bg-secondary);
+    font-size: 13px;
+  }
+  .vc-summary-row:last-child { border-bottom: none; }
+
+  /* Competition nudge banner */
+  .nudge-banner {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    border: 1px solid #fed7aa;
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #9a3412;
+    font-weight: 500;
+    line-height: 1.5;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .nudge-icon { font-size: 16px; flex-shrink: 0; }
+
+  /* ========================================
+     SMART FILL - 입력 도우미
+     ======================================== */
+  .sf-card {
+    background: var(--bg-elevated);
+    border: 1.5px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .sf-card:hover {
+    border-color: var(--accent-primary);
+    box-shadow: 0 2px 12px rgba(37,99,235,0.08);
+  }
+  .sf-card.recommended {
+    border-color: var(--accent-primary);
+    background: var(--accent-subtle);
+  }
+  .sf-card-icon {
+    width: 40px; height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .sf-card-icon.upload { background: var(--accent-subtle); }
+  .sf-card-icon.web { background: #e0f2fe; }
+  .sf-card-icon.dart { background: #dcfce7; }
+  .sf-card-icon.manual { background: var(--bg-secondary); }
+  .sf-card-body { flex: 1; }
+  .sf-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sf-card-desc {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    line-height: 1.5;
+  }
+  .sf-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    background: var(--accent-primary);
+    color: white;
+  }
+
+  /* Upload area */
+  .sf-upload-zone {
+    border: 2px dashed var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--bg-secondary);
+    margin-bottom: 16px;
+  }
+  .sf-upload-zone:hover {
+    border-color: var(--accent-primary);
+    background: var(--accent-subtle);
+  }
+  .sf-upload-zone.dragging {
+    border-color: var(--accent-primary);
+    background: var(--accent-subtle);
+  }
+  .sf-upload-icon { font-size: 32px; margin-bottom: 8px; }
+  .sf-upload-text { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .sf-upload-hint { font-size: 12px; color: var(--text-tertiary); }
+
+  /* URL input */
+  .sf-url-input {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .sf-url-input input {
+    flex: 1;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-family: var(--font-stack);
+    outline: none;
+  }
+  .sf-url-input input:focus { border-color: var(--accent-primary); }
+  .sf-url-btn {
+    padding: 12px 20px;
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-stack);
+    white-space: nowrap;
+  }
+
+  /* Processing animation */
+  .sf-processing {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .sf-spinner {
+    width: 48px; height: 48px;
+    border: 4px solid var(--bg-secondary);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .sf-proc-text {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .sf-proc-sub {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+  .sf-proc-steps {
+    margin-top: 16px;
+    text-align: left;
+    max-width: 260px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .sf-proc-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 13px;
+    color: var(--text-tertiary);
+    transition: color 0.3s;
+  }
+  .sf-proc-step.active { color: var(--accent-primary); font-weight: 600; }
+  .sf-proc-step.done { color: var(--status-success); }
+  .sf-proc-step-icon { width: 18px; text-align: center; }
+
+  /* Prefilled indicator */
+  .prefilled-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--status-success);
+    font-weight: 600;
+    margin-left: 8px;
+  }
+
+  /* DART info card */
+  .dart-info {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: var(--radius-md);
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .dart-info-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--status-success);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dart-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 13px;
+  }
+  .dart-info-label { color: var(--text-tertiary); }
+  .dart-info-value { font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="role-badge">BM-002 참가사 <a href="prototype-apply.html">바이어 보기</a></div>
+
+<!-- 글로벌 nav(app-bar + 드로어)는 nabi-nav.js가 .app-shell 상단에 주입 -->
+
+<!-- 단일 DOM 트리: 변형/스텝이 content-form(720) 안에서 reflow -->
+<div class="app-shell">
+  <main class="app-main">
+    <div class="app-content content-form" id="apply-seller-root">
+
+  <!-- ==========================================
+       VARIANT A - TOSS STYLE (Seller)
+       ========================================== -->
+  <div class="variant active" id="varA">
+
+    <!-- Step 1: 기본정보 확인 (회사명/부스/담당자) -->
+    <div class="va-step active" id="va-step-1">
+      <div class="va-progress">
+        <div class="va-dot current"></div>
+        <div class="va-dot"></div>
+        <div class="va-dot"></div>
+        <div class="va-dot"></div>
+        <div class="va-dot"></div>
+        <div class="va-graph"><div class="va-graph-fill" style="width:20%"></div></div>
+      </div>
+      <div class="va-content">
+        <div class="va-step-label">1단계</div>
+        <div class="va-title">기본 정보를 확인해주세요</div>
+        <div class="va-desc">등록된 참가사 정보입니다</div>
+        <div class="va-fields">
+          <div style="font-size:12px; font-weight:600; color:var(--text-tertiary); margin-bottom:8px;">회사 정보</div>
+          <div class="va-info-card">
+            <div class="va-info-row">
+              <span class="va-info-label">회사명</span>
+              <span class="va-info-value">에어빌리티 주식회사</span>
+            </div>
+            <div class="va-info-row">
+              <span class="va-info-label">영문명</span>
+              <span class="va-info-value">Airbility Inc.</span>
+            </div>
+            <div class="va-info-row">
+              <span class="va-info-label">부스번호</span>
+              <span class="va-info-value">미배정</span>
+            </div>
+            <div class="va-info-row">
+              <span class="va-info-label">부스 타입</span>
+              <span class="va-info-value">기본부스 2개</span>
+            </div>
+            <div class="va-info-row" style="border-top:1px solid var(--border-default); padding-top:10px; margin-top:4px;">
+              <span class="va-info-label">사업자등록번호</span>
+              <span class="va-info-value"><input type="text" id="va-biznum" class="input-field" value="123-45-67890" placeholder="000-00-00000" style="margin:0; padding:6px 10px; font-size:14px; width:160px; text-align:center;"></span>
+            </div>
+            <div style="font-size:11px; color:var(--text-tertiary); margin-top:6px; line-height:1.4;">설립연도, 직원수 등 기업 정보를 DART에서 자동으로 가져옵니다</div>
+          </div>
+          <div style="font-size:12px; font-weight:600; color:var(--text-tertiary); margin-bottom:8px; margin-top:16px;">담당자 정보</div>
+          <div class="va-info-card">
+            <div class="va-info-row">
+              <span class="va-info-label">이름</span>
+              <span class="va-info-value">한지민</span>
+            </div>
+            <div class="va-info-row">
+              <span class="va-info-label">직책</span>
+              <span class="va-info-value">Senior Designer</span>
+            </div>
+            <div class="va-info-row">
+              <span class="va-info-label">이메일</span>
+              <span class="va-info-value">seller@example.com</span>
+            </div>
+            <div class="va-info-row">
+              <span class="va-info-label">연락처</span>
+              <span class="va-info-value">010-0000-0000</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="va-bottom">
+        <button class="btn-primary" onclick="vaGoToSF()">정보가 맞습니다</button>
+        <div style="text-align:center; margin-top:12px;">
+          <span onclick="document.getElementById('va-wrong-info').style.display='block'; this.style.display='none';" style="font-size:13px; color:var(--text-tertiary); cursor:pointer; text-decoration:underline;">정보가 다릅니다</span>
+          <div id="va-wrong-info" style="display:none; margin-top:12px; padding:14px 16px; background:var(--bg-secondary); border-radius:var(--radius-md); text-align:left;">
+            <div style="font-size:13px; font-weight:600; margin-bottom:8px;">정보 수정은 운영사무국에 문의해주세요</div>
+            <div style="font-size:13px; color:var(--text-secondary); line-height:1.6;">
+              DX Korea 2026 운영사무국<br>
+              &#128222; 02-xxxx-xxxx<br>
+              &#128231; support@dxkorea.kr
+            </div>
+            <div style="font-size:12px; color:var(--text-tertiary); margin-top:10px;">현재 정보로 우선 진행할 수 있습니다</div>
+            <button class="btn-secondary" onclick="vaGoToSF()" style="margin-top:10px; font-size:13px; padding:10px;">현재 정보로 진행하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 1.5: Smart Fill 입력 도우미 -->
+    <div class="va-step" id="va-step-sf">
+      <div class="va-progress">
+        <div class="va-dot done"></div>
+        <div class="va-dot current"></div>
+        <div class="va-dot"></div>
+        <div class="va-dot"></div>
+        <div class="va-dot"></div>
+        <div class="va-graph"><div class="va-graph-fill" style="width:25%"></div></div>
+      </div>
+      <div class="va-content">
+        <div class="va-step-label">입력 도우미</div>
+        <div class="va-title">프로필을 빠르게 채워드릴까요?</div>
+        <div class="va-desc">회사 자료가 있으면 AI가 자동으로 추출합니다. 직접 입력도 가능해요.</div>
+        <div class="va-fields" id="va-sf-options">
+
+          <div class="sf-card recommended" onclick="vaSmartFill('upload')">
+            <div class="sf-card-icon upload">&#128196;</div>
+            <div class="sf-card-body">
+              <div class="sf-card-title">회사 소개서/카탈로그 업로드 <span class="sf-badge">추천</span></div>
+              <div class="sf-card-desc">PDF, PPT, Word 파일을 올리면 전시 품목, 회사 소개, 강점을 자동 추출합니다</div>
+            </div>
+          </div>
+
+          <div class="sf-card" onclick="vaSmartFill('url')">
+            <div class="sf-card-icon web">&#127760;</div>
+            <div class="sf-card-body">
+              <div class="sf-card-title">회사 웹사이트에서 가져오기</div>
+              <div class="sf-card-desc">URL을 입력하면 제품 정보와 회사 소개를 자동으로 가져옵니다</div>
+            </div>
+          </div>
+
+          <div class="sf-card" onclick="vaSmartFill('dart')">
+            <div class="sf-card-icon dart">&#127963;</div>
+            <div class="sf-card-body">
+              <div class="sf-card-title">DART(전자공시) 자동 조회</div>
+              <div class="sf-card-desc">사업자등록번호로 업종, 주요사업, 매출 규모를 자동으로 가져옵니다</div>
+            </div>
+          </div>
+
+          <div class="sf-card" onclick="vaSmartFill('manual')">
+            <div class="sf-card-icon manual">&#9997;</div>
+            <div class="sf-card-body">
+              <div class="sf-card-title">직접 입력하기</div>
+              <div class="sf-card-desc">각 단계에서 직접 입력합니다</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload UI (hidden by default) -->
+        <div class="va-fields" id="va-sf-upload" style="display:none;">
+          <div style="margin-bottom:16px;">
+            <span onclick="vaSmartFillBack()" style="font-size:13px; color:var(--accent-primary); cursor:pointer; font-weight:600;">&larr; 다른 방법 선택</span>
+          </div>
+          <div class="sf-upload-zone" id="va-upload-zone" onclick="vaSimulateUpload()">
+            <div class="sf-upload-icon">&#128229;</div>
+            <div class="sf-upload-text">파일을 여기에 끌어놓거나 클릭하세요</div>
+            <div class="sf-upload-hint">PDF, PPT, PPTX, DOC, DOCX (최대 20MB)</div>
+          </div>
+          <div style="font-size:12px; color:var(--text-tertiary); text-align:center;">
+            업로드된 파일은 정보 추출 후 즉시 삭제됩니다
+          </div>
+        </div>
+
+        <!-- URL UI (hidden by default) -->
+        <div class="va-fields" id="va-sf-url" style="display:none;">
+          <div style="margin-bottom:16px;">
+            <span onclick="vaSmartFillBack()" style="font-size:13px; color:var(--accent-primary); cursor:pointer; font-weight:600;">&larr; 다른 방법 선택</span>
+          </div>
+          <div class="input-group">
+            <label class="input-label">회사 웹사이트 주소</label>
+            <div class="sf-url-input">
+              <input type="text" placeholder="https://airbility.co.kr" id="va-url-input">
+              <button class="sf-url-btn" onclick="vaSimulateUrl()">가져오기</button>
+            </div>
+            <div class="input-hint">제품 소개, About 페이지 등을 자동으로 분석합니다</div>
+          </div>
+        </div>
+
+        <!-- DART UI (hidden by default) -->
+        <div class="va-fields" id="va-sf-dart" style="display:none;">
+          <div style="margin-bottom:16px;">
+            <span onclick="vaSmartFillBack()" style="font-size:13px; color:var(--accent-primary); cursor:pointer; font-weight:600;">&larr; 다른 방법 선택</span>
+          </div>
+          <div class="dart-info">
+            <div class="dart-info-title">&#9989; DART 자동 조회 완료</div>
+            <div class="dart-info-row"><span class="dart-info-label">사업자등록번호</span><span class="dart-info-value">408-86-17882</span></div>
+            <div class="dart-info-row"><span class="dart-info-label">업종</span><span class="dart-info-value">항공기용 부품 제조업</span></div>
+            <div class="dart-info-row"><span class="dart-info-label">주요사업</span><span class="dart-info-value">산업용 드론 개발/제조</span></div>
+            <div class="dart-info-row"><span class="dart-info-label">설립일</span><span class="dart-info-value">2018.04.12</span></div>
+            <div class="dart-info-row"><span class="dart-info-label">종업원수</span><span class="dart-info-value">35명</span></div>
+            <div class="dart-info-row"><span class="dart-info-label">매출액 (2025)</span><span class="dart-info-value">82억원</span></div>
+          </div>
+          <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:16px;">
+            &#128274; DART(전자공시시스템)에서 가져온 공시 정보입니다. 바이어에게 노출되지 않으며, 매칭 정확도를 높이는 데만 활용됩니다.
+          </div>
+          <button class="btn-primary" onclick="vaApplyDart()" style="font-size:14px;">이 정보로 프로필 채우기</button>
+          <button class="btn-secondary" onclick="vaSmartFill('manual')" style="margin-top:8px; font-size:13px;">직접 입력하기</button>
+        </div>
+
+        <!-- Processing UI (hidden by default) -->
+        <div class="va-fields" id="va-sf-processing" style="display:none;">
+          <div class="sf-processing">
+            <div class="sf-spinner"></div>
+            <div class="sf-proc-text" id="va-proc-title">분석 중...</div>
+            <div class="sf-proc-sub" id="va-proc-sub">AI가 문서를 읽고 있습니다</div>
+            <div class="sf-proc-steps">
+              <div class="sf-proc-step active" id="va-proc-s1"><span class="sf-proc-step-icon">&#9711;</span> 문서 업로드</div>
+              <div class="sf-proc-step" id="va-proc-s2"><span class="sf-proc-step-icon">&#9711;</span> 내용 분석</div>
+              <div class="sf-proc-step" id="va-proc-s3"><span class="sf-proc-step-icon">&#9711;</span> 전시 품목 추출</div>
+              <div class="sf-proc-step" id="va-proc-s4"><span class="sf-proc-step-icon">&#9711;</span> 회사 소개 생성</div>
+              <div class="sf-proc-step" id="va-proc-s5"><span class="sf-proc-step-icon">&#9711;</span> 키워드 매칭</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="va-bottom" id="va-sf-bottom">
+        <button class="va-btn-prev" onclick="vaGoTo(1)" style="width:100%;">&larr; 이전 단계</button>
+      </div>
+    </div>
+
+    <!-- Step 2: 전시 품목 + 분야 + 실적 -->
+    <div class="va-step" id="va-step-2">
+      <div class="va-progress">
+        <div class="va-dot done"></div>
+        <div class="va-dot current"></div>
+        <div class="va-dot"></div>
+        <div class="va-dot"></div>
+        <div class="va-dot"></div>
+        <div class="va-graph"><div class="va-graph-fill" style="width:40%"></div></div>
+      </div>
+      <div class="va-content">
+        <div class="va-step-label">2단계</div>
+        <div class="va-title">전시 품목과 실적을 알려주세요</div>
+        <div class="va-desc">바이어가 귀사를 탐색할 때 이 정보가 표시됩니다</div>
+        <div class="va-fields">
+          <div class="nudge-banner">
+            <span class="nudge-icon">&#128200;</span>
+            <span>프로필을 채울수록 바이어 매칭률이 올라갑니다. 현재 참가사 중 <strong>73%</strong>가 이미 프로필을 완성했어요.</span>
+          </div>
+
+          <!-- 전시 제품 (상품명 + 스펙 세트, 복수) -->
+          <div class="input-group">
+            <label class="input-label">전시할 제품/서비스</label>
+            <div class="input-hint" style="margin-bottom:10px">제품별로 이름과 주요 사양을 함께 입력하세요. 바이어 탐색 화면에 개별 표시됩니다</div>
+            <div id="va-exhibit-list">
+              <div class="exhibit-card">
+                <div class="exhibit-card-header">
+                  <span class="exhibit-card-num">1</span>
+                  <button class="exhibit-remove-btn" onclick="vaRemoveExhibit(this)" title="삭제" style="display:none">&times;</button>
+                </div>
+                <input type="text" class="input-field exhibit-name-input" placeholder="제품/서비스명 (예: ELIOS 3 밀폐공간 점검 드론)" oninput="vaCheckAI2(this)">
+                <textarea class="input-field exhibit-spec-input" placeholder="주요 사양 (예: 비행시간 12분, LiDAR+열화상 카메라, AI 결함 탐지)"></textarea>
+              </div>
+            </div>
+            <button class="exhibit-add-btn" onclick="vaAddExhibit()">+ 제품 추가</button>
+          </div>
+
+          <!-- 분야 키워드 -->
+          <div class="input-group">
+            <label class="input-label">분야 키워드</label>
+            <div class="input-hint" style="margin-bottom:8px">바이어 관심 분야와 매칭되는 핵심 태그입니다. 해당하는 항목을 모두 선택하세요</div>
+            <div class="keyword-grid" id="va-keyword-grid">
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')">무인기/드론</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')">통신장비</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')">감시/정찰</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')">사이버보안</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')">함정/해양</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')">항공/우주</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')">지상무기</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')">센서/광학</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')">복합소재</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')">전자전</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')">AI/자율주행</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')">시뮬레이션</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')">에너지/배터리</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')">방호/보호</div>
+            </div>
+          </div>
+
+          <!-- 주요 실적 (복수 입력) -->
+          <div class="input-group">
+            <label class="input-label">주요 실적 (선택)</label>
+            <div id="va-achievement-list">
+              <div class="exhibit-input-row">
+                <input type="text" class="input-field" placeholder="예: 누리호 3차 발사 성공 기여 (2024)">
+                <button class="exhibit-remove-btn" onclick="vaRemoveExhibit(this)" title="삭제" style="display:none">&times;</button>
+              </div>
+            </div>
+            <button class="exhibit-add-btn" onclick="vaAddAchievement()">+ 실적 추가</button>
+            <div class="input-hint">수출, 수주, 인증 등 대표 실적을 입력하면 바이어 신뢰도가 올라갑니다</div>
+          </div>
+
+          <!-- DART 자동 조회 결과 -->
+          <div class="dart-result" id="va-dart-result" style="display:none;">
+            <div class="dart-result-header">DART 자동 조회 완료</div>
+            <div class="dart-result-body">
+              <div class="dart-result-row"><span class="dart-label">설립일</span><span class="dart-value" id="va-dart-founded">2015년 3월</span></div>
+              <div class="dart-result-row"><span class="dart-label">종업원수</span><span class="dart-value" id="va-dart-employees">48명</span></div>
+              <div class="dart-result-row"><span class="dart-label">업종</span><span class="dart-value" id="va-dart-industry">항공기용 부품 제조업</span></div>
+              <div class="dart-result-row"><span class="dart-label">매출액</span><span class="dart-value" id="va-dart-revenue">127억 (2024)</span></div>
+            </div>
+            <div class="dart-result-note">사업자등록번호 기반 DART 전자공시 자동 조회. 바이어 탐색 화면에 표시됩니다.</div>
+          </div>
+
+          <div class="ai-suggest" id="va-ai-suggest-2" style="display:none;">
+            <div class="ai-suggest-title">&#129302; AI 키워드 추천</div>
+            <div>
+              <span class="ai-chip" onclick="this.classList.toggle('added')">+ 방폭 드론</span>
+              <span class="ai-chip" onclick="this.classList.toggle('added')">+ 실내 점검</span>
+              <span class="ai-chip" onclick="this.classList.toggle('added')">+ 밀폐공간</span>
+              <span class="ai-chip" onclick="this.classList.toggle('added')">+ 열화상</span>
+              <span class="ai-chip" onclick="this.classList.toggle('added')">+ ATEX</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="va-bottom">
+        <div class="va-bottom-row">
+          <button class="va-btn-prev" onclick="vaGoTo(1)">&larr; 이전</button>
+          <button class="btn-primary" onclick="vaNext(3)">다음</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: 회사 소개 + 강점 -->
+    <div class="va-step" id="va-step-3">
+      <div class="va-progress">
+        <div class="va-dot done"></div>
+        <div class="va-dot done"></div>
+        <div class="va-dot current"></div>
+        <div class="va-dot"></div>
+        <div class="va-dot"></div>
+        <div class="va-graph"><div class="va-graph-fill" style="width:60%"></div></div>
+      </div>
+      <div class="va-content">
+        <div class="va-step-label">3단계</div>
+        <div class="va-title">회사를 소개해주세요</div>
+        <div class="va-desc">바이어가 귀사를 이해할 수 있도록 알려주세요</div>
+        <div class="va-fields">
+          <div class="input-group">
+            <label class="input-label">회사 소개</label>
+            <textarea class="input-field" placeholder="예: 2018년 설립, 산업용 특수 드론 전문 기업. 방폭/밀폐공간 전용 드론 국내 최초 개발" oninput="vaCheckAI3(this)"></textarea>
+            <div class="input-hint">바이어가 미팅 전에 읽는 첫 인상입니다. 핵심 역량을 간결하게 써주세요</div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">차별점/강점</label>
+            <textarea class="input-field" placeholder="예: 국내 유일 ATEX Zone 1 인증 드론 보유, 석유화학/원전 현장 30+ 실적" style="min-height:60px" oninput="vaCheckAI3(this)"></textarea>
+            <div class="input-hint">경쟁사 대비 차별점을 적으면 귀사만 할 수 있는 일을 찾는 바이어가 매칭됩니다</div>
+          </div>
+
+          <div class="ai-suggest" id="va-ai-suggest-3" style="display:none;">
+            <div class="ai-suggest-title">&#129302; AI 키워드 추천</div>
+            <div>
+              <span class="ai-chip" onclick="this.classList.toggle('added')">+ 방폭인증</span>
+              <span class="ai-chip" onclick="this.classList.toggle('added')">+ 특수환경</span>
+              <span class="ai-chip" onclick="this.classList.toggle('added')">+ 산업용 드론</span>
+              <span class="ai-chip" onclick="this.classList.toggle('added')">+ 밀폐공간 점검</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="va-bottom">
+        <div class="va-bottom-row">
+          <button class="va-btn-prev" onclick="vaGoTo(2)">&larr; 이전</button>
+          <button class="btn-primary" onclick="vaNext(4)">다음</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: 타겟 바이어 -->
+    <div class="va-step" id="va-step-4">
+      <div class="va-progress">
+        <div class="va-dot done"></div>
+        <div class="va-dot done"></div>
+        <div class="va-dot done"></div>
+        <div class="va-dot current"></div>
+        <div class="va-dot"></div>
+        <div class="va-graph"><div class="va-graph-fill" style="width:80%"></div></div>
+      </div>
+      <div class="va-content">
+        <div class="va-step-label">4단계</div>
+        <div class="va-title">어떤 바이어를 만나고 싶으신가요?</div>
+        <div class="va-desc">원하는 바이어 유형을 적으면 AI가 우선 매칭합니다</div>
+        <div class="va-fields">
+          <div class="input-group">
+            <label class="input-label">만나고 싶은 바이어 유형</label>
+            <textarea class="input-field" placeholder="예: 군 정찰/감시 장비 도입 담당자, 석유화학 플랜트 안전 관리 부서"></textarea>
+            <div class="input-hint">구체적으로 적을수록 실제 구매력이 있는 바이어와 매칭됩니다</div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">희망 바이어 국적 (선택)</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">대한민국</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">미국</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">유럽</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">중동</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">동남아</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">전 세계</div>
+            </div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">희망 바이어 기관 유형 (선택)</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">군</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">정부/공공기관</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">방산 기업</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">민간 기업</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">연구/학계</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="va-bottom">
+        <div class="va-bottom-row">
+          <button class="va-btn-prev" onclick="vaGoTo(3)">&larr; 이전</button>
+          <button class="btn-primary" onclick="vaNext(5)">다음</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 5: 완료 -->
+    <div class="va-step" id="va-step-5">
+      <div class="va-progress">
+        <div class="va-dot done"></div>
+        <div class="va-dot done"></div>
+        <div class="va-dot done"></div>
+        <div class="va-dot done"></div>
+        <div class="va-dot done"></div>
+        <div class="va-graph"><div class="va-graph-fill" style="width:100%"></div></div>
+      </div>
+      <div class="va-complete">
+        <div class="va-check">&#10003;</div>
+        <div class="va-title">프로필 작성 완료!</div>
+        <div class="va-desc" style="margin-bottom:24px;">
+          비즈매칭 신청기간 종료 후<br>
+          AI가 귀사에 관심 있는 바이어를 매칭해드립니다.<br>
+          결과는 이메일로 알려드릴게요.
+        </div>
+        <div style="width:100%; background:var(--bg-secondary); border-radius:var(--radius-md); padding:16px; text-align:left; margin-bottom:20px;">
+          <div style="font-size:13px; color:var(--text-tertiary); margin-bottom:4px;">비즈매칭 신청기간</div>
+          <div style="font-size:15px; font-weight:700;">8/26 (화) ~ 9/11 (목)</div>
+        </div>
+        <button class="btn-secondary" onclick="alert('내 프로필 조회 화면(/profile)으로 이동')" style="margin-top:8px;">내 프로필 확인하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       VARIANT B - STEPPER FORM (Seller)
+       ========================================== -->
+  <div class="variant" id="varB">
+    <div class="vb-container">
+      <div class="vb-header">
+        <div class="vb-header-title">비즈매칭 프로필 작성</div>
+        <div class="vb-header-sub">한지민 &middot; 에어빌리티 주식회사 &middot; 참가사</div>
+      </div>
+      <div class="vb-progress-bar">
+        <div class="vb-progress-fill" id="vb-progress" style="width:0%"></div>
+      </div>
+
+      <div class="vb-steps">
+        <!-- Step 1 -->
+        <div class="vb-step active" id="vb-s1">
+          <div class="vb-step-header" onclick="vbToggle(1)">
+            <div class="vb-step-num">1</div>
+            <div class="vb-step-title">기본정보 확인</div>
+            <span class="vb-step-badge">진행 중</span>
+          </div>
+          <div class="vb-step-body">
+            <div style="font-size:11px; font-weight:600; color:var(--text-tertiary); margin-bottom:6px;">회사 정보</div>
+            <div class="va-info-card" style="margin:0;">
+              <div class="va-info-row"><span class="va-info-label">회사명</span><span class="va-info-value">에어빌리티 주식회사</span></div>
+              <div class="va-info-row"><span class="va-info-label">부스번호</span><span class="va-info-value">미배정</span></div>
+              <div class="va-info-row"><span class="va-info-label">부스 타입</span><span class="va-info-value">기본부스 2개</span></div>
+              <div class="va-info-row" style="border-top:1px solid var(--border-default); padding-top:8px; margin-top:4px;"><span class="va-info-label">사업자등록번호</span><span class="va-info-value"><input type="text" id="vb-biznum" class="input-field" value="123-45-67890" placeholder="000-00-00000" style="margin:0; padding:4px 8px; font-size:13px; width:140px; text-align:center;"></span></div>
+              <div style="font-size:10px; color:var(--text-tertiary); margin-top:4px;">설립연도, 직원수 등 DART 자동 조회</div>
+            </div>
+            <div style="font-size:11px; font-weight:600; color:var(--text-tertiary); margin:12px 0 6px;">담당자 정보</div>
+            <div class="va-info-card" style="margin:0;">
+              <div class="va-info-row"><span class="va-info-label">이름</span><span class="va-info-value">한지민</span></div>
+              <div class="va-info-row"><span class="va-info-label">직책</span><span class="va-info-value">Senior Designer</span></div>
+              <div class="va-info-row"><span class="va-info-label">이메일</span><span class="va-info-value">seller@example.com</span></div>
+              <div class="va-info-row"><span class="va-info-label">연락처</span><span class="va-info-value">010-0000-0000</span></div>
+            </div>
+            <div style="margin-top:10px;">
+              <span onclick="document.getElementById('vb-wrong-info').style.display=document.getElementById('vb-wrong-info').style.display==='none'?'block':'none';" style="font-size:12px; color:var(--text-tertiary); cursor:pointer; text-decoration:underline;">정보가 다릅니다</span>
+              <div id="vb-wrong-info" style="display:none; margin-top:8px; padding:12px; background:var(--bg-secondary); border-radius:var(--radius-sm); font-size:12px; line-height:1.6;">
+                <div style="font-weight:600; margin-bottom:4px;">정보 수정은 운영사무국에 문의해주세요</div>
+                <div style="color:var(--text-secondary);">&#128222; 02-xxxx-xxxx &middot; &#128231; support@dxkorea.kr</div>
+                <div style="color:var(--text-tertiary); margin-top:6px;">현재 정보로 우선 진행할 수 있습니다</div>
+              </div>
+            </div>
+            <div class="vb-step-action">
+              <button class="btn-primary" onclick="vbComplete(1)" style="font-size:14px; padding:12px;">정보가 맞습니다</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Smart Fill helper -->
+        <div id="vb-smart-fill" style="display:none; padding:16px 20px; background:linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-bottom:1px solid #93c5fd; animation: fadeIn 0.3s ease;">
+          <div style="font-size:14px; font-weight:700; margin-bottom:10px; color:#1e40af;">&#10024; 프로필을 빠르게 채워드릴까요?</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div class="sf-card" onclick="vbSmartFill('upload')" style="margin:0; padding:12px;">
+              <div class="sf-card-icon upload" style="width:32px; height:32px; font-size:16px;">&#128196;</div>
+              <div class="sf-card-body">
+                <div class="sf-card-title" style="font-size:13px;">소개서/카탈로그 업로드 <span class="sf-badge">추천</span></div>
+                <div class="sf-card-desc" style="font-size:11px;">PDF, PPT 업로드 → AI가 자동 추출</div>
+              </div>
+            </div>
+            <div class="sf-card" onclick="vbSmartFill('url')" style="margin:0; padding:12px;">
+              <div class="sf-card-icon web" style="width:32px; height:32px; font-size:16px;">&#127760;</div>
+              <div class="sf-card-body">
+                <div class="sf-card-title" style="font-size:13px;">웹사이트에서 가져오기</div>
+                <div class="sf-card-desc" style="font-size:11px;">URL → 제품/회사 정보 자동 추출</div>
+              </div>
+            </div>
+            <div style="text-align:center;">
+              <span onclick="document.getElementById('vb-smart-fill').style.display='none'" style="font-size:12px; color:#1e40af; cursor:pointer; text-decoration:underline;">직접 입력할게요</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: 전시 품목 + 분야 + 실적 -->
+        <div class="vb-step" id="vb-s2">
+          <div class="vb-step-header" onclick="vbToggle(2)">
+            <div class="vb-step-num">2</div>
+            <div class="vb-step-title">전시 품목 + 분야 + 실적</div>
+            <span class="vb-step-badge"></span>
+          </div>
+          <div class="vb-step-body">
+            <div style="font-size:12px; color:var(--accent-primary); margin-bottom:10px; background:var(--accent-subtle); padding:8px 10px; border-radius:6px;">바이어가 귀사를 탐색할 때 이 정보가 표시됩니다</div>
+            <div class="input-group" style="margin-bottom:12px;">
+              <label class="input-label">전시할 제품/서비스</label>
+              <div class="input-hint" style="margin-bottom:8px">제품별로 이름과 주요 사양을 함께 입력하세요</div>
+              <div id="vb-exhibit-list">
+                <div class="exhibit-card">
+                  <div class="exhibit-card-header">
+                    <span class="exhibit-card-num">1</span>
+                    <button class="exhibit-remove-btn" onclick="vbRemoveExhibit(this)" title="삭제" style="display:none">&times;</button>
+                  </div>
+                  <input type="text" class="input-field exhibit-name-input" placeholder="제품/서비스명">
+                  <textarea class="input-field exhibit-spec-input" placeholder="주요 사양"></textarea>
+                </div>
+              </div>
+              <button class="exhibit-add-btn" onclick="vbAddExhibit()">+ 제품 추가</button>
+            </div>
+            <div class="input-group" style="margin-bottom:12px;">
+              <label class="input-label">분야 키워드</label>
+              <div class="keyword-grid">
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">무인기/드론</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">통신장비</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">감시/정찰</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">사이버보안</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">함정/해양</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">항공/우주</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">지상무기</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">센서/광학</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">복합소재</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">전자전</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">AI/자율주행</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">시뮬레이션</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">에너지/배터리</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">방호/보호</div>
+              </div>
+            </div>
+            <div class="input-group" style="margin-bottom:12px;">
+              <label class="input-label">주요 실적 (선택)</label>
+              <div id="vb-achievement-list">
+                <div class="exhibit-input-row">
+                  <input type="text" class="input-field" placeholder="예: 누리호 3차 발사 성공 기여 (2024)">
+                </div>
+              </div>
+              <button class="exhibit-add-btn" onclick="vbAddAchievement()">+ 실적 추가</button>
+            </div>
+            <div class="vb-step-action">
+              <button class="btn-primary" onclick="vbComplete(2)" style="font-size:14px; padding:12px;">다음 단계</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: 회사 소개 + 강점 -->
+        <div class="vb-step" id="vb-s3">
+          <div class="vb-step-header" onclick="vbToggle(3)">
+            <div class="vb-step-num">3</div>
+            <div class="vb-step-title">회사 소개 + 강점</div>
+            <span class="vb-step-badge"></span>
+          </div>
+          <div class="vb-step-body">
+            <div class="input-group" style="margin-bottom:12px;">
+              <label class="input-label">회사 소개</label>
+              <textarea class="input-field" placeholder="예: 산업용 특수 드론 전문 기업" style="min-height:50px"></textarea>
+            </div>
+            <div class="input-group" style="margin-bottom:12px;">
+              <label class="input-label">차별점/강점</label>
+              <textarea class="input-field" placeholder="예: 국내 유일 ATEX Zone 1 인증 드론 보유" style="min-height:50px"></textarea>
+              <div class="input-hint">경쟁사 대비 차별점을 적으면 귀사만 할 수 있는 일을 찾는 바이어가 매칭됩니다</div>
+            </div>
+            <div class="vb-step-action">
+              <button class="btn-primary" onclick="vbComplete(3)" style="font-size:14px; padding:12px;">다음 단계</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: 타겟 바이어 -->
+        <div class="vb-step" id="vb-s4">
+          <div class="vb-step-header" onclick="vbToggle(4)">
+            <div class="vb-step-num">4</div>
+            <div class="vb-step-title">타겟 바이어</div>
+            <span class="vb-step-badge"></span>
+          </div>
+          <div class="vb-step-body">
+            <div class="input-group" style="margin-bottom:12px;">
+              <label class="input-label">만나고 싶은 바이어 유형</label>
+              <textarea class="input-field" placeholder="예: 군 정찰/감시 장비 도입 담당자" style="min-height:60px"></textarea>
+              <div class="input-hint">원하는 바이어 유형을 적으면 AI가 우선 매칭합니다</div>
+            </div>
+            <div class="input-group">
+              <label class="input-label">희망 기관 유형</label>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:12px; padding:6px 12px;">군</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:12px; padding:6px 12px;">정부</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:12px; padding:6px 12px;">방산 기업</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:12px; padding:6px 12px;">민간</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:12px; padding:6px 12px;">연구/학계</div>
+              </div>
+            </div>
+            <div class="vb-step-action">
+              <button class="btn-primary" id="vb-complete-btn" onclick="vbTryComplete()" style="font-size:14px; padding:12px;">프로필 완성</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 완료 화면 -->
+      <div id="vb-complete" style="display:none; flex:1; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:40px 24px;">
+        <div class="va-check" style="margin-bottom:20px;">&#10003;</div>
+        <div style="font-size:20px; font-weight:800; margin-bottom:8px;">프로필 작성 완료!</div>
+        <div style="font-size:14px; color:var(--text-tertiary); line-height:1.6; margin-bottom:24px;">
+          비즈매칭 신청기간 종료 후<br>
+          AI가 귀사에 관심 있는 바이어를 매칭해드립니다.<br>
+          결과는 이메일로 알려드릴게요.
+        </div>
+        <div style="width:100%; background:var(--bg-secondary); border-radius:var(--radius-md); padding:16px; text-align:left; margin-bottom:20px;">
+          <div style="font-size:13px; color:var(--text-tertiary); margin-bottom:4px;">비즈매칭 신청기간</div>
+          <div style="font-size:15px; font-weight:700;">8/26 (화) ~ 9/11 (목)</div>
+        </div>
+        <button class="btn-secondary" onclick="alert('내 프로필 조회 화면(/profile)으로 이동')" style="margin-top:8px;">내 프로필 확인하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       VARIANT C - CONVERSATIONAL (Seller)
+       ========================================== -->
+  <div class="variant" id="varC">
+    <div class="vc-container">
+      <div class="vc-header">
+        <div class="vc-avatar">N</div>
+        <div>
+          <div class="vc-header-text">NABI</div>
+          <div class="vc-header-sub">비즈매칭 프로필 작성</div>
+        </div>
+        <div class="vc-step-pills" id="vc-pills">
+          <div class="vc-pill current"></div>
+          <div class="vc-pill"></div>
+          <div class="vc-pill"></div>
+          <div class="vc-pill"></div>
+          <div class="vc-pill"></div>
+        </div>
+      </div>
+
+      <div class="vc-messages" id="vc-msgs">
+        <div class="vc-msg bot">
+          안녕하세요! &#128075; 에어빌리티 주식회사의 비즈매칭 프로필 작성을 시작할게요.<br><br>먼저 기본 정보를 확인해주세요.
+        </div>
+
+        <div class="vc-msg info" style="text-align:left;">
+          <div style="font-size:12px; font-weight:600; color:var(--text-tertiary); margin-bottom:6px;">회사 정보</div>
+          <div>&#127970; 에어빌리티 주식회사 (Airbility Inc.)</div>
+          <div style="margin-top:2px; font-size:12px; color:var(--text-secondary);">부스: 미배정 &middot; 기본부스 2개</div>
+          <div style="font-size:12px; font-weight:600; color:var(--text-tertiary); margin:10px 0 6px;">담당자 정보</div>
+          <div>&#128100; 한지민 &middot; Senior Designer</div>
+          <div style="margin-top:2px; font-size:12px; color:var(--text-secondary);">&#128231; seller@example.com<br>&#128222; 010-0000-0000</div>
+        </div>
+
+        <div class="vc-action-area" id="vc-action-1">
+          <button class="vc-action-btn" onclick="vcConfirmStep1(true)">정보가 맞습니다</button>
+          <button class="vc-action-btn secondary" style="margin-top:6px;" onclick="vcConfirmStep1(false)">정보가 다릅니다</button>
+        </div>
+      </div>
+
+      <div class="vc-input-area" id="vc-input-area">
+        <div class="vc-input-wrap">
+          <textarea class="vc-input" rows="1" placeholder="메시지를 입력하세요..." id="vc-input"></textarea>
+          <button class="vc-send" onclick="vcSend()">&#9654;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    </div><!-- /app-content -->
+  </main>
+</div><!-- /app-shell -->
+
+<!-- VARIANT SWITCHER BAR -->
+<div class="variant-bar">
+  <div class="variant-label">VARIANT</div>
+  <button class="variant-btn active" onclick="switchVariant('A', this)">A &middot; 토스 스타일</button>
+  <div class="variant-sep"></div>
+  <button class="variant-btn" onclick="switchVariant('B', this)">B &middot; 아코디언 스텝</button>
+  <div class="variant-sep"></div>
+  <button class="variant-btn" onclick="switchVariant('C', this)">C &middot; 대화형</button>
+  <div class="view-toggle">
+    <button class="view-toggle-btn" onclick="setPreview('mobile')"><span class="view-toggle-icon">&#128241;</span> Mobile</button>
+    <button class="view-toggle-btn active" onclick="setPreview('desktop')"><span class="view-toggle-icon">&#128187;</span> Desktop</button>
+  </div>
+</div>
+
+<script>
+/* ==========================================
+   PREVIEW TOGGLE (개발용 — 셸 폭만 제약, 컨테이너 쿼리가 reflow)
+   ========================================== */
+function setPreview(mode) {
+  document.body.classList.toggle('preview-mobile', mode === 'mobile');
+  document.querySelectorAll('.view-toggle-btn').forEach(function(b) {
+    b.classList.toggle('active', b.textContent.trim().toLowerCase().indexOf(mode) !== -1);
+  });
+  // prefilled textarea 높이 재계산
+  if (typeof sfPrefilled !== 'undefined' && sfPrefilled) {
+    setTimeout(function() {
+      document.querySelectorAll('textarea.prefilled').forEach(autoResizeTextarea);
+    }, 50);
+  }
+}
+
+/* ==========================================
+   VARIANT SWITCHER
+   ========================================== */
+function switchVariant(v, el) {
+  document.querySelectorAll('.variant').forEach(function(d) { d.classList.remove('active'); });
+  document.getElementById('var' + v).classList.add('active');
+  document.querySelectorAll('.variant-btn').forEach(function(b) { b.classList.remove('active'); });
+  if (el) el.classList.add('active');
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  var variants = ['A','B','C'];
+  var cur = document.querySelector('.variant.active').id.replace('var','');
+  var idx = variants.indexOf(cur);
+  if (e.key === 'ArrowLeft') { idx = (idx - 1 + 3) % 3; switchVariant(variants[idx], document.querySelectorAll('.variant-btn')[idx]); }
+  if (e.key === 'ArrowRight') { idx = (idx + 1) % 3; switchVariant(variants[idx], document.querySelectorAll('.variant-btn')[idx]); }
+});
+
+/* ==========================================
+   VARIANT A - TOSS STYLE
+   ========================================== */
+function showInlineAlert(stepEl, msg) {
+  var existing = stepEl.querySelector('.inline-alert');
+  if (existing) existing.remove();
+  var alert = document.createElement('div');
+  alert.className = 'inline-alert';
+  alert.innerHTML = '<span class="inline-alert-icon">&#9888;</span><span>' + msg + '</span>';
+  var target = stepEl.querySelector('.va-fields') || stepEl.querySelector('.vb-step-body') || stepEl.querySelector('.va-content');
+  if (target) {
+    target.insertBefore(alert, target.firstChild);
+    target.scrollTop = 0;
+  }
+  setTimeout(function() { if (alert.parentNode) alert.remove(); }, 4000);
+}
+
+function clearInlineAlert(stepEl) {
+  var existing = stepEl.querySelector('.inline-alert');
+  if (existing) existing.remove();
+}
+
+function vaValidateStep(currentStep) {
+  var stepEl = document.getElementById('va-step-' + currentStep);
+  clearInlineAlert(stepEl);
+  if (currentStep === 1) return true;
+  if (currentStep === 2) {
+    var exhibitNames = document.querySelectorAll('#va-exhibit-list .exhibit-name-input');
+    var hasProduct = false;
+    exhibitNames.forEach(function(inp) { if (inp.value.trim()) hasProduct = true; });
+    if (!hasProduct) {
+      showInlineAlert(stepEl, '전시할 제품/서비스를 최소 1개 입력해주세요. 바이어 매칭의 핵심 정보입니다.');
+      exhibitInputs[0].focus();
+      return false;
+    }
+    var hasKeyword = document.querySelectorAll('#va-keyword-grid .keyword-chip.selected').length > 0;
+    if (!hasKeyword) {
+      showInlineAlert(stepEl, '분야 키워드를 최소 1개 선택해주세요. 바이어 관심 분야와 매칭됩니다.');
+      return false;
+    }
+    return true;
+  }
+  if (currentStep === 3) {
+    var texts = document.querySelectorAll('#va-step-3 textarea');
+    var hasIntro = texts[0] && texts[0].value.trim().length > 0;
+    if (!hasIntro) {
+      showInlineAlert(stepEl, '회사 소개를 입력해주세요. 바이어가 미팅 전에 읽는 첫 인상입니다.');
+      texts[0].focus();
+      return false;
+    }
+    return true;
+  }
+  if (currentStep === 4) return true;
+  return true;
+}
+
+function vaGoTo(step) {
+  document.querySelectorAll('#varA .va-step').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('va-step-' + step).classList.add('active');
+  // Auto-resize prefilled textareas when step becomes visible
+  if (sfPrefilled) {
+    setTimeout(function() {
+      document.querySelectorAll('#va-step-' + step + ' textarea.prefilled').forEach(autoResizeTextarea);
+    }, 50);
+  }
+  // Show DART result on Step 2 entry (background lookup from biznum in Step 1)
+  if (step === 2) {
+    var dartEl = document.getElementById('va-dart-result');
+    var biznum = document.getElementById('va-biznum');
+    if (dartEl && biznum && biznum.value.trim()) {
+      setTimeout(function() { dartEl.style.display = 'block'; }, 600);
+    }
+  }
+}
+
+function vaGoToSF() {
+  document.querySelectorAll('#varA .va-step').forEach(function(s) { s.classList.remove('active'); });
+  // Reset Smart Fill to initial state
+  ['va-sf-upload','va-sf-url','va-sf-dart','va-sf-processing'].forEach(function(id) {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('va-sf-options').style.display = 'block';
+  // Cancel any running processing animations
+  sfTimers.forEach(function(t) { clearTimeout(t); });
+  sfTimers = [];
+  // Reset processing step indicators and labels
+  var defaultLabels = [' 문서 업로드',' 내용 분석',' 전시 품목 추출',' 회사 소개 생성',' 키워드 매칭'];
+  ['va-proc-s1','va-proc-s2','va-proc-s3','va-proc-s4','va-proc-s5'].forEach(function(id, i) {
+    var el = document.getElementById(id);
+    el.classList.remove('active','done');
+    el.querySelector('.sf-proc-step-icon').innerHTML = '&#9711;';
+    el.querySelector('.sf-proc-step-icon').nextSibling.textContent = defaultLabels[i];
+  });
+  document.getElementById('va-step-sf').classList.add('active');
+}
+
+function vaNext(step) {
+  var currentStep = step - 1;
+  if (currentStep >= 1 && !vaValidateStep(currentStep)) return;
+  vaGoTo(step);
+}
+
+function vaSelectOne(el) {
+  el.parentElement.querySelectorAll('.keyword-chip').forEach(function(c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+}
+
+function vaCheckAI2(el) {
+  if (el.value.length > 10) {
+    document.getElementById('va-ai-suggest-2').style.display = 'block';
+  }
+}
+
+// Exhibit card (Variant A) — product name + spec as one set
+function vaAddExhibit() {
+  var list = document.getElementById('va-exhibit-list');
+  var num = list.querySelectorAll('.exhibit-card').length + 1;
+  var card = document.createElement('div');
+  card.className = 'exhibit-card';
+  card.innerHTML = '<div class="exhibit-card-header"><span class="exhibit-card-num">' + num + '</span><button class="exhibit-remove-btn" onclick="vaRemoveExhibit(this)" title="삭제">&times;</button></div><input type="text" class="input-field exhibit-name-input" placeholder="제품/서비스명"><textarea class="input-field exhibit-spec-input" placeholder="주요 사양"></textarea>';
+  list.appendChild(card);
+  card.querySelector('.exhibit-name-input').focus();
+  vaRenumberExhibits();
+}
+function vaRemoveExhibit(btn) {
+  var card = btn.closest('.exhibit-card') || btn.closest('.exhibit-input-row');
+  var list = card.parentElement;
+  card.remove();
+  vaRenumberExhibits();
+  // For achievement rows
+  updateAchievementRemoveButtons(list);
+}
+function vaRenumberExhibits() {
+  var cards = document.querySelectorAll('#va-exhibit-list .exhibit-card');
+  cards.forEach(function(c, i) {
+    var num = c.querySelector('.exhibit-card-num');
+    if (num) num.textContent = i + 1;
+    var btn = c.querySelector('.exhibit-remove-btn');
+    if (btn) btn.style.display = cards.length > 1 ? 'flex' : 'none';
+  });
+}
+function updateAchievementRemoveButtons(list) {
+  var rows = list.querySelectorAll('.exhibit-input-row');
+  rows.forEach(function(r) {
+    var btn = r.querySelector('.exhibit-remove-btn');
+    if (btn) btn.style.display = rows.length > 1 ? 'flex' : 'none';
+  });
+}
+
+// Achievement multi-input (Variant A)
+function vaAddAchievement() {
+  var list = document.getElementById('va-achievement-list');
+  var row = document.createElement('div');
+  row.className = 'exhibit-input-row';
+  row.innerHTML = '<input type="text" class="input-field" placeholder="예: 폴란드 수출 계약 체결 (2024)" style="flex:1"><button class="exhibit-remove-btn" onclick="vaRemoveExhibit(this)" title="삭제">&times;</button>';
+  list.appendChild(row);
+  row.querySelector('input').focus();
+  updateAchievementRemoveButtons(list);
+}
+
+// Exhibit card (Variant B)
+function vbAddExhibit() {
+  var list = document.getElementById('vb-exhibit-list');
+  var num = list.querySelectorAll('.exhibit-card').length + 1;
+  var card = document.createElement('div');
+  card.className = 'exhibit-card';
+  card.innerHTML = '<div class="exhibit-card-header"><span class="exhibit-card-num">' + num + '</span><button class="exhibit-remove-btn" onclick="vbRemoveExhibit(this)" title="삭제">&times;</button></div><input type="text" class="input-field exhibit-name-input" placeholder="제품/서비스명"><textarea class="input-field exhibit-spec-input" placeholder="주요 사양"></textarea>';
+  list.appendChild(card);
+  card.querySelector('.exhibit-name-input').focus();
+  vbRenumberExhibits();
+}
+function vbRemoveExhibit(btn) {
+  btn.closest('.exhibit-card').remove();
+  vbRenumberExhibits();
+}
+function vbRenumberExhibits() {
+  var cards = document.querySelectorAll('#vb-exhibit-list .exhibit-card');
+  cards.forEach(function(c, i) {
+    var num = c.querySelector('.exhibit-card-num');
+    if (num) num.textContent = i + 1;
+    var btn = c.querySelector('.exhibit-remove-btn');
+    if (btn) btn.style.display = cards.length > 1 ? 'flex' : 'none';
+  });
+}
+function vbAddAchievement() {
+  var list = document.getElementById('vb-achievement-list');
+  var row = document.createElement('div');
+  row.className = 'exhibit-input-row';
+  row.innerHTML = '<input type="text" class="input-field" placeholder="예: 폴란드 수출 계약 체결 (2024)" style="flex:1"><button class="exhibit-remove-btn" onclick="vaRemoveExhibit(this)" title="삭제">&times;</button>';
+  list.appendChild(row);
+  row.querySelector('input').focus();
+  updateAchievementRemoveButtons(list);
+}
+
+function vaCheckAI3(el) {
+  if (el.value.length > 10) {
+    document.getElementById('va-ai-suggest-3').style.display = 'block';
+  }
+}
+
+/* ==========================================
+   SMART FILL (Variant A)
+   ========================================== */
+var sfPrefilled = false;
+var sfTimers = [];
+
+function vaSmartFill(mode) {
+  // Hide all sub-panels
+  ['va-sf-options','va-sf-upload','va-sf-url','va-sf-dart','va-sf-processing'].forEach(function(id) {
+    document.getElementById(id).style.display = 'none';
+  });
+
+  if (mode === 'upload') {
+    document.getElementById('va-sf-upload').style.display = 'block';
+  } else if (mode === 'url') {
+    document.getElementById('va-sf-url').style.display = 'block';
+  } else if (mode === 'dart') {
+    document.getElementById('va-sf-dart').style.display = 'block';
+  } else if (mode === 'manual') {
+    vaGoTo(2);
+    return;
+  }
+}
+
+function vaSmartFillBack() {
+  ['va-sf-upload','va-sf-url','va-sf-dart','va-sf-processing'].forEach(function(id) {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('va-sf-options').style.display = 'block';
+}
+
+function vaSimulateUpload() {
+  sfTimers.forEach(function(t) { clearTimeout(t); });
+  sfTimers = [];
+  ['va-sf-options','va-sf-upload','va-sf-url','va-sf-dart'].forEach(function(id) {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('va-sf-processing').style.display = 'block';
+
+  var steps = ['va-proc-s1','va-proc-s2','va-proc-s3','va-proc-s4','va-proc-s5'];
+  var labels = [
+    ['문서 업로드 중...', 'Airbility_Company_Profile_2026.pdf'],
+    ['내용 분석 중...', 'AI가 12페이지를 읽고 있습니다'],
+    ['전시 품목 추출 중...', '제품 3개 발견'],
+    ['회사 소개 생성 중...', '핵심 역량 정리'],
+    ['키워드 매칭 중...', '매칭 키워드 8개 생성']
+  ];
+  var delay = 0;
+  steps.forEach(function(id, i) {
+    sfTimers.push(setTimeout(function() {
+      if (i > 0) {
+        var prev = document.getElementById(steps[i-1]);
+        prev.classList.remove('active');
+        prev.classList.add('done');
+        prev.querySelector('.sf-proc-step-icon').innerHTML = '&#10003;';
+      }
+      var cur = document.getElementById(id);
+      cur.classList.add('active');
+      cur.querySelector('.sf-proc-step-icon').innerHTML = '&#9679;';
+      document.getElementById('va-proc-title').textContent = labels[i][0];
+      document.getElementById('va-proc-sub').textContent = labels[i][1];
+    }, delay));
+    delay += 700;
+  });
+
+  sfTimers.push(setTimeout(function() {
+    var last = document.getElementById(steps[steps.length - 1]);
+    last.classList.remove('active');
+    last.classList.add('done');
+    last.querySelector('.sf-proc-step-icon').innerHTML = '&#10003;';
+    document.getElementById('va-proc-title').textContent = '추출 완료!';
+    document.getElementById('va-proc-sub').textContent = '2~4단계가 자동으로 채워졌습니다';
+  }, delay));
+
+  sfTimers.push(setTimeout(function() {
+    vaPrefillFromAI();
+    vaGoTo(2);
+  }, delay + 800));
+}
+
+function vaSimulateUrl() {
+  sfTimers.forEach(function(t) { clearTimeout(t); });
+  sfTimers = [];
+  ['va-sf-options','va-sf-upload','va-sf-url','va-sf-dart'].forEach(function(id) {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('va-sf-processing').style.display = 'block';
+
+  // Reset step labels for URL crawl
+  var stepLabels = [' 웹사이트 접속',' 페이지 수집',' 제품 정보 추출',' 회사 소개 분석',' 키워드 매칭'];
+  ['va-proc-s1','va-proc-s2','va-proc-s3','va-proc-s4','va-proc-s5'].forEach(function(id, i) {
+    var el = document.getElementById(id);
+    el.classList.remove('active','done');
+    el.querySelector('.sf-proc-step-icon').innerHTML = '&#9711;';
+    el.querySelector('.sf-proc-step-icon').nextSibling.textContent = stepLabels[i];
+  });
+
+  var steps = ['va-proc-s1','va-proc-s2','va-proc-s3','va-proc-s4','va-proc-s5'];
+  var labels = [
+    ['웹사이트 접속 중...', 'airbility.co.kr'],
+    ['페이지 수집 중...', '제품 소개, About, 뉴스 등 5페이지'],
+    ['제품 정보 추출 중...', '제품 3개 발견'],
+    ['회사 소개 분석 중...', '핵심 역량 정리'],
+    ['키워드 매칭 중...', '매칭 키워드 8개 생성']
+  ];
+  var delay = 0;
+  steps.forEach(function(id, i) {
+    sfTimers.push(setTimeout(function() {
+      if (i > 0) {
+        var prev = document.getElementById(steps[i-1]);
+        prev.classList.remove('active');
+        prev.classList.add('done');
+        prev.querySelector('.sf-proc-step-icon').innerHTML = '&#10003;';
+      }
+      var cur = document.getElementById(id);
+      cur.classList.add('active');
+      cur.querySelector('.sf-proc-step-icon').innerHTML = '&#9679;';
+      document.getElementById('va-proc-title').textContent = labels[i][0];
+      document.getElementById('va-proc-sub').textContent = labels[i][1];
+    }, delay));
+    delay += 700;
+  });
+
+  sfTimers.push(setTimeout(function() {
+    var last = document.getElementById(steps[steps.length - 1]);
+    last.classList.remove('active');
+    last.classList.add('done');
+    last.querySelector('.sf-proc-step-icon').innerHTML = '&#10003;';
+    document.getElementById('va-proc-title').textContent = '추출 완료!';
+    document.getElementById('va-proc-sub').textContent = '2~4단계가 자동으로 채워졌습니다';
+  }, delay));
+
+  sfTimers.push(setTimeout(function() {
+    vaPrefillFromAI();
+    vaGoTo(2);
+  }, delay + 800));
+}
+
+function vaApplyDart() {
+  // DART gives partial info, still prefills some fields
+  vaPrefillFromAI();
+  vaGoTo(2);
+}
+
+function autoResizeTextarea(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
+}
+
+function vaPrefillFromAI() {
+  sfPrefilled = true;
+
+  // Prefill step 2: exhibit cards (name + spec pairs)
+  var exhibitList = document.getElementById('va-exhibit-list');
+  var firstCard = exhibitList.querySelector('.exhibit-card');
+  if (firstCard) {
+    firstCard.querySelector('.exhibit-name-input').value = 'ELIOS 3 - 실내 밀폐공간 점검용 구형 드론';
+    firstCard.querySelector('.exhibit-spec-input').value = '비행시간 12분, LiDAR+열화상+4K 카메라, 충돌 보호 케이지, AI 결함 탐지';
+  }
+  vaAddExhibit();
+  var cards = exhibitList.querySelectorAll('.exhibit-card');
+  if (cards[1]) {
+    cards[1].querySelector('.exhibit-name-input').value = 'AIR 6 - 산업용 방폭 드론';
+    cards[1].querySelector('.exhibit-spec-input').value = '비행시간 40분, 방폭인증 ATEX Zone 1 / IECEx, 열화상/가스감지 센서';
+  }
+  vaAddExhibit();
+  cards = exhibitList.querySelectorAll('.exhibit-card');
+  if (cards[2]) {
+    cards[2].querySelector('.exhibit-name-input').value = 'Inspector AI - 결함 탐지 소프트웨어';
+    cards[2].querySelector('.exhibit-spec-input').value = 'AI 기반 균열/부식/변형 자동 탐지, 3D 매핑 리포트 생성';
+  }
+
+  // Prefill keywords
+  var keywords = document.querySelectorAll('#va-keyword-grid .keyword-chip');
+  keywords.forEach(function(chip) {
+    var text = chip.textContent.trim();
+    if (text === '무인기/드론' || text === '센서/광학' || text === 'AI/자율주행') {
+      chip.classList.add('selected');
+    }
+  });
+
+  // Prefill achievements
+  var achList = document.getElementById('va-achievement-list');
+  var firstAch = achList.querySelector('input');
+  if (firstAch) firstAch.value = '국내 원전 밀폐공간 점검 독점 수행';
+  vaAddAchievement();
+  var achInputs = achList.querySelectorAll('input');
+  if (achInputs[1]) achInputs[1].value = '해군 함정 내부 점검 시범 사업 수주';
+  vaAddAchievement();
+  achInputs = achList.querySelectorAll('input');
+  if (achInputs[2]) achInputs[2].value = 'ELIOS 3 LiDAR 탑재 모델 국내 최초 도입';
+
+  // Show AI suggest
+  document.getElementById('va-ai-suggest-2').style.display = 'block';
+
+  // Prefill step 3 textareas
+  var s3texts = document.querySelectorAll('#va-step-3 textarea');
+  if (s3texts[0]) s3texts[0].value = '2018년 설립, 산업용 특수환경 드론 전문 기업. 스위스 Flyability 공식 파트너. 국내 밀폐공간 드론 점검 시장 점유율 1위. 석유화학, 발전, 조선, 원전 등 30+ 현장 실적.';
+  if (s3texts[1]) s3texts[1].value = '국내 유일 ATEX Zone 1 인증 산업용 드론 보유. 충돌 보호 케이지 기술로 GPS 없는 밀폐공간 자율비행. AI 기반 결함 자동 탐지 소프트웨어.';
+
+  // Show AI suggest
+  document.getElementById('va-ai-suggest-3').style.display = 'block';
+
+  // Mark prefilled fields
+  document.querySelectorAll('#va-step-2 textarea, #va-step-2 input[type="text"], #va-step-3 textarea').forEach(function(el) {
+    if (el.value.trim()) el.classList.add('prefilled');
+  });
+
+  // Add prefilled tags to labels
+  document.querySelectorAll('#va-step-2 .input-label, #va-step-3 .input-label').forEach(function(label) {
+    if (!label.querySelector('.prefilled-tag')) {
+      label.innerHTML += ' <span class="prefilled-tag">&#9989; AI 추출</span>';
+    }
+  });
+
+  // Auto-resize after DOM renders the step
+  setTimeout(function() {
+    document.querySelectorAll('#va-step-2 textarea, #va-step-3 textarea').forEach(autoResizeTextarea);
+  }, 50);
+
+  // Update nudge banner in step 2
+  var nudge = document.querySelector('#va-step-2 .nudge-banner');
+  if (nudge) {
+    nudge.innerHTML = '<span class="nudge-icon">&#10024;</span><span>AI가 회사 자료에서 자동 추출했습니다. <strong>내용을 확인하고 수정해주세요.</strong></span>';
+    nudge.style.background = 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)';
+    nudge.style.borderColor = '#93c5fd';
+    nudge.style.color = '#1e40af';
+  }
+}
+
+/* ==========================================
+   VARIANT B - STEPPER
+   ========================================== */
+function vbToggle(n) {
+  var step = document.getElementById('vb-s' + n);
+  if (step.classList.contains('active')) {
+    step.classList.remove('active');
+  } else {
+    document.querySelectorAll('#varB .vb-step').forEach(function(s) { s.classList.remove('active'); });
+    step.classList.add('active');
+    setTimeout(function() {
+      step.querySelectorAll('textarea.prefilled').forEach(autoResizeTextarea);
+    }, 50);
+  }
+}
+
+function vbValidateStep(n) {
+  var step = document.getElementById('vb-s' + n);
+  clearInlineAlert(step);
+  if (n === 2) {
+    var textarea = step.querySelector('textarea');
+    if (!textarea || textarea.value.trim().length === 0) {
+      showInlineAlert(step, '전시할 제품/서비스를 입력해주세요.');
+      if (textarea) textarea.focus();
+      return false;
+    }
+  }
+  if (n === 3) {
+    var textareas = step.querySelectorAll('textarea');
+    if (!textareas[0] || textareas[0].value.trim().length === 0) {
+      showInlineAlert(step, '회사 소개를 입력해주세요.');
+      if (textareas[0]) textareas[0].focus();
+      return false;
+    }
+  }
+  return true;
+}
+
+function vbComplete(n) {
+  if (!vbValidateStep(n)) return;
+
+  var step = document.getElementById('vb-s' + n);
+  step.classList.remove('active');
+  step.classList.add('done');
+  step.querySelector('.vb-step-num').innerHTML = '&#10003;';
+  step.querySelector('.vb-step-badge').textContent = '완료';
+
+  // After step 1, show smart fill helper
+  if (n === 1) {
+    document.getElementById('vb-smart-fill').style.display = 'block';
+  }
+
+  var next = document.getElementById('vb-s' + (n + 1));
+  if (next) {
+    next.classList.add('active');
+    next.querySelector('.vb-step-badge').textContent = '진행 중';
+  }
+
+  var progress = (n + 1) * 25;
+  document.getElementById('vb-progress').style.width = Math.min(progress, 100) + '%';
+}
+
+function vbSmartFill(mode) {
+  document.getElementById('vb-smart-fill').style.display = 'none';
+  // Prefill fields in stepper
+  var s2 = document.querySelector('#vb-s2 textarea');
+  if (s2) s2.value = 'ELIOS 3 - 실내 밀폐공간 점검용 구형 드론\nAIR 6 - 산업용 방폭 드론 (ATEX Zone 1 인증)';
+  var s3texts = document.querySelectorAll('#vb-s3 textarea');
+  if (s3texts[0]) s3texts[0].value = '2018년 설립, 산업용 특수환경 드론 전문. 스위스 Flyability 공식 파트너.';
+  if (s3texts[1]) s3texts[1].value = '국내 유일 ATEX Zone 1 인증 산업용 드론. 밀폐공간 자율비행 기술.';
+  // Mark prefilled and auto-resize
+  document.querySelectorAll('#vb-s2 textarea, #vb-s3 textarea').forEach(function(ta) {
+    ta.classList.add('prefilled');
+    ta.removeAttribute('style');
+  });
+  // Add prefilled indicators
+  document.querySelectorAll('#vb-s2 .input-label, #vb-s3 .input-label').forEach(function(label) {
+    if (!label.querySelector('.prefilled-tag')) {
+      label.innerHTML += ' <span class="prefilled-tag">&#9989; AI</span>';
+    }
+  });
+  // Auto-resize when accordion step opens
+  setTimeout(function() {
+    document.querySelectorAll('#vb-s2 textarea.prefilled, #vb-s3 textarea.prefilled').forEach(autoResizeTextarea);
+  }, 100);
+}
+
+function vbTryComplete() {
+  var s2 = document.getElementById('vb-s2');
+  var s3 = document.getElementById('vb-s3');
+  var s4 = document.getElementById('vb-s4');
+  var incomplete = [];
+  if (!s2.classList.contains('done')) incomplete.push('전시 품목');
+  if (!s3.classList.contains('done')) incomplete.push('회사 소개 + 강점');
+  clearInlineAlert(s4);
+  if (incomplete.length > 0) {
+    showInlineAlert(s4, '아직 완료되지 않은 단계가 있습니다: ' + incomplete.join(', ') + '. 해당 단계를 먼저 완료해주세요.');
+    return;
+  }
+  vbShowComplete();
+}
+
+function vbShowComplete() {
+  var step4 = document.getElementById('vb-s4');
+  step4.classList.remove('active');
+  step4.classList.add('done');
+  step4.querySelector('.vb-step-num').innerHTML = '&#10003;';
+  step4.querySelector('.vb-step-badge').textContent = '완료';
+  document.getElementById('vb-progress').style.width = '100%';
+
+  document.querySelector('#varB .vb-steps').style.display = 'none';
+  var complete = document.getElementById('vb-complete');
+  complete.style.display = 'flex';
+}
+
+/* ==========================================
+   VARIANT C - CONVERSATIONAL
+   ========================================== */
+var vcStep = 1;
+var vcMsgs;
+
+function vcInit() {
+  vcMsgs = document.getElementById('vc-msgs');
+}
+setTimeout(vcInit, 0);
+
+function vcScrollBottom() {
+  setTimeout(function() { vcMsgs.scrollTop = vcMsgs.scrollHeight; }, 50);
+}
+
+function vcAddBot(html) {
+  var el = document.createElement('div');
+  el.className = 'vc-msg bot';
+  el.innerHTML = html;
+  vcMsgs.appendChild(el);
+  vcScrollBottom();
+  return el;
+}
+
+function vcAddUser(text) {
+  var el = document.createElement('div');
+  el.className = 'vc-msg user';
+  el.textContent = text;
+  vcMsgs.appendChild(el);
+  vcScrollBottom();
+}
+
+function vcAddAction(html) {
+  var el = document.createElement('div');
+  el.className = 'vc-action-area';
+  el.innerHTML = html;
+  vcMsgs.appendChild(el);
+  vcScrollBottom();
+  return el;
+}
+
+function vcRemoveAction(el) {
+  if (el && el.parentNode) el.remove();
+}
+
+function vcUpdatePills(step) {
+  var pills = document.querySelectorAll('#vc-pills .vc-pill');
+  pills.forEach(function(p, i) {
+    p.classList.remove('done', 'current');
+    if (i < step - 1) p.classList.add('done');
+    if (i === step - 1) p.classList.add('current');
+  });
+}
+
+function vcConfirmStep1(correct) {
+  var area = document.getElementById('vc-action-1');
+  vcRemoveAction(area);
+
+  if (correct) {
+    vcAddUser('정보가 맞습니다');
+    vcGoToStep2();
+  } else {
+    vcAddUser('정보가 다릅니다');
+    vcAddBot('정보 수정은 운영사무국에 문의해주세요.<br>&#128222; 02-xxxx-xxxx &middot; &#128231; support@dxkorea.kr');
+    var actionHtml = '<button class="vc-action-btn" onclick="vcWrongInfoProceed(this)">현재 정보로 진행하기</button>';
+    vcAddAction(actionHtml);
+  }
+}
+
+function vcWrongInfoProceed(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddUser('현재 정보로 진행합니다');
+  vcGoToStep2();
+}
+
+// Smart Fill prompt before step 2
+function vcGoToStep2() {
+  vcStep = 'sf';
+  vcUpdatePills(2);
+
+  setTimeout(function() {
+    vcAddBot('프로필을 빠르게 채워드릴 수 있어요! &#10024;<br><br>회사 소개서나 카탈로그가 있으면 AI가 자동으로 추출합니다.');
+    var actionHtml =
+      '<button class="vc-action-btn" onclick="vcSmartFillUpload(this)" style="text-align:left; display:flex; align-items:center; gap:10px;"><span style="font-size:18px;">&#128196;</span> 소개서/카탈로그 업로드</button>' +
+      '<button class="vc-action-btn secondary" onclick="vcSmartFillUrl(this)" style="margin-top:6px; text-align:left; display:flex; align-items:center; gap:10px;"><span style="font-size:18px;">&#127760;</span> 웹사이트에서 가져오기</button>' +
+      '<button class="vc-action-btn secondary" onclick="vcSmartFillSkip(this)" style="margin-top:6px; text-align:left; display:flex; align-items:center; gap:10px;"><span style="font-size:18px;">&#9997;</span> 직접 입력할게요</button>';
+    vcAddAction(actionHtml);
+  }, 400);
+}
+
+function vcSmartFillUpload(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddUser('소개서 업로드');
+
+  setTimeout(function() {
+    vcAddBot('파일을 받았습니다. 분석 중이에요...');
+    setTimeout(function() {
+      vcAddBot('&#9989; <strong>Airbility_Company_Profile_2026.pdf</strong>에서 추출 완료!<br><br>&#128196; 제품 2개 발견<br>&#127970; 회사 소개 추출<br>&#127942; 강점 3개 식별<br>&#128204; 키워드 8개 생성<br><br><span style="font-size:12px; color:var(--text-tertiary);">다음 단계에서 추출된 내용을 확인하고 수정할 수 있어요.</span>');
+      vcPrefilled = true;
+      setTimeout(function() { vcStartStep2Real(); }, 600);
+    }, 1500);
+  }, 400);
+}
+
+function vcSmartFillUrl(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddUser('웹사이트에서 가져오기');
+
+  setTimeout(function() {
+    vcAddBot('웹사이트 주소를 알려주세요.');
+    document.getElementById('vc-input').placeholder = 'https://airbility.co.kr';
+    vcStep = 'sf-url';
+    document.getElementById('vc-input').focus();
+  }, 400);
+}
+
+function vcHandleSfUrl(text) {
+  setTimeout(function() {
+    vcAddBot('&#127760; <strong>' + text + '</strong> 접속 중...');
+    setTimeout(function() {
+      vcAddBot('&#9989; 웹사이트에서 추출 완료!<br><br>&#128196; 제품 정보 추출<br>&#127970; About 페이지 분석<br>&#128204; 키워드 6개 생성<br><br><span style="font-size:12px; color:var(--text-tertiary);">다음 단계에서 확인하고 수정할 수 있어요.</span>');
+      vcPrefilled = true;
+      setTimeout(function() { vcStartStep2Real(); }, 600);
+    }, 1500);
+  }, 400);
+}
+
+function vcSmartFillSkip(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddUser('직접 입력할게요');
+  vcStartStep2Real();
+}
+
+var vcPrefilled = false;
+
+function vcStartStep2Real() {
+  vcStep = 2;
+
+  setTimeout(function() {
+    if (vcPrefilled) {
+      vcAddBot('어떤 제품을 전시하시나요? &#128640; AI가 추출한 내용을 보여드릴게요.<br><br><div style="background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:8px; padding:12px; margin-top:8px; font-size:13px;"><strong>ELIOS 3</strong> - 실내 밀폐공간 점검용 구형 드론<br><strong>AIR 6</strong> - 산업용 방폭 드론 (ATEX Zone 1 인증)</div><br><span style="font-size:12px; color:var(--text-tertiary);">수정하거나 추가할 내용이 있으면 입력해주세요.</span>');
+      var actionHtml = '<button class="vc-action-btn" onclick="vcStep2PrefilledOk(this)">이대로 진행</button>' +
+        '<button class="vc-action-btn secondary" style="margin-top:6px;" onclick="vcStep2PrefilledEdit(this)">수정할게요</button>';
+      vcAddAction(actionHtml);
+    } else {
+      vcAddBot('어떤 제품을 전시하시나요? &#128640;<br><br><span style="font-size:12px; color:var(--text-tertiary);">전시 품목을 상세히 적을수록 관심 있는 바이어와 정확히 매칭됩니다.</span>');
+      vcAddBot('<span style="font-size:13px; color:var(--text-tertiary);">예시: "산업용 방폭 드론, 밀폐공간 점검용 구형 드론, ATEX Zone 1 인증"</span>');
+      document.getElementById('vc-input').placeholder = '전시할 제품/서비스를 입력하세요...';
+      document.getElementById('vc-input').focus();
+    }
+  }, 400);
+}
+
+function vcStep2PrefilledOk(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddUser('이대로 진행');
+  vcStep2Inputs.push('(AI 추출 내용 확인)');
+  vcStep2DoneAuto();
+}
+
+function vcStep2PrefilledEdit(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddBot('수정하거나 추가할 내용을 입력해주세요.');
+  document.getElementById('vc-input').placeholder = '전시 품목 수정/추가...';
+  document.getElementById('vc-input').focus();
+}
+
+function vcStep2DoneAuto() {
+  // Skip keyword step if prefilled (already extracted)
+  setTimeout(function() {
+    vcAddBot('키워드도 자동 추출되었습니다. &#129302;');
+    var actionHtml = '<div class="vc-quick-tags">';
+    ['방폭 드론','밀폐공간','구형 드론','열화상','ATEX','산업용 드론','LiDAR','자율비행'].forEach(function(k) {
+      actionHtml += '<div class="vc-quick-tag selected" onclick="vcSelectTag(this)">+ ' + k + '</div>';
+    });
+    actionHtml += '</div>';
+    actionHtml += '<button class="vc-action-btn" onclick="vcConfirmKeywords2(this)">키워드 확정</button>';
+    actionHtml += '<button class="vc-action-btn secondary" style="margin-top:6px;" onclick="vcSkipKeywords2(this)">건너뛰기</button>';
+    vcAddAction(actionHtml);
+  }, 400);
+}
+
+// Step 2 text input handler
+var vcStep2Inputs = [];
+
+function vcHandleStep2(text) {
+  vcStep2Inputs.push(text);
+  setTimeout(function() {
+    vcAddBot('좋아요! &#128077; 더 추가할 제품이 있으신가요?');
+    var actionHtml = '<button class="vc-action-btn secondary" onclick="vcStep2More(this)">더 입력하기</button>' +
+      '<button class="vc-action-btn" style="margin-top:6px;" onclick="vcStep2Done(this)">입력 완료, 다음으로</button>';
+    vcAddAction(actionHtml);
+  }, 400);
+}
+
+function vcStep2More(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddBot('추가 제품이나 사양을 알려주세요.');
+  document.getElementById('vc-input').focus();
+  vcStep = 2;
+}
+
+function vcStep2Done(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddUser('입력 완료');
+
+  // AI 키워드 추출
+  setTimeout(function() {
+    var botEl = vcAddBot('입력하신 내용을 분석하고 있어요...');
+    setTimeout(function() {
+      botEl.innerHTML = '입력하신 내용에서 키워드를 추출했어요. &#129302;<br>추가할 키워드를 탭해주세요.';
+      var actionHtml = '<div class="vc-quick-tags">';
+      ['방폭 드론','밀폐공간','산업용 드론','열화상','ATEX'].forEach(function(k) {
+        actionHtml += '<div class="vc-quick-tag" onclick="vcSelectTag(this)">+ ' + k + '</div>';
+      });
+      actionHtml += '</div>';
+      actionHtml += '<button class="vc-action-btn" style="display:none;" onclick="vcConfirmKeywords2(this)">키워드 확정</button>';
+      actionHtml += '<button class="vc-action-btn secondary" style="margin-top:6px;" onclick="vcSkipKeywords2(this)">건너뛰기</button>';
+      vcAddAction(actionHtml);
+    }, 800);
+  }, 400);
+}
+
+function vcConfirmKeywords2(btn) {
+  var area = btn.closest('.vc-action-area');
+  var selected = area.querySelectorAll('.vc-quick-tag.selected');
+  var text = selected.length > 0 ? Array.from(selected).map(function(t) { return t.textContent.replace('+ ',''); }).join(', ') : '(없음)';
+  vcRemoveAction(area);
+  vcAddUser('키워드 추가: ' + text);
+  vcGoToStep3();
+}
+
+function vcSkipKeywords2(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddUser('키워드 건너뛰기');
+  vcGoToStep3();
+}
+
+// Step 3: 회사 소개 + 강점
+function vcGoToStep3() {
+  vcStep = 3;
+  vcUpdatePills(3);
+  setTimeout(function() {
+    if (vcPrefilled) {
+      vcAddBot('회사 소개도 추출되었어요. &#127970;<br><br><div style="background:var(--bg-elevated); border:1px solid var(--border-default); border-radius:8px; padding:12px; margin-top:8px; font-size:13px;"><strong>회사 소개:</strong> 2018년 설립, 산업용 특수환경 드론 전문. 스위스 Flyability 공식 파트너.<br><br><strong>강점:</strong> 국내 유일 ATEX Zone 1 인증 산업용 드론. 밀폐공간 자율비행 기술. 석유화학/원전 현장 30+ 실적.</div>');
+      var actionHtml = '<button class="vc-action-btn" onclick="vcStep3PrefilledOk(this)">이대로 진행</button>' +
+        '<button class="vc-action-btn secondary" style="margin-top:6px;" onclick="vcStep3PrefilledEdit(this)">수정할게요</button>';
+      vcAddAction(actionHtml);
+    } else {
+      vcAddBot('회사를 소개해주세요. &#127970;<br><br><span style="font-size:12px; color:var(--text-tertiary);">바이어가 미팅 전에 읽는 첫 인상입니다. 핵심 역량과 차별점을 알려주세요.</span>');
+      vcAddBot('<span style="font-size:13px; color:var(--text-tertiary);">예시: "2018년 설립, 산업용 특수 드론 전문. 국내 유일 ATEX Zone 1 인증 드론 보유, 석유화학/원전 현장 30+ 실적"</span>');
+      document.getElementById('vc-input').placeholder = '회사 소개와 강점을 입력하세요...';
+      document.getElementById('vc-input').focus();
+    }
+  }, 400);
+}
+
+function vcStep3PrefilledOk(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddUser('이대로 진행');
+  vcGoToStep4();
+}
+
+function vcStep3PrefilledEdit(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddBot('수정하거나 추가할 내용을 입력해주세요.');
+  document.getElementById('vc-input').placeholder = '회사 소개 수정/추가...';
+  document.getElementById('vc-input').focus();
+}
+
+function vcHandleStep3(text) {
+  setTimeout(function() {
+    vcAddBot('좋아요! &#128077; 더 추가할 내용이 있으신가요?');
+    var actionHtml = '<button class="vc-action-btn secondary" onclick="vcStep3More(this)">더 입력하기</button>' +
+      '<button class="vc-action-btn" style="margin-top:6px;" onclick="vcStep3Done(this)">입력 완료, 다음으로</button>';
+    vcAddAction(actionHtml);
+  }, 400);
+}
+
+function vcStep3More(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddBot('추가 강점이나 실적을 알려주세요.');
+  document.getElementById('vc-input').focus();
+  vcStep = 3;
+}
+
+function vcStep3Done(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddUser('입력 완료');
+  vcGoToStep4();
+}
+
+// Step 4: 타겟 바이어
+function vcGoToStep4() {
+  vcStep = 4;
+  vcUpdatePills(4);
+  setTimeout(function() {
+    vcAddBot('거의 다 왔어요! &#128170;<br><br>어떤 바이어를 만나고 싶으신가요?<br><span style="font-size:12px; color:var(--text-tertiary);">원하는 바이어 유형을 적으면 AI가 우선 매칭합니다.</span>');
+    vcAddBot('<span style="font-size:13px; color:var(--text-tertiary);">예시: "군 정찰/감시 장비 도입 담당자, 석유화학 플랜트 안전 관리 부서"</span>');
+
+    var actionHtml = '<div style="margin-bottom:8px;">' +
+      '<div style="font-size:12px; font-weight:600; color:var(--text-tertiary); margin-bottom:6px;">희망 기관 유형</div>' +
+      '<div class="vc-quick-tags">' +
+      '<div class="vc-quick-tag" onclick="vcSelectTag(this)">군</div>' +
+      '<div class="vc-quick-tag" onclick="vcSelectTag(this)">정부/공공기관</div>' +
+      '<div class="vc-quick-tag" onclick="vcSelectTag(this)">방산 기업</div>' +
+      '<div class="vc-quick-tag" onclick="vcSelectTag(this)">민간 기업</div>' +
+      '<div class="vc-quick-tag" onclick="vcSelectTag(this)">연구/학계</div>' +
+      '</div></div>';
+    actionHtml += '<button class="vc-action-btn" onclick="vcConfirmStep4(this)">다음</button>';
+    actionHtml += '<button class="vc-action-btn secondary" style="margin-top:6px;" onclick="vcSkipStep4(this)">건너뛰기 (선택사항)</button>';
+    vcAddAction(actionHtml);
+    document.getElementById('vc-input').placeholder = '만나고 싶은 바이어 유형을 입력하세요...';
+  }, 400);
+}
+
+function vcConfirmStep4(btn) {
+  var area = btn.closest('.vc-action-area');
+  var selected = area.querySelectorAll('.vc-quick-tag.selected');
+  var orgTypes = selected.length > 0 ? Array.from(selected).map(function(t) { return t.textContent; }).join(', ') : '전체';
+  var input = document.getElementById('vc-input');
+  var detail = input.value.trim();
+  vcRemoveAction(area);
+  var msg = '희망 기관: ' + orgTypes;
+  if (detail) msg += '\n상세: ' + detail;
+  vcAddUser(msg);
+  input.value = '';
+  vcShowComplete();
+}
+
+function vcSkipStep4(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddUser('타겟 바이어 건너뛰기');
+  vcShowComplete();
+}
+
+// Step 5: 완료
+function vcShowComplete() {
+  vcStep = 6;
+  vcUpdatePills(5);
+  setTimeout(function() {
+    var card = document.createElement('div');
+    card.className = 'vc-summary-card';
+    card.innerHTML = '<div class="vc-summary-title">&#10003; 프로필 작성 완료!</div>' +
+      '<div class="vc-summary-row"><span>회사</span><span>에어빌리티 주식회사</span></div>' +
+      '<div class="vc-summary-row"><span>전시 품목</span><span>방폭 드론, 밀폐공간 점검 드론</span></div>' +
+      '<div class="vc-summary-row"><span>키워드</span><span>방폭, 밀폐공간, 산업용 드론</span></div>' +
+      '<div class="vc-summary-row"><span>타겟 바이어</span><span>군, 정부/공공기관</span></div>' +
+      '<div style="text-align:center; margin-top:12px; font-size:13px; color:var(--text-tertiary);">신청기간 종료 후 관심 있는 바이어를 매칭해드릴게요</div>' +
+      '<div style="text-align:center; margin-top:16px;"><button class="vc-action-btn" onclick="alert(\'내 프로필 조회 화면(/profile)으로 이동\')" style="width:auto; padding:10px 20px; font-size:13px; display:inline-block;">내 프로필 확인하기</button></div>';
+    vcMsgs.appendChild(card);
+    vcScrollBottom();
+    document.getElementById('vc-input-area').style.display = 'none';
+  }, 400);
+}
+
+function vcSelectTag(el) {
+  el.classList.toggle('selected');
+  var area = el.closest('.vc-action-area');
+  if (area) {
+    var btn = area.querySelector('.vc-action-btn');
+    var selected = area.querySelectorAll('.vc-quick-tag.selected');
+    if (btn) btn.style.display = selected.length > 0 ? 'block' : 'none';
+  }
+}
+
+// Text input send
+function vcSend() {
+  var input = document.getElementById('vc-input');
+  var text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  vcAddUser(text);
+
+  if (vcStep === 'sf-url') {
+    vcHandleSfUrl(text);
+  } else if (vcStep === 2) {
+    vcHandleStep2(text);
+  } else if (vcStep === 3) {
+    vcHandleStep3(text);
+  }
+}
+</script>
+
+<script>
+  window.NABI_NAV_ACTIVE = 'profile';
+  window.NABI_NAV_USER = { name: '에어빌리티', avatar: '에' };
+</script>
+<script src="nabi-nav.js?v=20260607"></script>
+
+<script>
+/* 기본 = 데스크톱(셸 전체폭). ?view=mobile 로 폰 프리뷰 시작 가능. */
+(function () {
+  if (new URLSearchParams(location.search).get('view') === 'mobile') setPreview('mobile');
+})();
+</script>
+</body>
+</html>

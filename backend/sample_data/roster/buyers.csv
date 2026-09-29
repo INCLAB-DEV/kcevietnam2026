@@ -1,0 +1,7 @@
+회원ID,기업명,담당자,이메일,연락처,구분,업종,사업자등록번호
+BY-001,국방조달본부,오정세,oh@dapa-test.go.kr,02-1111-2222,바이어,정부조달,
+BY-002,말레이시아국방부,Ahmad,ahmad@mod-test.gov.my,,바이어,해외정부,
+BY-003,UAE방위군,Khalid,khalid@uae-test.gov.ae,,바이어,해외정부,
+BY-004,넥스원구매팀,서강준,seo@nexone-test.kr,031-222-3333,바이어,방산대기업,111-22-33444
+BY-005,폴란드군수청,Piotr,piotr@army-test.mil.pl,,바이어,해외정부,
+BY-006,인도네시아경찰청,Budi,budi@polri-test.go.id,,바이어,치안,

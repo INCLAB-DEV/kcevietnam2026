@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NABI 글로벌 네비게이션 — 결정용 미리보기</title>
+<link rel="stylesheet" href="nabi-ui.css">
+<style>
+  body { background: #e8e6e3; padding: 28px 24px 60px; }
+  .pv-h1 { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .pv-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; }
+  .pv-row { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; margin-bottom: 32px; }
+  .frame { background: #fff; border-radius: var(--radius-lg); border: 1px solid var(--border-default); overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,.06); }
+  .frame-label { font-size: 12px; font-weight: 700; color: var(--text-tertiary); padding: 10px 14px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-default); }
+  .frame-body { position: relative; overflow: hidden; }
+  .f-mobile .frame-body { width: 390px; height: 460px; }
+  .f-wide .frame-body { width: 1100px; max-width: 78vw; height: 200px; }
+  .f-narrow .frame-body { width: 520px; height: 200px; }
+  .dummy { padding: 20px; color: var(--text-tertiary); font-size: 13px; }
+  .dummy-box { height: 80px; background: var(--bg-secondary); border-radius: var(--radius-md); margin-bottom: 10px; }
+
+  .pv-card { background: #fff; border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 20px 22px; max-width: 760px; }
+  .pv-card h2 { font-size: 16px; font-weight: 800; margin-bottom: 12px; }
+  table.cand { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.cand th, table.cand td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border-default); }
+  table.cand th { font-size: 11px; color: var(--text-tertiary); font-weight: 700; text-transform: uppercase; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: var(--radius-full); }
+  .tag-has { background: var(--color-success-subtle); color: var(--color-success); }
+  .tag-no { background: var(--bg-secondary); color: var(--text-tertiary); }
+  .q { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin-top: 14px; }
+  .q b { color: var(--text-primary); }
+</style>
+</head>
+<body>
+
+<div class="pv-h1">NABI 글로벌 네비게이션 — 결정용 미리보기</div>
+<div class="pv-sub">같은 컴포넌트(<code>.app-bar</code> + 드로어) 하나가 <b>폭에 따라 인라인 ↔ 햄버거</b>로 자동 전환됩니다. 아래 3개는 동일 컴포넌트를 폭만 다르게 둔 것 (메뉴 항목은 <b>placeholder</b>).</div>
+
+<div class="pv-row">
+  <!-- 모바일 / 좁은 폭: 햄버거 + 드로어 열림 -->
+  <div class="frame f-mobile">
+    <div class="frame-label">① 모바일 (390px) — 햄버거 + 드로어 열림</div>
+    <div class="frame-body">
+      <header class="app-bar">
+        <button class="hamburger"><span></span><span></span><span></span></button>
+        <div class="app-bar-logo"><div class="app-bar-logo-icon">N</div> NABI</div>
+        <nav class="app-bar-menu">
+          <button class="app-bar-link">NABI 대화</button><button class="app-bar-link">기업 탐색</button><button class="app-bar-link">내 미팅</button><button class="app-bar-link">내 대화</button><button class="app-bar-link active">내 프로필</button>
+        </nav>
+        <div class="app-bar-right"><div class="app-bar-avatar">김</div></div>
+      </header>
+      <div class="dummy"><div class="dummy-box"></div><div class="dummy-box"></div></div>
+      <div class="nav-drawer-scrim open"></div>
+      <nav class="nav-drawer open">
+        <div class="nav-drawer-head"><div class="app-bar-logo-icon">N</div> NABI</div>
+        <a class="nav-drawer-item"><span class="nav-drawer-ico">💬</span> NABI 대화</a>
+        <a class="nav-drawer-item"><span class="nav-drawer-ico">🔍</span> 기업 탐색</a>
+        <a class="nav-drawer-item"><span class="nav-drawer-ico">📅</span> 내 미팅</a>
+        <a class="nav-drawer-item"><span class="nav-drawer-ico">🗨️</span> 내 대화</a>
+        <a class="nav-drawer-item active"><span class="nav-drawer-ico">👤</span> 내 프로필</a>
+      </nav>
+    </div>
+  </div>
+
+  <!-- 데스크톱 와이드: 인라인 -->
+  <div class="frame f-wide">
+    <div class="frame-label">② 데스크톱 와이드 (1100px) — 인라인 메뉴</div>
+    <div class="frame-body">
+      <header class="app-bar">
+        <button class="hamburger"><span></span><span></span><span></span></button>
+        <div class="app-bar-logo"><div class="app-bar-logo-icon">N</div> NABI</div>
+        <nav class="app-bar-menu">
+          <button class="app-bar-link">NABI 대화</button><button class="app-bar-link">기업 탐색</button><button class="app-bar-link">내 미팅</button><button class="app-bar-link">내 대화</button><button class="app-bar-link active">내 프로필</button>
+        </nav>
+        <div class="app-bar-right"><div class="app-bar-user"><div class="app-bar-avatar">김</div> 김도현</div></div>
+      </header>
+      <div class="dummy"><div class="dummy-box"></div></div>
+    </div>
+  </div>
+
+  <!-- 좁힌 데스크톱: 햄버거 -->
+  <div class="frame f-narrow">
+    <div class="frame-label">③ 좁힌 데스크톱 (520px) — 햄버거로 전환</div>
+    <div class="frame-body">
+      <header class="app-bar">
+        <button class="hamburger"><span></span><span></span><span></span></button>
+        <div class="app-bar-logo"><div class="app-bar-logo-icon">N</div> NABI</div>
+        <nav class="app-bar-menu">
+          <button class="app-bar-link">NABI 대화</button><button class="app-bar-link">기업 탐색</button><button class="app-bar-link">내 미팅</button><button class="app-bar-link">내 대화</button><button class="app-bar-link active">내 프로필</button>
+        </nav>
+        <div class="app-bar-right"><div class="app-bar-user"><div class="app-bar-avatar">김</div> 김도현</div></div>
+      </header>
+      <div class="dummy"><div class="dummy-box"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="pv-card">
+  <h2>결정해줄 것 — 글로벌 메뉴 항목 (현재는 placeholder 5개)</h2>
+  <table class="cand">
+    <thead><tr><th>후보 항목</th><th>라우트 / 페이지</th><th>프로토타입</th><th>역할</th></tr></thead>
+    <tbody>
+      <tr><td>💬 NABI 대화</td><td>/chat (MN-001)</td><td><span class="tag tag-no">예정</span></td><td>바이어 메인</td></tr>
+      <tr><td>🔍 기업 탐색</td><td>/discover (DV-001)</td><td><span class="tag tag-has">있음</span></td><td>공통</td></tr>
+      <tr><td>📅 내 미팅</td><td>/meetings (MY-001)</td><td><span class="tag tag-has">있음</span></td><td>공통</td></tr>
+      <tr><td>🗨️ 내 대화</td><td>/conversations (AG-LIST)</td><td><span class="tag tag-no">예정</span></td><td>공통</td></tr>
+      <tr><td>👤 내 프로필</td><td>/profile (BM-004/005)</td><td><span class="tag tag-has">있음</span></td><td>공통</td></tr>
+    </tbody>
+  </table>
+  <div class="q">
+    <b>1. 항목 &amp; 순서</b> — 위 5개 중 글로벌 메뉴에 넣을 것과 순서. (빼거나 추가할 것 있으면 말해줘)<br>
+    <b>2. 역할별 분기</b> — 바이어 / 참가사 / 운영사가 같은 메뉴인지, 다른지. (예: 운영사는 OP-* 대시보드라 메뉴가 완전히 다름)<br>
+    <b>3. 패턴</b> — 이 "상단 앱바 → 좁으면 햄버거" 방식 확정 OK?
+  </div>
+</div>
+
+</body>
+</html>

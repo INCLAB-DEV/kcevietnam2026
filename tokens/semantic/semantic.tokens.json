@@ -1,0 +1,41 @@
+{
+  "$description": "NABI semantic tokens — alias into primitives (or other semantics). This is the tier components/CSS bind to. CSS var names match the existing nabi-ui.css canonical tokens exactly so prototypes keep working. Tokens aliasing a PRIMITIVE emit a literal value in CSS; tokens aliasing another SEMANTIC emit var(--…) indirection.",
+  "surface": {
+    "primary":   { "$type": "color", "$value": "{color.offwhite}", "$extensions": { "com.nabi.css": "--bg-primary" } },
+    "secondary": { "$type": "color", "$value": "{color.stone.50}", "$extensions": { "com.nabi.css": "--bg-secondary" } },
+    "elevated":  { "$type": "color", "$value": "{color.white}",    "$extensions": { "com.nabi.css": "--bg-elevated" } }
+  },
+  "border": {
+    "default": { "$type": "color", "$value": "{color.stone.200}", "$extensions": { "com.nabi.css": "--border-default" } }
+  },
+  "text": {
+    "primary":   { "$type": "color", "$value": "{color.ink.950}",  "$extensions": { "com.nabi.css": "--text-primary" } },
+    "secondary": { "$type": "color", "$value": "{color.gray.700}", "$extensions": { "com.nabi.css": "--text-secondary" } },
+    "tertiary":  { "$type": "color", "$value": "{color.stone.500}", "$extensions": { "com.nabi.css": "--text-tertiary" } },
+    "inverse":   { "$type": "color", "$value": "{color.white}",     "$extensions": { "com.nabi.css": "--text-inverse" } }
+  },
+  "accent": {
+    "primary": { "$type": "color", "$value": "{color.blue.600}", "$extensions": { "com.nabi.css": "--accent-primary" } },
+    "subtle":  { "$type": "color", "$value": "{color.blue.50}",  "$extensions": { "com.nabi.css": "--accent-subtle" } }
+  },
+  "feedback": {
+    "success":        { "$type": "color", "$value": "{color.green.600}",  "$extensions": { "com.nabi.css": "--color-success" } },
+    "success-subtle": { "$type": "color", "$value": "{color.green.50}",   "$extensions": { "com.nabi.css": "--color-success-subtle" } },
+    "danger":         { "$type": "color", "$value": "{color.red.600}",    "$extensions": { "com.nabi.css": "--color-danger" } },
+    "danger-subtle":  { "$type": "color", "$value": "{color.red.50}",     "$extensions": { "com.nabi.css": "--color-danger-subtle" } },
+    "warning":        { "$type": "color", "$value": "{color.orange.600}", "$extensions": { "com.nabi.css": "--color-warning" } },
+    "warning-subtle": { "$type": "color", "$value": "{color.orange.50}",  "$extensions": { "com.nabi.css": "--color-warning-subtle" } },
+    "gold":           { "$type": "color", "$value": "{color.amber.500}",  "$extensions": { "com.nabi.css": "--color-gold" } }
+  },
+  "meeting": {
+    "$description": "Meeting status enum → UI (CONTEXT.md Schedule Table / ADR-0003). accepted+completed=green, proposed=red(action needed), noshow=orange, empty/rejected/cancelled=gray. These alias other SEMANTIC tokens (chained), so they emit var(--…) in CSS.",
+    "accepted":        { "$type": "color", "$value": "{feedback.success}",        "$extensions": { "com.nabi.css": "--status-accepted" } },
+    "accepted-subtle": { "$type": "color", "$value": "{feedback.success-subtle}", "$extensions": { "com.nabi.css": "--status-accepted-subtle" } },
+    "proposed":        { "$type": "color", "$value": "{feedback.danger}",         "$extensions": { "com.nabi.css": "--status-proposed" } },
+    "proposed-subtle": { "$type": "color", "$value": "{feedback.danger-subtle}",  "$extensions": { "com.nabi.css": "--status-proposed-subtle" } },
+    "noshow":          { "$type": "color", "$value": "{feedback.warning}",        "$extensions": { "com.nabi.css": "--status-noshow" } },
+    "noshow-subtle":   { "$type": "color", "$value": "{feedback.warning-subtle}", "$extensions": { "com.nabi.css": "--status-noshow-subtle" } },
+    "empty":           { "$type": "color", "$value": "{surface.secondary}",       "$extensions": { "com.nabi.css": "--status-empty" } },
+    "empty-border":    { "$type": "color", "$value": "{border.default}",          "$extensions": { "com.nabi.css": "--status-empty-border" } }
+  }
+}

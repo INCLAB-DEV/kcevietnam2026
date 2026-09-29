@@ -1,0 +1,362 @@
+테이블,컬럼명,한글명,타입,NULL,키,참조(FK),기본값,도메인/값,값 샘플,설명,비고(근거)
+events,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,행사 행을 구별하는 고유 번호,PK·자동생성
+events,name,행사명,text,NO,,,,,DX Korea 2026,전시회 이름,
+events,slug,행사 슬러그,text,NO,UQ,,,,dx-korea-2026,URL에 쓰는 짧은 영문 식별자,고유값(UQ)
+events,biz_start,비즈매칭 신청 시작일,date,YES,,,,,2026-08-26,비즈매칭 신청 시작 날짜,구 application_start/open_at→biz_*로 명확화
+events,biz_end,비즈매칭 신청 마감일,date,YES,,,,,2026-09-11,비즈매칭 신청 마감 날짜,
+events,biz_open_at,매칭 활성일,date,YES,,,,,2026-09-12,신청 마감 후 매칭·전체기능 여는 날,
+events,exhibition_start,전시 시작일,date,YES,,,,,2026-09-16,미팅이 열리는 전시 시작 날짜,슬롯 그리드 날짜 출처(운영 시각과 곱해 슬롯 생성)
+events,exhibition_end,전시 종료일,date,YES,,,,,2026-09-19,미팅 진행 종료 날짜,
+events,operating_start,운영 시작 시각,time,NO,,,'09:00',,09:00,일일 미팅 운영 시작 시각,"구 event_schedule_settings 흡수·ADR-0006/F-OP-005, 디폴트 09:00"
+events,operating_end,운영 종료 시각,time,NO,,,'18:00',,18:00,일일 미팅 운영 종료 시각,디폴트 18:00; 슬롯 수는 이 값+전시기간서 파생
+events,slot_minutes,슬롯 길이(분),integer,NO,,,30,,30,미팅 슬롯 한 칸 길이(분),기본 30
+events,min_guaranteed_slots,최소 보장 슬롯 수,integer,NO,,,10,,10,참가사당 보장하는 최소 미팅 슬롯 수,ADR-0006 보장 라운드 기준; 점심 등 미팅불가는 exhibitor_profiles.unavailable_meeting_slots
+events,created_at,생성 시각,timestamptz,NO,,,now(),,2026-05-01 09:00,행 생성 시각,
+events,updated_at,수정 시각,timestamptz,NO,,,now(),,2026-09-10 14:00,행 수정 시각,운영 변수 변경 추적
+organizers,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,운영사 행을 구별하는 고유 번호,PK·자동생성
+organizers,name,운영자 이름,text,NO,,,,,김운영,운영사 담당자 이름,
+organizers,email,이메일,text,NO,UQ,,,,ops@nabi.kr,운영자 로그인 아이디 겸 연락용 이메일,고유값(UQ)
+organizers,password_hash,비밀번호 해시,text,NO,,,,,$2b$12$…,NABI 자체 인증용 비밀번호 해시,평문 금지·bcrypt; 운영자는 외부검증 없이 로그인
+organizers,created_at,생성 시각,timestamptz,NO,,,now(),,2026-05-01 09:00,행 생성 시각,
+event_organizers,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,행을 구별하는 고유 번호,PK·자동생성
+event_organizers,event_id,행사,uuid,NO,FK/UQ,events(id) ON DELETE CASCADE,,,a1b2…e9f0,이 권한이 적용되는 행사,FK events·UQ
+event_organizers,organizer_id,운영자 계정,uuid,NO,FK/UQ,organizers(id) ON DELETE CASCADE,,,a1b2…e9f0,권한을 받는 운영자 계정,FK organizers·UQ
+event_organizers,permission_level,권한 등급,text,NO,,,,master · sub,master,행사별 운영 권한 등급,행사별 명시 부여·전역 기본 없음·ADR-0012
+organizations,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,기업 행을 구별하는 고유 번호,PK·자동생성
+organizations,name_ko,기업명(국문),text,YES,,,,,한화에어로스페이스,기업 국문명,nullable(Registrant서 이른 생성); 폼 필수는 제출 API 검증·ADR-0009
+organizations,name_en,기업명(영문),text,YES,,,,,Hanwha Aerospace,기업 영문명,nullable(바이어=영문 필수)
+organizations,business_reg_no,사업자등록번호,text,YES,,,,,123-45-67890,법인 사업자등록번호(정본),정본(부가속성·키 아님)·해외 결측; registrants.business_number 충돌은 명시 동기화로만·ADR-0007
+organizations,website,홈페이지,text,YES,,,,,https://www.hanwha.com,기업 홈페이지 주소,현재 BM-001/002 폼서 미수집→NULL(결정 8)
+organizations,created_at,생성 시각,timestamptz,NO,,,now(),,2026-06-01 09:00,행 생성 시각,description·founded·employees·위치·Tel은 역할 프로필로 이관·스냅샷
+registrants,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,행을 구별하는 고유 번호,PK·자동생성
+registrants,event_id,행사,uuid,NO,FK/UQ,events(id) ON DELETE CASCADE,,,a1b2…e9f0,이 등록자가 속한 행사,FK events·UQ
+registrants,organizer_member_id,주관사 회원번호,text,NO,UQ,,,,DX-2026-004521,주관사(DX Korea)가 매긴 회원 고유번호,멱등 주키·로그인 신원 앵커·ADR-0007
+registrants,organization_id,기업,uuid,YES,FK,organizations(id) ON DELETE SET NULL,,,a1b2…e9f0,이 등록자가 속한 기업,FK·명단 적재 시 즉시 생성·ADR-0009
+registrants,name,등록자 성명,text,YES,,,,,김영호,등록자(사용자) 성명,명단 매핑; 미확정 시 raw서 보강·ADR-0009
+registrants,org_name,소속 기업명,text,YES,,,,,한화시스템,소속 기업명(명단 원문),eager org 생성 시드·ADR-0009
+registrants,contact_email,연락 이메일,text,YES,,,,,yh.kim@hanwha.com,알림 발송용 이메일,회원ID 결측·충돌 시 보조 대조·ADR-0007
+registrants,contact_phone,연락 전화번호,text,YES,,,,,010-1234-5678,알림 발송용 휴대폰,OTP 폐기→발송용으로만 보존·ADR-0007/0009
+registrants,business_number,사업자등록번호,text,YES,,,,,123-45-67890,명단에서 가져온 사업자번호(관찰값),관찰값·정본=organizations.business_reg_no; org 갱신은 명시 동기화로만(§9 ⑥)·ADR-0007
+registrants,role_hint,역할 힌트,text,YES,,,,exhibitor · buyer · both,exhibitor,명단으로 유추한 잠정 역할,프로필 경로로 확정·ADR-0009
+registrants,raw,명단 원본,jsonb,NO,,,,,"{""회원ID"":""DX-2026-004521"",""회사명"":""한화시스템""}",명단 원본 전체를 담은 JSON,불변·절대 갱신 안 함(컬럼 구조 미확정)·ADR-0009/F-OP-002 D17
+registrants,created_at,생성 시각,timestamptz,NO,,,now(),,2026-06-01 09:00,행 생성 시각,
+registrants,updated_at,수정 시각,timestamptz,NO,,,now(),,2026-06-05 09:00,행 수정 시각,멱등 upsert 갱신 시각
+members,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,행을 구별하는 고유 번호,PK·자동생성
+members,organization_id,기업,uuid,NO,FK,organizations(id) ON DELETE CASCADE,,,a1b2…e9f0,이 계정이 소속된 기업,FK organizations
+members,registrant_id,명단 적재 기록,uuid,YES,UQ/FK,registrants(id) ON DELETE SET NULL,,,a1b2…e9f0,이 계정이 나온 명단 적재 기록,회원번호 정본은 registrants; 키 중복 미보유·UQ/FK·ADR-0009
+members,name,회원 이름,text,NO,,,,,김영호,회원(로그인 사용자) 이름,
+members,email,이메일,text,NO,UQ,,,,yh.kim@hanwha.com,회원 로그인·연락용 이메일,고유값(UQ); 회원ID 결측·충돌 시 보조 대조
+members,title,직급,text,YES,,,,,부장,회원 직급,미팅 수락 후 공개·F-DV-001 D9
+members,created_at,생성 시각,timestamptz,NO,,,now(),,2026-06-01 09:00,행 생성 시각,
+consent_documents,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,행을 구별하는 고유 번호,PK·자동생성
+consent_documents,type,약관 종류,text,NO,UQ,,,tos · privacy · sensitive · third_party · marketing,privacy,약관 항목 구분,서비스/개인정보/민감정보(방산)/제3자/마케팅·UQ
+consent_documents,title,약관명,text,NO,,,,,개인정보 수집·이용 동의,화면에 노출되는 약관 이름,ADR-0009
+consent_documents,version,약관 버전,text,NO,UQ,,,,v1.2,약관 버전(개정 추적),"UQ((type,version) 누적)"
+consent_documents,content_url,약관 본문 위치,text,YES,,,,,https://cdn.nabi.kr/consent/privacy-v1.2.html,약관 본문이 있는 위치,
+consent_documents,is_required,필수 여부,boolean,NO,,,,,true,필수/선택 구분,ADR-0009
+consent_documents,effective_date,시행일,date,YES,,,,,2026-08-01,약관 시행 날짜,
+consent_documents,created_at,생성 시각,timestamptz,NO,,,now(),,2026-07-01 09:00,행 생성 시각,
+user_consent_states,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,행을 구별하는 고유 번호,PK·자동생성
+user_consent_states,member_id,회원,uuid,NO,FK/UQ,members(id) ON DELETE CASCADE,,,a1b2…e9f0,이 동의 상태의 주인 회원,FK members·UQ
+user_consent_states,type,약관 종류,text,NO,UQ,,,tos · privacy · sensitive · third_party · marketing,privacy,동의 대상 약관 항목,tos/privacy/sensitive(방산)/third_party/marketing·UQ
+user_consent_states,consent_document_id,동의 약관 버전,uuid,YES,FK,consent_documents(id),,,a1b2…e9f0,현재 동의한 약관 버전,FK consent_documents
+user_consent_states,agreed,동의 여부,boolean,NO,,,,,true,현재 동의 여부,
+user_consent_states,agreed_at,동의 시각,timestamptz,YES,,,,,2026-08-27 10:15,현재 동의한 시각,미동의 시 NULL
+user_consent_states,withdrawn_at,철회 시각,timestamptz,YES,,,,,2026-09-01 12:00,동의를 철회한 시각,미철회 시 NULL
+user_consent_states,updated_at,수정 시각,timestamptz,NO,,,now(),,2026-08-27 10:15,행 수정 시각,
+user_consent_history,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,동의 이력 행 고유 식별자,
+user_consent_history,member_id,회원,uuid,NO,FK,members(id) ON DELETE CASCADE,,,a1b2…e9f0,이 동의·철회 기록의 대상 회원,members FK; 회원 삭제 시 CASCADE
+user_consent_history,consent_document_id,약관 문서,uuid,YES,FK,consent_documents(id),,,a1b2…e9f0,동의·철회 대상 약관 버전,consent_documents FK; nullable
+user_consent_history,action,행위 종류,text,NO,,,,agreed · withdrawn,agreed,동의/철회 구분,enum: agreed·withdrawn
+user_consent_history,acted_at,행위 시각,timestamptz,NO,,,now(),,2026-09-11 10:30,동의·철회가 발생한 시각,감사용; append-only ADR-0009
+user_consent_history,ip,IP 주소,text,YES,,,,,203.0.113.7,동의·철회 시점 접속 IP,증빙용; nullable
+user_consent_history,method,행위 경로,text,YES,,,,,web_form,동의·철회 경로/수단,증빙용; nullable
+organization_event_roles,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,이벤트별 역할 행 고유 식별자,
+organization_event_roles,organization_id,기업,uuid,NO,FK/UQ,organizations(id) ON DELETE CASCADE,,,a1b2…e9f0,이 역할 행의 소유 기업,"organizations FK; (기업,행사) UQ, CASCADE"
+organization_event_roles,event_id,행사,uuid,NO,FK/UQ,events(id) ON DELETE CASCADE,,,a1b2…e9f0,이 역할이 적용되는 행사,"events FK; (기업,행사) UQ, CASCADE"
+organization_event_roles,is_exhibitor,참가사 여부,boolean,NO,,,false,,true,이 행사에서 참가사(셀러) 역할인지 여부,buyer와 동시 true 가능; 기본 false
+organization_event_roles,is_buyer,바이어 여부,boolean,NO,,,false,,true,이 행사에서 바이어 역할인지 여부,exhibitor와 동시 true 가능; 기본 false
+organization_event_roles,buyer_subtype,바이어 하위유형,text,YES,,,,hosted · pre_registered · on_site,hosted,바이어 분류 구분(기능은 동일),enum: hosted·pre_registered·on_site; 분류용
+organization_event_roles,application_status,신청 상태,text,NO,,,'registered',registered · submitted · changes_requested · approved · rejected,approved,승인 게이트 상태머신,"enum 5종; ADR-0009, 매칭 노출은 approved부터, bm-profile-fields §6"
+organization_event_roles,reviewed_at,검토 시각,timestamptz,YES,,,,,2026-08-30 14:00,최종 검토(승인/반려/보완) 시각,승인 감사 컬럼; bm-profile-fields §6
+organization_event_roles,reviewed_by,검토 운영자,uuid,YES,FK,organizers(id) ON DELETE SET NULL,,,a1b2…e9f0,검토를 수행한 운영자,organizers FK; SET NULL
+organization_event_roles,review_note,검토 사유,text,YES,,,,,사업자등록증 재첨부 요망,보완요청/반려 사유,
+organization_event_roles,managing_organizer_id,관리 운영자,uuid,YES,FK,organizers(id) ON DELETE SET NULL,,,a1b2…e9f0,이 바이어를 현재 관리하는 운영자,"ADR-0012/0013; 재배정 가능, 국내·참가사행은 NULL"
+organization_event_roles,created_by_organizer_id,최초 등록 운영자,uuid,YES,FK,organizers(id) ON DELETE SET NULL,,,a1b2…e9f0,이 역할 행을 최초 등록한 운영자,ADR-0012(문서상 created_by_operator_id); SET NULL
+organization_event_roles,created_at,생성 시각,timestamptz,NO,,,now(),,2026-08-26 09:00,행 생성 시각,
+keywords,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,키워드 행 고유 식별자,
+keywords,code,분류 코드,text,YES,UQ,,,,mobility,고정 분류 슬러그(API·매칭 식별자),UQ; bm-profile-fields §1.1
+keywords,label,표시 라벨,text,NO,,,,,기동,화면 표시 라벨(국문),
+keywords,category,분류 체계,text,YES,UQ,,,,defense_field,키워드 소속 분류(방산분야13·기관유형8),자유텍스트 유지(체계 미확정); UQ
+org_event_role_org_types,org_event_role_id,기업 행사 역할,uuid,NO,FK/PK,organization_event_roles(id) ON DELETE CASCADE,,,a1b2…e9f0,기관유형 태그가 붙는 기업-행사 역할,"복합 PK; org_event_roles FK, CASCADE"
+org_event_role_org_types,keyword_id,키워드,uuid,NO,FK/PK,keywords(id) ON DELETE CASCADE,,,a1b2…e9f0,부착된 기관유형 키워드,복합 PK; category='org_type'만
+halls,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,전시관 행 고유 식별자,
+halls,event_id,행사,uuid,NO,FK/UQ,events(id) ON DELETE CASCADE,,,a1b2…e9f0,이 전시관이 속한 행사,"events FK; (행사,홀) UQ, CASCADE"
+halls,hall_no,홀 번호,text,NO,UQ,,,,1,홀 식별·정렬 번호,"text(표기 미확정, 숫자·영문 수용); UQ"
+halls,hall_name,홀 이름,text,NO,,,,,제1전시관,전시관 이름,
+halls,created_at,생성 시각,timestamptz,NO,,,now(),,2026-07-01 09:00,행 생성 시각,
+booths,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,부스 행 고유 식별자,
+booths,hall_id,전시관,uuid,NO,FK/UQ,halls(id) ON DELETE CASCADE,,,a1b2…e9f0,이 부스가 속한 전시관,"halls FK; (홀,코드) UQ, CASCADE"
+booths,code,부스 코드,text,NO,UQ,,,,b-12,부스 위치 코드,UQ
+booths,created_at,생성 시각,timestamptz,NO,,,now(),,2026-07-01 09:00,행 생성 시각,
+files,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,파일 행 고유 식별자,
+files,s3_key,S3 객체 키,text,NO,,,,,org/abcd/profile.pdf,S3 객체 키(암호화 버킷),
+files,s3_version_id,S3 버전 ID,text,YES,,,,,3HL4kqtJvV8…,S3 버전 ID(교체 이력),버저닝; nullable
+files,original_filename,원본 파일명,text,YES,,,,,한화_회사소개서.pdf,업로드 원본 파일명,nullable
+files,content_type,MIME 타입,text,YES,,,,,application/pdf,파일 MIME 타입,nullable
+files,byte_size,파일 크기,bigint,YES,,,,,1048576,파일 바이트 크기,nullable
+files,checksum_sha256,체크섬,text,YES,,,,,e3b0c44298fc…,SHA-256 무결성 체크섬,nullable
+files,purpose,파일 용도,text,NO,,,,company_logo · company_profile · company_profile_doc · smartfill_source,company_logo,파일 사용 목적,enum 4종; smartfill_source 원본도 동일 테이블
+files,owner_org_id,소유 기업,uuid,YES,FK,organizations(id) ON DELETE SET NULL,,,a1b2…e9f0,이 파일을 소유한 기업,"organizations FK; SET NULL, nullable"
+files,uploaded_by_member_id,업로더 회원,uuid,YES,FK,members(id) ON DELETE SET NULL,,,a1b2…e9f0,이 파일을 업로드한 회원,"members FK; SET NULL, nullable"
+files,scan_status,스캔 상태,text,NO,,,'pending',pending · clean · infected,clean,악성코드 스캔 상태,enum: pending·clean·infected; 기본 pending
+files,retention_until,보관 만료일,date,YES,,,,,2027-09-11,파일 보관기간 만료일,방산 보관정책; nullable
+files,created_at,생성 시각,timestamptz,NO,,,now(),,2026-08-27 11:00,행 생성 시각,
+exhibitor_profiles,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,참가사 프로필 행 고유 식별자,
+exhibitor_profiles,org_event_role_id,기업 행사 역할,uuid,NO,UQ/FK,organization_event_roles(id) ON DELETE CASCADE,,,a1b2…e9f0,이 셀러 프로필이 붙는 기업-행사 역할,"org_event_roles FK; 역할당 1개(UQ), CASCADE"
+exhibitor_profiles,booth_id,부스,uuid,YES,FK,booths(id) ON DELETE SET NULL,,,a1b2…e9f0,배정된 정규화 부스 위치,"booths FK; 미배정 시 NULL(SET NULL), 표시값은 halls·booths 조인 파생"
+exhibitor_profiles,booth_hall,부스 홀(신고),text,YES,,,,,7,회원가입 신고 부스 Hall(스냅샷),읽기전용 신고값; 실배정은 booth_id
+exhibitor_profiles,booth_pavilion,부스 관(신고),text,YES,,,,,대한민국관,신고 부스 관(스냅샷),읽기전용 신고값
+exhibitor_profiles,booth_location,부스 위치(신고),text,YES,,,,,A-101,신고 부스 위치,미배정 시 NULL
+exhibitor_profiles,booth_type,부스 타입,text,YES,,,,,독립부스,부스 타입,
+exhibitor_profiles,booth_count,부스 개수,integer,YES,,,,,2,신청 부스 개수,
+exhibitor_profiles,representative_name_ko,대표자명(국문),text,YES,,,,,김영호,대표자 이름(국문),
+exhibitor_profiles,representative_name_en,대표자명(영문),text,YES,,,,,Kim Youngho,대표자 이름(영문),
+exhibitor_profiles,company_email,회사 이메일,text,YES,,,,,sales@hanwha.com,회사 대표 이메일,
+exhibitor_profiles,zip_code,우편번호,text,YES,,,,,13488,회사 우편번호,
+exhibitor_profiles,business_type,업태,text,YES,,,,,제조업,사업자 업태,
+exhibitor_profiles,business_item,종목,text,YES,,,,,항공기 부품 제조,사업자 종목,
+exhibitor_profiles,main_tel,대표번호,text,YES,,,,,02-1234-5678,회사 대표 전화번호,step1 행사별 스냅샷
+exhibitor_profiles,fax,팩스번호,text,YES,,,,,02-1234-5679,회사 팩스번호,
+exhibitor_profiles,address_ko,주소(국문),text,YES,,,,,경기도 성남시 판교로 100,회사 주소(국문),
+exhibitor_profiles,address_detail,상세주소,text,YES,,,,,3층 301호,회사 상세주소,
+exhibitor_profiles,address_en,주소(영문),text,YES,,,,,"Seongnam, Gyeonggi",회사 주소(영문),
+exhibitor_profiles,annual_sales_range,연매출 구간,text,YES,,,,krw_1_5 · krw_5_10 · krw_10_50 · krw_50plus,krw_5_10,연매출 구간(억원),enum 4종; §1.4 annual_sales_seller
+exhibitor_profiles,employee_range,직원 규모,text,YES,,,,e_0_10 · e_11_50 · e_51_100 · e_101plus,e_51_100,회사 규모(직원 수 구간),enum 4종; §1.4
+exhibitor_profiles,available_languages,상담 가능언어,text[],YES,,,,,"{한국어,영어}",상담 가능 언어(멀티),§1.2 meeting_language
+exhibitor_profiles,intro_ko,기업 소개(국문),text,YES,,,,,당사는 항공전자 전문…,기업 소개 문구(국문),최대 500자; §3 KO/EN 고정
+exhibitor_profiles,intro_en,기업 소개(영문),text,YES,,,,,We are an avionics…,기업 소개 문구(영문),최대 500자
+exhibitor_profiles,product_intro_ko,상품 소개(국문),text,YES,,,,,무인기 시스템 라인업…,상품 소개 문구(국문),최대 500자
+exhibitor_profiles,product_intro_en,상품 소개(영문),text,YES,,,,,Our UAV systems…,상품 소개 문구(영문),최대 500자
+exhibitor_profiles,product_price_range,상품 가격대,text,YES,,,,krw_0_10m · krw_10_30m · krw_30_50m · krw_50_70m · krw_70_100m,krw_10_30m,상품 가격대(백만원),enum 5종; §1.4
+exhibitor_profiles,company_logo_file_id,기업 로고 파일,uuid,YES,FK,files(id) ON DELETE SET NULL,,,a1b2…e9f0,기업 로고 이미지 파일,files FK; SET NULL
+exhibitor_profiles,company_profile_doc_file_id,기업 소개서 파일,uuid,YES,FK,files(id) ON DELETE SET NULL,,,a1b2…e9f0,기업 소개서 문서 파일,files FK; SET NULL
+exhibitor_profiles,preferred_buyer_country,선호 바이어 국가(구),text,YES,,,,,미국,선호 바이어 국가(구 자유텍스트),멀티선택으로 대체·비파괴 보존; BM-002
+exhibitor_profiles,preferred_buyer_countries,선호 바이어 국가,text[],YES,,,,,"{미국,UAE}",선호 바이어 국가(멀티 선택),
+exhibitor_profiles,preferred_buyer_types,선호 바이어 구분,text[],YES,,,,,{government},선호 바이어 기관유형(멀티),
+exhibitor_profiles,participation_route,참가 경로,text,YES,,,,re_1_2 · re_3_5 · re_6plus · new,re_3_5,전시회 참가 경로,"enum 4종; 조건부 CHECK §1.3, KOTRA"
+exhibitor_profiles,new_acquisition_channel,신규 발굴 경로,text,YES,,,,edm · official_letter · kotra_invitation · website_sns · media,kotra_invitation,신규 참가사 발굴 경로,enum 5종; 참가경로 'new'일 때만
+exhibitor_profiles,kst_available_time,KST 상담 가능시간,text,YES,,,,,09:00-18:00,KST 기준 상담 가능 시간,v1 text; §7 HITL 슬롯 구조화 예정
+exhibitor_profiles,unavailable_meeting_slots,미팅 불가 슬롯,text[],YES,,,,,{2026-09-16T13:00},미팅 불가(opt-out) 시간 슬롯,events 그리드에서 파생
+exhibitor_profiles,kotra_member,KOTRA 회원 여부,boolean,YES,,,,,true,KOTRA 기업회원 가입 여부,
+exhibitor_profiles,created_at,생성 시각,timestamptz,NO,,,now(),,2026-08-27 11:00,행 생성 시각,
+exhibitor_products,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,전시 제품 행 고유 ID,
+exhibitor_products,exhibitor_profile_id,셀러 프로필,uuid,NO,FK,exhibitor_profiles(id) ON DELETE CASCADE,,,a1b2…e9f0,제품이 속한 셀러 프로필(기업),
+exhibitor_products,name_ko,제품명(국문),text,NO,,,,,K9 자주포 사격통제장치,제품/서비스명(국문),기존 name 분리 백필
+exhibitor_products,name_en,제품명(영문),text,YES,,,,,K9 Fire Control System,제품/서비스명(영문),
+exhibitor_products,category,전시품목 분야,text,YES,,,,mobility · firepower · protection · aviation · unmanned_drone · maritime · c4i_security · training · civmil_cooperation · air_space · apparel_personal · rescue_medical · other,firepower,방산 13분야 카테고리 코드,방산 13분야
+exhibitor_products,category_ko,카테고리(국문),text,YES,,,,,화력,구 자유텍스트 카테고리(국문),category로 대체(구필드)
+exhibitor_products,category_en,카테고리(영문),text,YES,,,,,Firepower,구 자유텍스트 카테고리(영문),category로 대체(구필드)
+exhibitor_products,hs_code,HS코드,text,YES,,,,,9301.90,품목 HS코드,KOTRA 요구사항
+exhibitor_products,hs_description,HS 품목 설명,text,YES,,,,,군용 무기 부품,HS코드 품목 설명,KOTRA 요구사항
+exhibitor_products,spec,사양(국문),text,YES,,,,,"구경 155mm, 사거리 40km",제품 사양(국문),
+exhibitor_products,spec_en,사양(영문),text,YES,,,,,"155mm, range 40km",제품 사양(영문),
+exhibitor_products,price_range,가격대,text,YES,,,,krw_0_10m · krw_10_30m · krw_30_50m · krw_50_70m · krw_70_100m,krw_30_50m,제품 가격대(KRW 백만원),프로필 단위에서 제품 단위로 이동
+exhibitor_products,sort_order,정렬 순서,integer,NO,,,0,,0,제품 표시 정렬 순서,
+exhibitor_products,created_at,생성 시각,timestamptz,NO,,,now(),,2026-09-16 10:30,행 생성 시각,
+exhibitor_keywords,exhibitor_profile_id,셀러 프로필,uuid,NO,FK/PK,exhibitor_profiles(id) ON DELETE CASCADE,,,a1b2…e9f0,키워드를 붙인 셀러 프로필(기업),복합 PK(N:M)
+exhibitor_keywords,keyword_id,키워드,uuid,NO,FK/PK,keywords(id) ON DELETE CASCADE,,,a1b2…e9f0,셀러가 전시하는 방산 분야 키워드,"13종 중 선택, 복합 PK"
+exhibitor_attendees,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,셀러 담당자 행 고유 ID,
+exhibitor_attendees,exhibitor_profile_id,셀러 프로필,uuid,NO,FK/UQ,exhibitor_profiles(id) ON DELETE CASCADE,,,a1b2…e9f0,담당자가 속한 셀러 프로필(기업),
+exhibitor_attendees,member_id,회원,uuid,YES,FK,members(id) ON DELETE SET NULL,,,a1b2…e9f0,동일인 회원 연결(nullable),"로그인·미팅 인물과 동일인이면 연결, codex P1; 미정 시 NULL"
+exhibitor_attendees,last_name_ko,성(국문),text,YES,,,,,김,담당자 성(국문),
+exhibitor_attendees,last_name_en,성(영문),text,YES,,,,,Kim,담당자 성(영문),
+exhibitor_attendees,first_name_ko,이름(국문),text,YES,,,,,영호,담당자 이름(국문),
+exhibitor_attendees,first_name_en,이름(영문),text,YES,,,,,Youngho,담당자 이름(영문),
+exhibitor_attendees,division_ko,부서(국문),text,YES,,,,,해외영업팀,담당자 소속 부서(국문),
+exhibitor_attendees,division_en,부서(영문),text,YES,,,,,Global Sales,담당자 소속 부서(영문),
+exhibitor_attendees,title_ko,직책(국문),text,YES,,,,,팀장,담당자 직책(국문),
+exhibitor_attendees,title_en,직책(영문),text,YES,,,,,Manager,담당자 직책(영문),
+exhibitor_attendees,email,이메일,text,YES,UQ,,,,youngho.kim@hanwha.com,담당자 이메일,
+exhibitor_attendees,tel,전화번호,text,YES,,,,,02-1234-5678,담당자 유선 전화번호,
+exhibitor_attendees,mobile,휴대폰 번호,text,YES,,,,,010-1234-5678,담당자 휴대폰 번호,
+exhibitor_attendees,whatsapp_id,WhatsApp 아이디,text,YES,,,,,+82-10-1234-5678,담당자 WhatsApp 아이디,해외 연락용
+exhibitor_attendees,languages,구사 언어,text[],YES,,,,,"{ko,en}",담당자 상담 가능 언어,§1.2 meeting_language
+exhibitor_attendees,sort_order,정렬 순서,integer,NO,,,0,,0,담당자 표시 정렬 순서,
+exhibitor_attendees,created_at,생성 시각,timestamptz,NO,,,now(),,2026-08-30 14:00,행 생성 시각,
+exhibitor_recommended_buyers,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,추천 바이어 행 고유 ID,
+exhibitor_recommended_buyers,exhibitor_profile_id,셀러 프로필,uuid,NO,FK,exhibitor_profiles(id) ON DELETE CASCADE,,,a1b2…e9f0,추천을 적어낸 셀러 프로필(기업),
+exhibitor_recommended_buyers,continent,대륙,text,YES,,,,,Asia,추천 바이어 소재 대륙,
+exhibitor_recommended_buyers,country,국가,text,YES,,,,,UAE,추천 바이어 소재 국가,
+exhibitor_recommended_buyers,org_name_en,회사명(영문),text,YES,,,,,Emirates Defense Co.,추천 바이어 회사명(영문),
+exhibitor_recommended_buyers,person_name_en,담당자명(영문),text,YES,,,,,Ahmed Al Nahyan,추천 바이어 담당자 이름(영문),
+exhibitor_recommended_buyers,email,이메일,text,YES,,,,,ahmed@edc.ae,추천 바이어 연락 이메일,
+exhibitor_recommended_buyers,contact,연락처,text,YES,,,,,+971-2-123-4567,추천 바이어 기타 연락처,
+exhibitor_recommended_buyers,resolved_organization_id,매칭 기업,uuid,YES,FK,organizations(id) ON DELETE SET NULL,,,a1b2…e9f0,후속 dedupe로 연결된 기업,"§7 HITL dedupe, codex P2; 미정 시 NULL"
+exhibitor_recommended_buyers,sort_order,정렬 순서,integer,NO,,,0,,0,추천 표시 정렬 순서,
+exhibitor_recommended_buyers,created_at,생성 시각,timestamptz,NO,,,now(),,2026-08-30 14:00,행 생성 시각,
+buyer_profiles,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,바이어 프로필 행 고유 ID,
+buyer_profiles,org_event_role_id,기업-행사 역할,uuid,NO,UQ/FK,organization_event_roles(id) ON DELETE CASCADE,,,a1b2…e9f0,프로필이 붙는 기업-행사 역할,역할당 하나(UQ)
+buyer_profiles,contact_name_ko,신청자 이름(국문),text,YES,,,,,정민아,신청자 이름(국문),폼 step1 신청자 식별
+buyer_profiles,contact_name_en,신청자 이름(영문),text,YES,,,,,Mina Jung,신청자 이름(영문),"폼 필수, 확정결정#3"
+buyer_profiles,contact_title_ko,신청자 직위(국문),text,YES,,,,,구매팀장,신청자 직위(국문),
+buyer_profiles,contact_title_en,신청자 직위(영문),text,YES,,,,,Procurement Manager,신청자 직위(영문),
+buyer_profiles,contact_email,신청자 이메일,text,YES,,,,,mina@buyer.com,신청자 이메일,폼 필수
+buyer_profiles,tel,전화번호,text,YES,,,,,+971-50-123-4567,신청자 전화번호,폼 필수; 구 '현장 연락' 재용도
+buyer_profiles,contact_language,상담 언어,text,YES,,,,ko · en · zh · ja · ru · other,en,상담/소통 언어(단일값),§1.2 meeting_language
+buyer_profiles,contact_interpreter_need,통역 필요 여부,boolean,YES,,,,,true,통역 필요 여부,미정 시 NULL
+buyer_profiles,country,소속 국가,text,YES,,,,,United Arab Emirates,신청자 소속 국가,"폼 필수, 행사별 스냅샷"
+buyer_profiles,annual_sales_range,연매출 구간,text,YES,,,,usd_lt_500k · usd_500k_1m · usd_1m_5m · usd_gt_5m,usd_1m_5m,연매출 구간(USD),§1.4 annual_sales_buyer
+buyer_profiles,employee_range,임직원 수 구간,text,YES,,,,e_0_10 · e_11_50 · e_51_100 · e_101plus,e_51_100,정규직 임직원 수 구간,§1.4
+buyer_profiles,company_intro_ko,기업소개(국문),text,YES,,,,,중동 방산 조달 전문 기업,"기업 소개(국문, 500자)",폼 step2
+buyer_profiles,company_intro_en,기업소개(영문),text,YES,,,,,Defense procurement firm in the Middle East,"기업 소개(영문, 500자)",폼 필수
+buyer_profiles,budget_range,예산 구간,text,YES,,,,usd_lt_100k · usd_100k_500k · usd_500k_1m · usd_1m_5m · usd_5m_10m · usd_10m_plus,usd_500k_1m,지출 가능 예산 구간(USD),§1.4 budget_range
+buyer_profiles,adoption_timeline,도입 시기,text,YES,,,,2026_h2 · 2027_h1 · 2027_h2 · 2028_h1 · 2028_h2 · 2029_h1 · 2029_h2 · 2030_h1 · 2030_h2 · undecided,2027_h1,도입 시기(년도+반기),§1.4 adoption_timeline
+buyer_profiles,continent,대륙,text,YES,,,,,Asia,신청자 소속 대륙,"폼 미노출(v1), 컬럼만 유지"
+buyer_profiles,city_state,도시/주,text,YES,,,,,Abu Dhabi,소속 도시·주,폼 미노출(v1)
+buyer_profiles,zip_code,우편번호,text,YES,,,,,00000,소속 우편번호,폼 미노출(v1)
+buyer_profiles,address1,주소1,text,YES,,,,,Corniche St. 12,소속 주소1,폼 미노출(v1)
+buyer_profiles,address2,주소2,text,YES,,,,,"Building A, 5F",소속 주소2,폼 미노출(v1)
+buyer_profiles,last_year_best_buyer,전년도 우수 바이어,text,YES,,,,,선정,전년도 최우수 바이어 실적,폼 미노출(v1)
+buyer_profiles,business_perf_korea_3y,대한 거래실적 3년,text,YES,,,,none · usd_1_1m · usd_1m_5m · usd_5m_plus,usd_1m_5m,최근 3년 대한국 거래실적(USD),"§1.4, 폼 미노출(v1)"
+buyer_profiles,travelers_korea_3y,방한 인원 3년,text,YES,,,,t_0_500 · t_501_1000 · t_1001_5000 · t_5001_10000 · t_10000plus,t_501_1000,최근 3년 방한 인원 규모,"§1.4, 폼 미노출(v1)"
+buyer_profiles,company_logo_file_id,회사 로고 파일,uuid,YES,FK,files(id) ON DELETE SET NULL,,,a1b2…e9f0,회사 로고 이미지 파일,"BM-001 폼 미수집, 무역관/운영 이관; KOTRA 요구"
+buyer_profiles,company_profile_file_id,회사 소개서 파일,uuid,YES,FK,files(id) ON DELETE SET NULL,,,a1b2…e9f0,회사 소개서 파일,"BM-001 폼 미수집, 무역관/운영 이관"
+buyer_profiles,note,비고,text,YES,,,,,특이사항 없음,기타 메모,폼 미수집(C)
+buyer_profiles,participation_route,참가 경로,text,YES,,,,re_1_2 · re_3_5 · re_6plus · new,new,재참가/신규 참가 경로,"re=재참가 횟수, new=신규"
+buyer_profiles,new_acquisition_channel,신규 발굴 경로,text,YES,,,,edm · official_letter · kotra_invitation · website_sns · media,kotra_invitation,신규 바이어 발굴 경로,참가경로 '신규'일 때만 입력
+buyer_profiles,kst_available_time,상담 가능 시간(KST),text,YES,,,,,09:00-12:00 KST,KST 상담 가능 시간,"v1 text, §7 HITL 슬롯 구조화"
+buyer_profiles,kotra_member,KOTRA 회원 여부,boolean,YES,,,,,false,KOTRA 기업회원 가입 여부,미정 시 NULL
+buyer_profiles,created_at,생성 시각,timestamptz,NO,,,now(),,2026-06-29 09:00,행 생성 시각,
+buyer_interest_keywords,buyer_profile_id,바이어 프로필,uuid,NO,FK/PK,buyer_profiles(id) ON DELETE CASCADE,,,a1b2…e9f0,관심분야를 붙일 바이어 프로필,복합 PK 일부
+buyer_interest_keywords,keyword_id,키워드,uuid,NO,FK/PK,keywords(id) ON DELETE CASCADE,,,c3d4…f1a2,바이어 관심 방산 분야 키워드,defense_field 13종 중 선택·폼[3] 통합 §부록A HITL
+buyer_attendees,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,행 고유 식별자,
+buyer_attendees,buyer_profile_id,바이어 프로필,uuid,NO,FK/UQ,buyer_profiles(id) ON DELETE CASCADE,,,b2c3…f0a1,참석자가 속한 바이어 프로필,
+buyer_attendees,member_id,회원,uuid,YES,FK,members(id) ON DELETE SET NULL,,,c3d4…a1b2,동일인 회원 연결,nullable 폼값 스냅샷·codex P1
+buyer_attendees,first_name,이름,text,YES,,,,,Ahmad,참석자 이름,
+buyer_attendees,last_name,성,text,YES,,,,,Al-Rashid,참석자 성,
+buyer_attendees,division,부서,text,YES,,,,,구매팀,참석자 소속 부서,
+buyer_attendees,job_title,직책,text,YES,,,,,Procurement Manager,참석자 직책,
+buyer_attendees,email,이메일,text,YES,UQ,,,,ahmad@moda.gov.sa,참석자 이메일,
+buyer_attendees,tel,전화번호,text,YES,,,,,+966-11-2345678,참석자 유선 전화번호,
+buyer_attendees,mobile,휴대폰 번호,text,YES,,,,,+966-50-1234567,참석자 휴대폰 번호,
+buyer_attendees,whatsapp_id,WhatsApp 아이디,text,YES,,,,,+966501234567,해외 연락용 WhatsApp ID,
+buyer_attendees,messenger_id,메신저 ID,text,YES,,,,,kakao:ahmad_r,KAKAO/LINE/TELEGRAM 메신저 ID,
+buyer_attendees,languages,사용 언어,text[],YES,,,,,"{en,ar}",참석자 사용 언어 목록,§1.2 meeting_language
+buyer_attendees,interpreter_need,통역 필요 여부,boolean,NO,,,false,,false,통역 필요 여부,체류정보 통역 재사용·신설 안 함 ADR-0013
+buyer_attendees,interpreter_languages,통역 언어,text[],YES,,,,,"{ko,ar}",필요한 통역 언어,체류정보 재사용
+buyer_attendees,arrival_flight_no,도착 항공편명,text,YES,,,,,KE956,방한 도착 항공편명,체류정보(Stay Info)·참석자 단위·ADR-0013
+buyer_attendees,arrival_at,도착 시각,timestamptz,YES,,,,,2026-09-15 14:20,방한 도착 일시,
+buyer_attendees,departure_flight_no,출발 항공편명,text,YES,,,,,KE955,출국 항공편명,
+buyer_attendees,departure_at,출발 시각,timestamptz,YES,,,,,2026-09-18 09:30,출국 일시,
+buyer_attendees,hotel_name,숙박 호텔명,text,YES,,,,,그랜드 하얏트 서울,숙박 호텔명,
+buyer_attendees,hotel_check_in,체크인 날짜,date,YES,,,,,2026-09-15,호텔 체크인 날짜,
+buyer_attendees,hotel_check_out,체크아웃 날짜,date,YES,,,,,2026-09-18,호텔 체크아웃 날짜,
+buyer_attendees,stay_note,체류 메모,text,YES,,,,,채식 식단 요청,체류 관련 자유 메모,선택
+buyer_attendees,sort_order,정렬 순서,integer,NO,,,0,,0,참석자 표시 순서,작을수록 먼저
+buyer_attendees,created_at,생성 시각,timestamptz,NO,,,now(),,2026-09-01 10:00,행 생성 시각,
+buyer_recommended_buyers,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,행 고유 식별자,
+buyer_recommended_buyers,buyer_profile_id,바이어 프로필,uuid,NO,FK,buyer_profiles(id) ON DELETE CASCADE,,,b2c3…f0a1,추천을 적어낸 바이어 프로필,
+buyer_recommended_buyers,continent,대륙,text,YES,,,,,Asia,추천 바이어 소속 대륙,
+buyer_recommended_buyers,country,국가,text,YES,,,,,Saudi Arabia,추천 바이어 소속 국가,
+buyer_recommended_buyers,organization,회사명,text,YES,,,,,MODA,추천 바이어 회사명,
+buyer_recommended_buyers,person_in_charge,담당자명,text,YES,,,,,Ahmad Al-Rashid,추천 바이어 담당자 이름,
+buyer_recommended_buyers,email,이메일,text,YES,,,,,contact@moda.gov.sa,추천 바이어 연락 이메일,
+buyer_recommended_buyers,tel,전화번호,text,YES,,,,,+966-11-2345678,추천 바이어 연락 전화번호,
+buyer_recommended_buyers,resolved_organization_id,연결 기업,uuid,YES,FK,organizations(id) ON DELETE SET NULL,,,c3d4…a1b2,중복제거로 연결된 기업,후속 dedupe §7 HITL·codex P2·미해결 시 NULL
+buyer_recommended_buyers,sort_order,정렬 순서,integer,NO,,,0,,0,추천 표시 순서,작을수록 먼저
+buyer_recommended_buyers,created_at,생성 시각,timestamptz,NO,,,now(),,2026-09-01 10:00,행 생성 시각,
+visitors,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,행 고유 식별자,
+visitors,event_id,행사,uuid,NO,FK,events(id) ON DELETE CASCADE,,,b2c3…f0a1,방문자가 입장한 행사,
+visitors,qr_token,QR 토큰,text,NO,UQ,,,,qr_a1b2c3d4,현장 QR 입장 고유 토큰,
+visitors,status,상태,text,NO,,,'browsing',browsing · converted,browsing,방문자 상태,"browsing=둘러봄, converted=현장 바이어 전환"
+visitors,converted_org_id,전환 기업,uuid,YES,FK,organizations(id) ON DELETE SET NULL,,,c3d4…a1b2,전환된 현장 바이어 기업,미전환 시 NULL
+visitors,created_at,생성 시각,timestamptz,NO,,,now(),,2026-09-11 09:30,행 생성 시각,
+meeting_venues,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,행 고유 식별자,
+meeting_venues,event_id,행사,uuid,NO,FK,events(id) ON DELETE CASCADE,,,b2c3…f0a1,미팅 장소가 속한 행사,
+meeting_venues,venue_type,장소 종류,text,NO,,,,booth · zone_table · business_room,booth,미팅 장소 종류,booth/zone_table/business_room
+meeting_venues,booth_id,부스,uuid,YES,FK,booths(id) ON DELETE SET NULL,,,c3d4…a1b2,연결된 물리 부스,부스 위치 단일 출처·비부스는 NULL
+meeting_venues,label,위치 라벨,text,NO,,,,,Hall D D-12,위치·식별 라벨,부스는 {hall_name} {code} 파생 가능
+meeting_venues,created_at,생성 시각,timestamptz,NO,,,now(),,2026-09-01 10:00,행 생성 시각,
+saturation_batch_runs,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,행 고유 식별자,
+saturation_batch_runs,event_id,행사,uuid,NO,FK/UQ,events(id) ON DELETE CASCADE,,,b2c3…f0a1,이 배정 실행이 속한 행사,
+saturation_batch_runs,run_number,실행 회차,integer,NO,UQ,,,,3,이벤트별 실행 회차,이벤트 내 1부터 증가·ADR-0006
+saturation_batch_runs,min_guaranteed_slots,최소 보장 슬롯 수,integer,NO,,,,,30,실행에 적용된 최소 보장 슬롯 N,실행 파라미터·설정값 덮어쓰기 가능·ADR-0006
+saturation_batch_runs,status,상태,text,NO,,,'draft',draft · confirmed · discarded,draft,배정 실행 상태,draft→confirmed→discarded·F-OP-005 검토 게이트
+saturation_batch_runs,triggered_by,실행 운영자,uuid,YES,FK,organizers(id) ON DELETE SET NULL,,,c3d4…a1b2,배정 실행을 시작한 운영자,nullable
+saturation_batch_runs,created_at,생성 시각,timestamptz,NO,,,now(),,2026-09-01 09:00,행 생성 시각,
+saturation_batch_runs,confirmed_at,확정 시각,timestamptz,YES,,,,,2026-09-01 11:00,운영자가 최종 확정한 시각,미확정 시 NULL
+meetings,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,행 고유 식별자,
+meetings,event_id,행사,uuid,NO,FK,events(id) ON DELETE CASCADE,,,b2c3…f0a1,이 미팅이 속한 행사,
+meetings,exhibitor_org_id,참가사 기업,uuid,NO,FK,organizations(id),,,c3d4…a1b2,참가사 측 기업,매칭 단위=Organization ADR-0002
+meetings,buyer_org_id,바이어 기업,uuid,NO,FK,organizations(id),,,d4e5…b2c3,바이어 측 기업,매칭 단위=Organization ADR-0002
+meetings,venue_id,미팅 장소,uuid,YES,FK,meeting_venues(id),,,e5f6…c3d4,미팅이 열리는 장소,미정 시 NULL
+meetings,matching_type,매칭 종류,text,NO,,,,ai · open · forced · on_site,ai,매칭을 만든 채널(출처),provenance 발생시점 고정 영구보존 ADR-0004; 수락규칙은 독립축 ADR-0005
+meetings,saturation_run_id,포화배정 실행,uuid,YES,FK,saturation_batch_runs(id) ON DELETE SET NULL,,,f6a7…d4e5,산출한 전체 포화배정 실행 회차,포화배정 산출 아니면 NULL·ADR-0006
+meetings,ai_score,AI 적합도 점수,numeric,YES,,,,,87.5,AI 매칭 적합도 점수,AI 매칭만; Open/On-site는 NULL(대조군)
+meetings,ai_score_reasons,AI 추천 근거,jsonb,YES,,,,,"{""keyword_overlap"":0.8}",AI 매칭 추천 근거,막히면 text로 대체
+meetings,status,상태,text,NO,,,'proposed',proposed · accepted · rejected · cancelled · completed,accepted,미팅 진행 상태,종료상태 completed만; noshow는 상태 아닌 리뷰 입력값 ADR-0010
+meetings,requested_by,신청 주체,text,YES,,,,exhibitor · buyer · organizer,buyer,미팅 신청 주체,exhibitor/buyer/organizer 대칭
+meetings,proxy_applied_by_organizer_id,대리신청 운영자,uuid,YES,FK,organizers(id) ON DELETE SET NULL,,,a7b8…e5f6,대리신청한 대행 운영자,sub(무역관) 운영자 대리·ADR-0013; 일반 신청은 NULL
+meetings,scheduled_start,시작 예정 시각,timestamptz,YES,,,,,2026-09-16 10:30,미팅 예정 시작 시각,
+meetings,scheduled_end,종료 예정 시각,timestamptz,YES,,,,,2026-09-16 11:00,미팅 예정 종료 시각,스케줄러가 경과 후 completed 전환 ADR-0010
+meetings,created_at,생성 시각,timestamptz,NO,,,now(),,2026-09-01 10:00,행 생성 시각,
+meeting_participants,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,참석자 행 고유 ID,
+meeting_participants,meeting_id,미팅,uuid,NO,FK/UQ,meetings(id) ON DELETE CASCADE,,,a1b2…e9f0,어느 미팅의 참석자인지,
+meeting_participants,member_id,회원,uuid,NO,FK/UQ,members(id) ON DELETE CASCADE,,,a1b2…e9f0,그 미팅에 참석 지정된 회원,ADR-0002: 수락 시 참석 Member 지정
+post_meeting_reviews,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,리뷰 행 고유 ID,
+post_meeting_reviews,meeting_id,미팅,uuid,NO,FK/UQ,meetings(id) ON DELETE CASCADE,,,a1b2…e9f0,어느 미팅에 대한 평가인지,
+post_meeting_reviews,reviewer_org_id,평가 주체 기업,uuid,NO,FK/UQ,organizations(id) ON DELETE CASCADE,,,a1b2…e9f0,이 평가를 작성한 기업,completed 미팅당 평가 주체별 1행
+post_meeting_reviews,counterpart_noshow,상대 노쇼 여부,boolean,NO,,,false,,False,상대가 미팅에 안 왔는지(비공개),상태 아닌 리뷰 입력값·ADR-0004보정/ADR-0010
+post_meeting_reviews,satisfaction_rating,만족도 점수,smallint,YES,,,,,4,"Step1 만족도(1~5 별점, 비공개)",매칭 효과 측정 지표·미입력 시 NULL
+post_meeting_reviews,follow_up_intent,후속 거래 의향,text,YES,,,,none · reviewing · yes,yes,후속 거래 의향(비공개),매칭 효과 측정 핵심 지표
+post_meeting_reviews,fit_rating,적합도 평가,text,YES,,,,good · normal · bad,good,Step2 상대 적합도(비공개),Fit Assessment·ADR-0004
+post_meeting_reviews,fit_reason,적합도 사유,text,YES,,,,,제품군이 우리 수요와 정확히 일치,적합/부적합 자유 서술 사유(비공개),
+post_meeting_reviews,fit_reason_tags,적합도 사유 태그,jsonb,YES,,,,,"{""category"": ""price_mismatch""}",적합도 사유 AI 사후 카테고리 태깅,D10
+post_meeting_reviews,audio_s3_key,녹음 파일 키,text,YES,,,,,reviews/2026/ab12.m4a,미팅 원본 녹음 S3 키(비공개),원본은 S3 영구보관
+post_meeting_reviews,transcript,전사 원문,text,YES,,,,,오늘 미팅에서 논의한 주요 내용은…,녹음 전사 원문(비공개),
+post_meeting_reviews,report_sections,보고서 본문,jsonb,YES,,,,,"{""discussion"": ""…"", ""agreements"": ""…"", ""actions"": ""…""}",보고문서 내보내기 본문,
+post_meeting_reviews,report_confirmed_at,보고서 확정 시각,timestamptz,YES,,,,,2026-09-16 15:20,보고문서 확정 시각,Step2 저장 시점
+post_meeting_reviews,created_at,생성 시각,timestamptz,NO,,,now(),,2026-09-16 15:00,행 생성 시각,
+love_calls,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,러브콜 행 고유 ID,
+love_calls,meeting_id,미팅,uuid,YES,FK/UQ,meetings(id) ON DELETE SET NULL,,,a1b2…e9f0,이 러브콜이 비롯된 미팅,없을 수 있음(SET NULL)
+love_calls,event_id,행사,uuid,NO,FK,events(id) ON DELETE CASCADE,,,a1b2…e9f0,이 러브콜이 속한 행사,
+love_calls,from_org_id,보낸 기업,uuid,NO,FK/UQ,organizations(id) ON DELETE CASCADE,,,a1b2…e9f0,러브콜을 보낸 기업,
+love_calls,to_org_id,받은 기업,uuid,NO,FK/UQ,organizations(id) ON DELETE CASCADE,,,a1b2…e9f0,러브콜을 받은 기업,양방향 성립 시 Mutual로 격상
+love_calls,created_at,생성 시각,timestamptz,NO,,,now(),,2026-09-16 16:00,행 생성 시각,
+conversation_channels,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,대화 채널 고유 ID,
+conversation_channels,event_id,행사,uuid,NO,FK/UQ,events(id) ON DELETE CASCADE,,,a1b2…e9f0,이 채널이 속한 행사,
+conversation_channels,org_a_id,참여 기업 A,uuid,NO,FK/UQ,organizations(id) ON DELETE CASCADE,,,a1b2…e9f0,대화에 참여한 한쪽 기업,
+conversation_channels,org_b_id,참여 기업 B,uuid,NO,FK/UQ,organizations(id) ON DELETE CASCADE,,,a1b2…e9f0,대화에 참여한 다른쪽 기업,
+conversation_channels,opened_at,채널 개설 시각,timestamptz,NO,,,now(),,2026-09-16 16:05,대화 채널이 열린 시각,Mutual Love Call 성립 시 생성
+ai_match_suggestions,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,추천 행 고유 ID,
+ai_match_suggestions,event_id,행사,uuid,NO,FK/UQ,events(id) ON DELETE CASCADE,,,a1b2…e9f0,이 추천이 속한 행사,
+ai_match_suggestions,for_org_id,제안 받는 기업,uuid,NO,FK/UQ,organizations(id) ON DELETE CASCADE,,,a1b2…e9f0,추천을 받는 기업,양측 대칭 제안
+ai_match_suggestions,target_org_id,제안된 상대 기업,uuid,NO,FK/UQ,organizations(id) ON DELETE CASCADE,,,a1b2…e9f0,추천된 상대 기업,
+ai_match_suggestions,ai_score,AI 적합도 점수,numeric,YES,,,,,87.5,AI 매칭 적합도 점수,정의 미확정 #48(HITL)·미정 시 NULL·ADR-0006
+ai_match_suggestions,ai_score_reasons,AI 추천 근거,jsonb,YES,,,,,"{""keyword_overlap"": 0.8}",AI가 이 기업을 추천한 근거(구조화),
+ai_match_suggestions,status,처리 상태,text,NO,,,'pending',pending · requested · bookmarked · dismissed,requested,추천 카드 처리 상태,
+ai_match_suggestions,created_at,생성 시각,timestamptz,NO,,,now(),,2026-08-27 09:00,행 생성 시각,
+interested_organizations,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,북마크 행 고유 ID,
+interested_organizations,event_id,행사,uuid,NO,FK/UQ,events(id) ON DELETE CASCADE,,,a1b2…e9f0,이 북마크가 속한 행사,
+interested_organizations,owner_org_id,저장 주체 기업,uuid,NO,FK/UQ,organizations(id) ON DELETE CASCADE,,,a1b2…e9f0,관심기업을 저장한 기업,
+interested_organizations,target_org_id,관심 대상 기업,uuid,NO,FK/UQ,organizations(id) ON DELETE CASCADE,,,a1b2…e9f0,관심기업으로 저장된 기업,
+interested_organizations,source,저장 출처,text,YES,,,,ai · all,ai,북마크 저장 출처 탭,미정 시 NULL
+interested_organizations,created_at,생성 시각,timestamptz,NO,,,now(),,2026-08-27 10:00,행 생성 시각,
+notifications,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,알림 행 고유 ID,
+notifications,event_id,행사,uuid,NO,FK,events(id) ON DELETE CASCADE,,,a1b2…e9f0,이 알림이 속한 행사,
+notifications,recipient_org_id,수신 기업,uuid,NO,FK/UQ,organizations(id) ON DELETE CASCADE,,,a1b2…e9f0,알림 수신 기업(공유 인박스),수신 단위=Org·ADR-0010
+notifications,type,알림 종류,text,NO,UQ,,,meeting_requested · meeting_accepted · meeting_cancelled · meeting_reminder · review_prompt · review_ready,meeting_requested,알림 종류,
+notifications,meeting_id,미팅,uuid,YES,FK/UQ,meetings(id) ON DELETE CASCADE,,,a1b2…e9f0,연결된 미팅(링크·조인용),없을 수 있음
+notifications,due_at,발화 예정 시각,timestamptz,YES,UQ,,,,2026-09-16 09:00,시간성 알림 발화 예정 시각,이벤트성은 NULL·ADR-0010
+notifications,payload,표시 데이터 스냅샷,jsonb,YES,,,,,"{""meeting_title"": ""한화-록히드 미팅""}",통지 당시 표시 데이터 스냅샷,불변 보존·ADR-0010
+notifications,created_at,생성 시각,timestamptz,NO,,,now(),,2026-09-15 09:00,행 생성 시각,
+notifications,read_at,읽음 시각,timestamptz,YES,,,,,2026-09-15 09:30,기업 공유 읽음 시각(null=안읽음),외부 발송 성공과 분리
+notifications,read_by_member_id,읽은 회원,uuid,YES,FK,members(id) ON DELETE SET NULL,,,a1b2…e9f0,알림을 읽은 회원,
+notification_dispatches,id,고유 ID,uuid,NO,PK,,gen_random_uuid(),,a1b2…e9f0,발송 행 고유 ID,
+notification_dispatches,notification_id,알림,uuid,NO,FK/UQ,notifications(id) ON DELETE CASCADE,,,a1b2…e9f0,외부 채널로 보낼 대상 알림,
+notification_dispatches,member_id,회원,uuid,NO,FK/UQ,members(id) ON DELETE CASCADE,,,a1b2…e9f0,이 알림을 받을 회원,멤버×채널당 1행
+notification_dispatches,channel,발송 채널,text,NO,UQ,,,in_app · email · sms,email,보내는 통로,
+notification_dispatches,status,발송 상태,text,NO,,,,pending · sent · failed · skipped,sent,채널 발송 상태,연락처 없음·인프라 미비 시 skipped
+notification_dispatches,sent_at,발송 시각,timestamptz,YES,,,,,2026-09-15 09:01,실제로 발송된 시각,미발송 시 NULL
+notification_dispatches,error,오류 내용,text,YES,,,,,SMTP timeout,발송 실패 시 오류 내용,

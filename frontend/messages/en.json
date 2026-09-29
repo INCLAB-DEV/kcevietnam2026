@@ -1,0 +1,1442 @@
+{
+  "common": {
+    "appName": "NABI",
+    "logout": "Log out",
+    "close": "Close",
+    "languageToggleLabel": "Language",
+    "themeToggleLabel": "Appearance",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "roleBuyer": "Buyer",
+    "roleExhibitor": "Exhibitor"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "discover": "Discover",
+    "meetings": "Meetings",
+    "notifications": "Notifications",
+    "profile": "Profile",
+    "opsDashboard": "Ops Dashboard",
+    "members": "Exhibitor Management",
+    "forcedMatching": "Matching Assignment",
+    "adminConsole": "Admin Console",
+    "contactSecretariat": "Contact Secretariat",
+    "contactSecretariatAria": "Contact {org}",
+    "unreadAria": "{count} unread notifications",
+    "unreadCount": "{count}"
+  },
+  "login": {
+    "brandTagline": "AI Business Matching",
+    "heroTitle": "Business Matching\nApplication",
+    "heroDescription": "Match with exhibitors and buyers using AI, and request meetings. Sign up, get approved by the organizer, and you are in.",
+    "posterAlt": "{event} official poster",
+    "periodApplication": "Business matching period",
+    "periodExhibition": "Exhibition dates",
+    "title": "Sign in",
+    "subtitlePrefilled": "Hi {name}, enter your password to continue.",
+    "subtitleDefault": "Enter the ID (email) and password you used to sign up.",
+    "usernameLabel": "ID",
+    "passwordLabel": "Password",
+    "showPasswordAria": "Show password",
+    "hidePasswordAria": "Hide password",
+    "submit": "Sign in",
+    "forgotPrefilled": "Forgot your password? Contact the secretariat",
+    "forgotDefault": "Can't sign in? Contact the secretariat",
+    "demoAccountsLabel": "Demo accounts · password",
+    "demoGroupParticipant": "Participants",
+    "demoGroupOperator": "Operators",
+    "demoAccountBuyerOld": "Primary demo buyer — browse companies and request meetings",
+    "demoAccountBuyer": "Invited buyer — first-login consent flow; incoming requests auto-confirm",
+    "demoAccountBuyerWip": "Buyer mid-application",
+    "demoAccountExhibitor": "Exhibitor (Hanbit Studio) — accept/decline received requests",
+    "demoAccountExhibitorOld": "Exhibitor (Donghae Sound) — completed meetings and notes",
+    "demoAccountOrganizer": "Organizer master — full superadmin console at /admin",
+    "demoAccountTradeOffice": "Trade office sub — scoped to assigned exhibitors only, 403 on master actions",
+    "demoAdminHint": "The super admin console opens at /admin after signing in as organizer.",
+    "consentTitle": "Terms & Consent",
+    "consentSubtitle": "Please agree to the terms below to use NABI. All required items must be agreed to continue.",
+    "agreeAll": "Agree to all (including optional)",
+    "requiredBadge": "Required",
+    "optionalBadge": "Optional",
+    "consentAria": "Agree to {title}",
+    "viewFull": "View full text",
+    "agreeSheetButton": "I agree",
+    "submitConsent": "Agree and get started",
+    "resumeTitle": "Welcome back — you've signed in before.",
+    "resumeSubtitle": "Choose an account to sign in with",
+    "resumeAccountName": "{name}",
+    "loggedInAs": "Signed in with NABI account",
+    "switchAccount": "Sign in with a different account",
+    "checking": "Checking link…",
+    "redirecting": "Signing in…",
+    "deeplinkExpiredTitle": "This link has expired",
+    "deeplinkExpiredBody": "Your invite link is no longer valid. Please sign in with your ID and password.",
+    "deeplinkInvalidTitle": "This link isn't valid",
+    "deeplinkInvalidBody": "Please double-check the link, or sign in with your ID and password.",
+    "backToLogin": "Sign in with ID and password",
+    "errorAccountLocked": "Your account is locked. Please contact the secretariat to unlock it and try again.",
+    "errorUpstreamUnavailable": "Please try again shortly — the authentication server is temporarily unavailable.",
+    "errorInvalidCredentials": "Incorrect ID or password. Please check and try again.",
+    "errorNotFound": "We couldn't find this account on the roster. Please contact the organizer.",
+    "errorTicketInvalid": "Your sign-in session has expired. Please start over.",
+    "signupPrompt": "Don't have an account yet?",
+    "signupLink": "Sign up"
+  },
+  "signup": {
+    "title": "Sign up",
+    "subtitle": "Create a buyer or exhibitor account and start business matching.",
+    "heroDescription": "Sign up as an exhibitor or buyer and start meetings with AI-powered matching.",
+    "roleFieldLabel": "Account type",
+    "orgNameKoLabel": "Company name (Korean)",
+    "orgNameKoPlaceholder": "e.g. 주식회사 나비",
+    "orgNameEnLabel": "Company name (English, optional)",
+    "orgNameEnPlaceholder": "e.g. NABI Co., Ltd.",
+    "nameLabel": "Contact name",
+    "namePlaceholder": "e.g. Hong Gildong",
+    "emailLabel": "Email",
+    "emailPlaceholder": "e.g. name@company.com",
+    "emailVerifiedBadge": "Verified",
+    "emailChangeButton": "Change",
+    "sendCodeButton": "Send code",
+    "resendCodeButton": "Resend ({seconds}s)",
+    "codeSentHint": "We sent a verification code to your email. It expires in 10 minutes.",
+    "codeFieldLabel": "Verification code",
+    "codePlaceholder": "6-digit code",
+    "verifyCodeButton": "Verify",
+    "verifyingCode": "Verifying…",
+    "sendingCode": "Sending…",
+    "errorSendCodeRateLimited": "Please try again in a moment.",
+    "errorSendCodeInvalidEmail": "That doesn't look like a valid email.",
+    "errorSendCodeGeneric": "Couldn't send the verification code. Please try again shortly.",
+    "errorVerifyCodeInvalid": "That code is invalid or expired.",
+    "errorEmailNotVerified": "Please verify your email first.",
+    "errorVerificationInvalid": "Your email verification expired. Please verify the code again.",
+    "passwordLabel": "Password",
+    "passwordHint": "At least 8 characters, including letters and numbers.",
+    "passwordConfirmLabel": "Confirm password",
+    "phoneLabel": "Phone (optional)",
+    "phonePlaceholder": "e.g. +82-10-1234-5678",
+    "termsRequiredLabel": "Required terms",
+    "viewFull": "View full text",
+    "termsAgreeLabel": "I agree to all of the above (required)",
+    "submit": "Sign up",
+    "submitting": "Signing up…",
+    "successTitle": "You're all set",
+    "successBody": "Please sign in on the login screen with the account you just created.",
+    "goToLogin": "Go to sign in",
+    "errorEmailTaken": "This email is already registered.",
+    "errorGeneric": "Something went wrong while signing up. Please try again shortly."
+  },
+  "home": {
+    "greeting": "Hello, {name}",
+    "summary": "{meetingCount} meetings today · {todoCount} to do",
+    "meetingStatus": {
+      "title": "Meeting Status",
+      "viewAll": "View all",
+      "upcoming": "Upcoming",
+      "sentRequests": "Sent requests",
+      "receivedRequests": "Received requests",
+      "completed": "Completed",
+      "excludedNote": "{count} cancelled or rejected excluded"
+    },
+    "todaySchedule": {
+      "title": "Today's Schedule",
+      "viewAll": "Full schedule",
+      "empty": "No meetings scheduled today"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "viewAll": "View all",
+      "empty": "No new notifications"
+    },
+    "notificationMessages": {
+      "meetingRequested": "{org} requested a meeting",
+      "meetingAccepted": "{org} accepted your meeting request",
+      "meetingCancelled": "Meeting with {org} was cancelled",
+      "meetingCancelledByOrganizer": "The secretariat cancelled your meeting with {org}",
+      "meetingRejected": "{org} declined your meeting request",
+      "meetingReminder": "Meeting with {org} is starting soon",
+      "reviewPrompt": "Please write meeting notes for {org}",
+      "reviewReady": "Meeting notes for {org} are ready",
+      "applicationApproved": "{org}'s business matching application has been approved"
+    }
+  },
+  "welcome": {
+    "writeForm": {
+      "badge": "Application open",
+      "title": "Please complete your business matching application",
+      "description": "Enter your business fields, strengths, and target buyers to be included in matching. Progress saves automatically, so you can pick up where you left off.",
+      "descriptionBuyer": "Enter your business interests, budget, and adoption timeline to be included in matching. Progress saves automatically, so you can pick up where you left off.",
+      "cta": "Start application"
+    },
+    "changesRequested": {
+      "badge": "Changes requested",
+      "title": "The organizer has requested changes",
+      "description": "Please update your application to reflect the requested changes and resubmit. Resubmitting returns it to review.",
+      "note": "Organizer note: (review_note — shown once connected)",
+      "cta": "Edit"
+    },
+    "underReview": {
+      "badge": "Under review",
+      "title": "Under review by the host country",
+      "description": "Your application has been submitted. The organizer's approval process is underway, and results will be announced after the application period ends. Your application can't be edited while under review."
+    },
+    "meetingWaiting": {
+      "badge": "Approved",
+      "title": "Approved · waiting to request meetings",
+      "description": "Your business matching participation has been approved. Business meeting services will open once the application period ends. Thanks for your patience.",
+      "waitingLabel": "Waiting to request meetings"
+    },
+    "enterService": {
+      "badge": "Ready to enter",
+      "title": "Start your business meetings",
+      "description": "The application period has closed and your application is approved. You can now discover companies and request meetings.",
+      "cta": "Find companies to meet"
+    },
+    "rejected": {
+      "badge": "Rejected",
+      "title": "Your application was rejected",
+      "description": "This business matching application was rejected. Please contact the organizer for details."
+    },
+    "closed": {
+      "badge": "Application closed",
+      "title": "The business matching application period has closed",
+      "description": "The application period has ended, so applications can no longer be created or edited. Please contact the organizer with any questions."
+    },
+    "actions": {
+      "viewApplication": "View application",
+      "edit": "Edit",
+      "start": "Start application",
+      "resubmit": "Resubmit",
+      "submit": "Submit",
+      "confirmTitle": "You won't be able to edit after submitting",
+      "confirmDescription": "Submitting locks your application so it can't be changed. You can only edit again if the organizer requests changes. Submit now?",
+      "cancel": "Cancel",
+      "incompleteHint": "Complete all required fields to submit.",
+      "toastValidationFailed": "Some required fields are still missing. Please check your application.",
+      "toastSubmitBlocked": "Your application can't be submitted right now. Please contact the organizer.",
+      "toastSubmitFailed": "Submission failed. Please try again shortly.",
+      "toastRejectedResubmit": "Rejected applications can't be resubmitted. Please contact the organizer."
+    }
+  },
+  "meeting": {
+    "reasonDialog": {
+      "rejectTitle": "Decline meeting",
+      "rejectDescription": "Choose a reason. It will be shared with the other party.",
+      "cancelTitle": "Cancel meeting",
+      "cancelDescription": "Choose a reason. It will be shared with the other party.",
+      "reasonInterestMismatch": "Interest mismatch",
+      "reasonScheduleUnavailable": "Schedule unavailable",
+      "reasonScheduleConflict": "Schedule conflict",
+      "reasonCounterpartRequest": "Counterpart request",
+      "reasonInternalChange": "Internal change",
+      "reasonOther": "Other",
+      "reasonTextLabel": "Details",
+      "reasonTextPlaceholder": "Write freely",
+      "reasonTextRequired": "Please describe the reason",
+      "cancelButton": "Close",
+      "submitReject": "Decline",
+      "submitCancel": "Cancel meeting"
+    },
+    "toast": {
+      "acceptSuccess": "Meeting accepted",
+      "acceptError": "Failed to accept. Please try again shortly",
+      "rejectSuccess": "Meeting declined",
+      "rejectError": "Failed to decline. Please try again shortly",
+      "cancelSuccess": "Meeting cancelled",
+      "cancelError": "Failed to cancel. Please try again shortly",
+      "createSlotTaken": "That slot was just taken. Please pick another time",
+      "createDuplicateApplication": "You already requested this company at the same time. Please pick another time",
+      "createError": "Failed to send the request. Please try again shortly"
+    },
+    "status": {
+      "acceptNeeded": "Accept needed",
+      "acceptWaiting": "Awaiting acceptance",
+      "upcoming": "Upcoming",
+      "writeReview": "Write notes",
+      "viewReview": "View notes",
+      "noShow": "No-show",
+      "rejected": "Declined",
+      "cancelled": "Cancelled",
+      "expired": "Response window passed"
+    },
+    "shortStatus": {
+      "accepted": "Confirmed",
+      "completed": "Done",
+      "rejected": "Declined",
+      "cancelled": "Cancelled",
+      "acceptNeeded": "Accept",
+      "waiting": "Waiting",
+      "review": "Notes",
+      "upcoming": "Upcoming",
+      "noShow": "No-show",
+      "expired": "Expired"
+    },
+    "direction": {
+      "sent": "You requested",
+      "received": "They requested",
+      "organizer": "Assigned by organizer"
+    },
+    "typeLabel": {
+      "exhibitor": "Exhibitor",
+      "buyer": "Buyer",
+      "buyerTyped": "{type} buyer"
+    },
+    "acceptance": {
+      "immediateTitle": "Your meeting is confirmed!",
+      "immediateDescription": "Your meeting with {org} has been added to your schedule.",
+      "immediateStatus": "Confirmed",
+      "pendingTitle": "Meeting request sent!",
+      "pendingDescription": "We sent your meeting request to {org}. We'll notify you when they accept.",
+      "pendingStatus": "Awaiting acceptance"
+    },
+    "emptyState": {
+      "title": "No meetings scheduled yet",
+      "exhibitorDescription": "Check out AI-recommended buyers and propose a meeting first.",
+      "exhibitorCta": "See AI-recommended buyers",
+      "buyerDescription": "Browse companies you're interested in and request a meeting.",
+      "buyerCta": "Browse companies"
+    },
+    "actionStrip": {
+      "receivedLabel": "Meeting requests",
+      "receivedContext": "They're waiting on you",
+      "receivedCta": "Accept/Decline",
+      "reviewLabel": "Meeting notes",
+      "reviewContext": "Wrap up finished meetings",
+      "reviewCta": "Write",
+      "countSuffix": "{count}"
+    },
+    "timeline": {
+      "meetingCountAria": "{count} meetings",
+      "pendingAria": "Has a pending request",
+      "nowLabel": "Now {time}",
+      "slotMeetingsAria": "{count} meetings in this time slot",
+      "sheetTitle": "Meeting company info"
+    },
+    "detailPanel": {
+      "aria": "Meeting details with {name}",
+      "aiMatchTitle": "AI Match Score",
+      "requestReasonLabel": "Request message",
+      "detailLink": "View company details",
+      "memberUs": "(us)",
+      "memberThem": "(them)",
+      "actionAccept": "Accept",
+      "actionReject": "Decline",
+      "actionCancel": "Cancel",
+      "actionReview": "Write notes",
+      "actionReviewDone": "View notes",
+      "actionAttendance": "Edit attendance",
+      "comingSoon": "{action} is coming soon",
+      "emptySlotTitle": "This slot is open",
+      "emptySlotDescription": "Find a business partner to meet during this time and send a request.",
+      "emptySlotCta": "Browse companies",
+      "findPartnerTitle": "No meetings scheduled",
+      "findPartnerDescription": "Find a business partner to collaborate with right now.",
+      "findPartnerCta": "Browse companies",
+      "noMeetingsTitle": "No meetings scheduled."
+    },
+    "request": {
+      "title": "Request meeting",
+      "stepTime": "Time",
+      "stepVenue": "Venue",
+      "stepConfirm": "Confirm",
+      "back": "Back",
+      "next": "Next",
+      "submit": "Send request",
+      "legendBoth": "Both available",
+      "legendConflict": "Schedule conflict",
+      "morning": "Morning",
+      "afternoon": "Afternoon",
+      "slotsAvailable": "{count} slots",
+      "slotHint": "Select consecutive {minutes}-minute slots (up to {max} minutes per meeting).",
+      "autoSelected": "Auto-selected",
+      "dateTimeLabel": "Date & time",
+      "venueLabel": "Venue",
+      "reasonLabel": "Message",
+      "aiDraftBadge": "AI draft",
+      "aiDraftHint": "This message was auto-generated from your profile. Feel free to edit it.",
+      "statusLabel": "Status",
+      "confirmButton": "Done",
+      "durationMinutes": "{count} min",
+      "durationHours": "{count}h",
+      "durationHoursMinutes": "{hours}h {minutes}m",
+      "immediateToast": "Your meeting with {org} is confirmed",
+      "requestedToast": "Meeting request sent to {org}"
+    },
+    "page": {
+      "title": "My Meetings",
+      "subtitle": "Check your confirmed and pending meetings by day",
+      "breadcrumbMeetings": "Meetings",
+      "breadcrumbReview": "Meeting notes",
+      "breadcrumbDetail": "Meeting details"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unreadCount": "{count} unread",
+    "markAllRead": "Mark all as read",
+    "pinnedRemindersAria": "Upcoming reminders",
+    "filterAria": "Filter by notification type",
+    "emptyState": "No notifications to show",
+    "unreadAria": "Unread",
+    "readByNamed": "· Read by {name} {time}",
+    "readByAnon": "· Read {time}",
+    "loadMore": "Load more",
+    "loadingMore": "Loading…",
+    "filters": {
+      "all": "All",
+      "meetingRequested": "Requested",
+      "meetingAccepted": "Accepted",
+      "meetingCancelled": "Cancelled",
+      "meetingRejected": "Declined",
+      "meetingReminder": "Reminder",
+      "reviewPrompt": "Notes needed",
+      "reviewReady": "Notes ready",
+      "applicationApproved": "Approved"
+    },
+    "typeLabels": {
+      "meetingRequested": "Meeting request received",
+      "meetingAccepted": "Meeting accepted",
+      "meetingCancelled": "Meeting cancelled",
+      "meetingRejected": "Meeting declined",
+      "meetingReminder": "Meeting reminder",
+      "reviewPrompt": "Write meeting notes",
+      "reviewReady": "Meeting notes ready",
+      "applicationApproved": "Application approved"
+    },
+    "messages": {
+      "meetingRequested": "{org} requested a meeting",
+      "meetingAccepted": "{org} accepted your meeting request",
+      "meetingCancelled": "Meeting with {org} was cancelled",
+      "meetingRejected": "{org} declined your meeting request. Feel free to request a different time",
+      "meetingReminder": "Meeting with {org} is starting soon",
+      "reviewPrompt": "Please write meeting notes for {org}",
+      "reviewReady": "Meeting notes for {org} are ready. Review and save them",
+      "applicationApproved": "{org}'s business matching application has been approved. Start exploring matches on NABI"
+    }
+  },
+  "discover": {
+    "page": {
+      "title": "Discover Companies",
+      "subtitle": "Check out AI-recommended companies and request a meeting"
+    },
+    "reasons": {
+      "sharedInterest": "Matches your interest areas ''{fields}'' with its business fields",
+      "budgetFit": "Offers a solution that fits your budget range ({budget})",
+      "general": "A content specialist company aligned with your interest areas"
+    },
+    "tabs": {
+      "ai": "AI Recommended",
+      "all": "All Companies",
+      "bookmarks": "Bookmarked"
+    },
+    "search": {
+      "placeholder": "Search by company, keyword, or strength"
+    },
+    "facets": {
+      "timeline": "Adoption Timeline",
+      "budget": "Budget Range",
+      "category": "Category",
+      "matchRate": "Match Rate",
+      "matchRateAll": "All",
+      "bookmarkedOnly": "Bookmarked only",
+      "reset": "Reset"
+    },
+    "sort": {
+      "score": "Best match",
+      "name": "Name",
+      "booth": "Hall location"
+    },
+    "list": {
+      "count": "{count} companies",
+      "emptyOrgs": "No companies to show",
+      "emptyBookmarks": "No bookmarked companies",
+      "emptyResults": "No results found",
+      "emptyResultsHint": "Try a different search term or filter."
+    },
+    "card": {
+      "matchScore": "{score}% match",
+      "aiMatch": "AI Match",
+      "aiReasonTitle": "Why we recommend this",
+      "bookmarkSaved": "Bookmarked",
+      "bookmark": "Bookmark",
+      "bookmarkAdded": "Bookmarked",
+      "bookmarkAddAria": "Add bookmark",
+      "bookmarkRemoveAria": "Remove bookmark",
+      "viewDetail": "View details",
+      "requestMeeting": "Request meeting"
+    },
+    "swipeDeck": {
+      "emptyTitle": "No recommended companies",
+      "emptyDescription": "Try browsing the All Companies tab instead.",
+      "prevAria": "Previous recommendation",
+      "nextAria": "Next recommendation",
+      "feedbackPrompt": "Was this a good recommendation?",
+      "yes": "Yes",
+      "no": "No",
+      "reasonHint": "What didn't fit? (Choosing a reason excludes it from recommendations)",
+      "back": "← Back",
+      "reasonExisting": "Already in contact/dealing",
+      "reasonFieldMismatch": "Field doesn't match",
+      "reasonTimingMismatch": "Adoption timing doesn't fit",
+      "reasonOther": "Other"
+    },
+    "feedback": {
+      "defaultOrgName": "this company",
+      "appropriate": "You rated ''{org}'' as a good recommendation",
+      "excluded": "Removed ''{org}'' from AI recommendations",
+      "undo": "Undo"
+    },
+    "detail": {
+      "aiMatchTitle": "AI Match Score",
+      "aiReasonTitle": "Why we recommend this",
+      "boothTitle": "Booth Location",
+      "exhibitsTitle": "Exhibits",
+      "keywordsExhibitor": "Field Keywords",
+      "keywordsBuyer": "Areas of Interest",
+      "adoptionPlanTitle": "Adoption Plan",
+      "budgetPrefix": "Budget {value}",
+      "adoptionPrefix": "Adopt {value}",
+      "strengthTitle": "Strengths",
+      "achievementsTitle": "Key Achievements",
+      "companyInfoTitle": "Company Info",
+      "founded": "Founded",
+      "employees": "Employees",
+      "buyerSuffix": "{type} buyer",
+      "backAria": "Back to company discovery"
+    }
+  },
+  "review": {
+    "title": "Meeting Notes",
+    "subtitleIntake": "Tell us briefly how the meeting went.",
+    "subtitleCompose": "Upload a recording or write a memo to put together your meeting notes — AI can help organize it too.",
+    "subtitleDone": "Your meeting notes are complete. You can export the report or edit it again.",
+    "loading": "Loading…",
+    "loadErrorTitle": "Couldn't load meeting notes",
+    "loadErrorDescription": "Please try again shortly, or refresh the page. (Check backend connection)",
+    "retry": "Retry",
+    "steps": {
+      "intake": "Meeting review",
+      "compose": "AI report + fit",
+      "done": "Done"
+    },
+    "proceededOptions": {
+      "proceeded": "Meeting held",
+      "counterpartNoshow": "They didn't show",
+      "selfNoshow": "I didn't show"
+    },
+    "intake": {
+      "proceededQuestion": "Did the meeting take place?",
+      "satisfactionLabel": "Meeting satisfaction (private)",
+      "satisfactionAria": "{n} stars",
+      "followUpLabel": "Follow-up interest (private)",
+      "noshowTitle": "This will be recorded as a meeting that didn't take place",
+      "noshowDescription": "Satisfaction, follow-up interest, and the report will all be skipped.",
+      "submitNoshow": "Save as is",
+      "submitFinish": "Save & finish"
+    },
+    "compose": {
+      "audioTab": "Upload recording",
+      "textTab": "Type it in",
+      "memoLabel": "Meeting notes",
+      "memoPlaceholder": "Freely write what was discussed, what was agreed, and what's planned next.",
+      "processing": "Organizing…",
+      "runAi": "Organize with AI",
+      "reviewHint": "Type it in directly, or review and edit what AI organized. Each line is one item.",
+      "discussion": "Key discussion points",
+      "agreements": "Agreements",
+      "actions": "Follow-up actions",
+      "fitLabel": "Fit assessment (private)",
+      "fitHint": "— AI suggested, save after review",
+      "fitReasonLabel": "Fit reasoning (private, free text)",
+      "privacyNotice": "Fit and follow-up interest are not shared with the other party and are not included in the exported report.",
+      "back": "Back",
+      "next": "Next: write meeting review",
+      "removeFileAria": "Remove file",
+      "dropzoneTitle": "Drag a recording here, or click to choose",
+      "dropzoneDescription": "AI will transcribe it and organize it into a report. No recording? Use the 'Type it in' tab.",
+      "composingAudio": "Organizing your recording into meeting notes. We'll notify you when it's done — feel free to leave this screen.",
+      "composingText": "Organizing your memo into meeting notes."
+    },
+    "fit": {
+      "good": "Good fit",
+      "normal": "Neutral",
+      "bad": "Poor fit"
+    },
+    "followUp": {
+      "none": "None",
+      "reviewing": "Considering",
+      "yes": "Yes"
+    },
+    "done": {
+      "noshowTitle": "Recorded as a no-show",
+      "selfNoshowTitle": "Recorded as a meeting you didn't attend",
+      "completeTitle": "Meeting notes complete",
+      "savedWith": "Your meeting notes with {org} have been saved.",
+      "exportTitle": "Export report",
+      "exportPrivacyNote": "Private items are not included in the report.",
+      "transcriptPrivacyNote": "Only you can see the raw transcript — it's not shared with the other party or the report.",
+      "edit": "Edit",
+      "emptySection": "(None)"
+    },
+    "loveCallMail": {
+      "title": "Send a Love Call email",
+      "description": "AI drafts a follow-up proposal from your meeting notes. Review it, edit it, then send it to {org}.",
+      "openButton": "Draft with AI",
+      "reportRequired": "Finalize your meeting notes first — AI writes the email from them.",
+      "loading": "Loading Love Call email status…",
+      "stateErrorTitle": "Couldn't load the Love Call email status",
+      "dialogTitle": "Love Call email",
+      "dialogDescription": "Review the AI draft, edit it freely, then send. What you see here is exactly what goes out.",
+      "generating": "Writing your email from the meeting notes…",
+      "subjectLabel": "Subject",
+      "bodyLabel": "Message",
+      "bodyPlaceholder": "Write the proposal you want to send to the other company.",
+      "recipients": "Will be sent to {count} contact(s) at {org}.",
+      "noRecipients": "{org} has no registered contact email, so this can't be sent.",
+      "aiFailedTitle": "AI couldn't write the draft",
+      "aiFailedManualHint": "You can still write it yourself in the editor below.",
+      "draftErrorTitle": "Couldn't load the draft",
+      "sendFailedTitle": "Sending failed",
+      "retryDraft": "Try AI again",
+      "send": "Send",
+      "sending": "Sending…",
+      "close": "Close",
+      "privacyNote": "Private items — satisfaction, follow-up interest, fit assessment, raw transcript — are never included.",
+      "sentTitle": "Love Call email sent",
+      "sentSummary": "Delivered to {count} contact(s) at {org}.",
+      "sentOnlyOnce": "You can only send one per meeting.",
+      "sentSubjectLabel": "Subject sent",
+      "sentBodyLabel": "Message sent",
+      "toastSent": "Love Call email sent."
+    },
+    "transcript": {
+      "viewButton": "View transcript",
+      "title": "Transcript",
+      "aiNote": "🤖 AI-estimated speakers — speakers are inferred from text, not audio, so they may not be accurate.",
+      "us": "Our company",
+      "counterpartFallback": "The other company"
+    },
+    "toast": {
+      "noshowSaved": "Recorded as not attended. Additional evaluation is skipped.",
+      "saveFailed": "Failed to save. Check the backend connection and try again.",
+      "textDraftDone": "Draft meeting notes created. Review and edit them.",
+      "transcriptionStarted": "Creating your meeting notes. We'll notify you when it's done — feel free to leave this screen.",
+      "transcriptionDraftDone": "Draft meeting notes are ready. Review and save them.",
+      "transcriptionStartFailed": "Failed to start transcription. Check the backend connection.",
+      "reportEmpty": "The report is empty. Type it in or organize it with AI.",
+      "reportSaved": "Report saved.",
+      "exportFailed": "Failed to export. Check the backend connection.",
+      "audioOnly": "Only audio files can be uploaded."
+    }
+  },
+  "applyExhibitor": {
+    "requiredAria": "Required",
+    "sourceBadge": {
+      "roster": "From registration",
+      "ai": "AI draft"
+    },
+    "selectPlaceholder": "Select",
+    "smartFill": {
+      "title": "Smart Fill — auto-fill from your company materials",
+      "description": "Upload your company brochure or catalog (PDF, PPT, Word) and AI will fill in your company intro and business fields. You can review and edit the draft.",
+      "analyzing": "Analyzing…",
+      "uploadCta": "Upload company materials",
+      "noNewFields": "Those fields were already filled in, so there was nothing new to add.",
+      "success": "Filled in your company intro and business fields from your materials. Please review and edit.",
+      "error": "Couldn't extract from the file. Please fill it in manually instead."
+    },
+    "loadError": "Couldn't load your profile. Please refresh the page.",
+    "loadErrorTitle": "Couldn't load your profile",
+    "loadErrorDescription": "Please try again shortly, or refresh the page. (Check backend connection)",
+    "retry": "Retry",
+    "saveError": "Failed to save. Please try again shortly.",
+    "header": {
+      "title": "Complete Your Exhibitor Profile",
+      "descriptionPrefix": "Enter your business fields, strengths, and target buyers to become a business matching participant. Each step is saved automatically, so you can leave and continue later.",
+      "descriptionSuffix": "marks required fields."
+    },
+    "reviewNoteBanner": "Organizer's requested changes",
+    "stepDone": "Done",
+    "prev": "Back",
+    "next": "Next",
+    "saving": "Saving…",
+    "saveExit": "Save & exit",
+    "footerSubmittable": "You're all set. Save and exit, then submit from the pre-entry screen.",
+    "footerIncomplete": "Some required steps are still incomplete. Finish the steps marked 'Needs work' above before submitting.",
+    "fallback": "Not entered",
+    "step1": {
+      "title": "Basic Info",
+      "subtitle": "Enter your company details. You can leave fields blank and fill them in later.",
+      "lockedTitle": "Company name & booth can't be edited here",
+      "lockedDescription": "The company name comes from your signup, and the booth details are assigned by the organizer, so they can't be changed here. The rest of your company info can be entered or edited below.",
+      "companyInfoTitle": "Company Info",
+      "businessRegNo": "Business registration number",
+      "companyEmail": "Company email",
+      "nameKo": "Company name (Korean)",
+      "nameEn": "Company name (English)",
+      "repNameKo": "Representative name (Korean)",
+      "repNameEn": "Representative name (English)",
+      "mainTel": "Company phone",
+      "fax": "Company fax",
+      "businessType": "Business type",
+      "businessItem": "Business item",
+      "zipCode": "Postal code",
+      "addressKo": "Company address",
+      "addressDetail": "Address detail",
+      "addressEn": "Company address (English)",
+      "boothInfoTitle": "Booth Info (by category)",
+      "boothInfoHint": "Exhibitors don't enter booth details themselves — this shows the assignment made by the organizer.",
+      "hall": "Hall",
+      "hallSuffix": "Hall {n}",
+      "pavilion": "Pavilion",
+      "boothType": "Booth type",
+      "boothCount": "Booth count",
+      "boothCountSuffix": "{n}",
+      "boothLocation": "Booth location",
+      "unassigned": "Unassigned",
+      "attendeesTitle": "Attendees",
+      "noAttendees": "No attendees registered.",
+      "attendeeLabel": "Attendee {n}",
+      "addAttendee": "Add attendee",
+      "deleteAttendee": "Delete",
+      "deleteAttendeeAria": "Delete attendee {n}",
+      "attendeeNameKo": "Attendee name (Korean)",
+      "attendeeNameEn": "Attendee name (English)",
+      "attendeeTitle": "Title",
+      "attendeeEmail": "Attendee email",
+      "attendeeMobile": "Attendee phone"
+    },
+    "step2": {
+      "title": "Company Intro",
+      "subtitle": "Enter your company intro and supporting info (around 500 characters recommended per intro).",
+      "introKo": "Company intro (Korean)",
+      "introKoHint": "This is buyers' first impression before a meeting. Keep it concise and focus on your core strengths and differentiators.",
+      "introKoPlaceholder": "Describe your company's strengths and what sets you apart.",
+      "introEn": "Company intro (English)",
+      "introEnHint": "This is what international buyers read. Highlighting your strengths versus competitors helps buyers find and match with you.",
+      "website": "Website",
+      "websiteHint": "A channel buyers use to check out your company before a meeting.",
+      "annualSales": "Annual revenue",
+      "annualSalesHint": "Helps buyers gauge your company size and potential for collaboration.",
+      "employeeRange": "Number of employees",
+      "employeeRangeHint": "Helps gauge supply stability based on organization size.",
+      "languages": "Languages for consultation",
+      "languagesHint": "Choosing available languages improves interpretation and meeting matching accuracy."
+    },
+    "step3": {
+      "title": "Business fields",
+      "subtitle": "First choose your exhibit fields, then add the products you'll be exhibiting.",
+      "categories": "Business fields",
+      "categoriesHint": "Key tags matched against buyer interests. Select all that apply.",
+      "productsTitle": "Exhibited Products",
+      "productsSubtitle": "Adding products individually displays them separately in the buyer discovery screen.",
+      "noProducts": "No products added yet.",
+      "noValidProduct": "Please add at least one exhibited product (Korean product name required).",
+      "productLabel": "Product {n}",
+      "deleteAria": "Delete product {n}",
+      "delete": "Delete",
+      "nameKo": "Product name (Korean)",
+      "nameKoPlaceholder": "Original animation series",
+      "nameEn": "Product name (English)",
+      "category": "Business Field",
+      "categoryHint": "Select a business field.",
+      "contentCategory": "Category",
+      "contentCategoryHint": "Select the single category that best represents your company.",
+      "hsCode": "HS code (for physical goods)",
+      "hsCodeHint": "Only fill this in if you're exhibiting a physical product (merchandise, etc.). Leave it blank for content rights deals such as dramas or films.",
+      "hsCodePlaceholder": "e.g., 9503.00 (toys, figures)",
+      "priceRange": "Price range",
+      "priceRangeHint": "Matches you with buyers whose budget fits.",
+      "specKo": "Content overview (Korean)",
+      "specKoHint": "Describing the genre, episode count/runtime, synopsis, and main characters helps buyers judge meeting value.",
+      "specKoPlaceholder": "e.g., Romance drama, 16 episodes, simultaneous OTT release. A secret romance between a third-generation chaebol heir and an ordinary office worker.",
+      "specEn": "Content overview (English)",
+      "specEnHint": "The content overview read by international buyers.",
+      "specEnPlaceholder": "e.g., Romance drama, 16 episodes, simultaneous OTT release.",
+      "addProduct": "Add product"
+    },
+    "step4": {
+      "title": "Target",
+      "subtitle": "Enter the buyers you'd like to meet.",
+      "countries": "Preferred buyer countries",
+      "countriesHint": "Choosing countries you'd like to meet lets AI prioritize buyers from those countries.",
+      "types": "Preferred buyer types",
+      "typesHint": "Choosing organization types you'd like to meet prioritizes matching with those buyer types."
+    },
+    "step5": {
+      "title": "Review & Submit",
+      "subtitle": "Review your entries and submit. Submitting makes you a business matching participant.",
+      "step1Summary": "{names} · {count} attendee(s)",
+      "step2SummaryFilled": "{intro}…",
+      "empty": "—",
+      "step3Summary": "{products} product(s) · {categories} field(s)",
+      "step4Summary": "{countries} preferred countr(y/ies) · {types} preferred type(s)",
+      "needsWork": "Needs work",
+      "edit": "Edit"
+    },
+    "completion": {
+      "title": "Your business matching application is complete",
+      "description1": "You'll be visible for business matching once the organizer approves your application.",
+      "description2": "You can edit your profile only during the application period.",
+      "confirm": "Confirm"
+    },
+    "profileView": {
+      "back": "Back",
+      "title": "My Business Matching Profile",
+      "descriptionEditable": "This is your submitted profile. You can edit it during the application period.",
+      "descriptionLocked": "This is your submitted application. It can't be edited after submission. If changes are needed, the organizer will reopen it with a change request.",
+      "edit": "Edit",
+      "tabBasic": "Basic Info",
+      "tabIntro": "Company Intro",
+      "tabProducts": "Business fields",
+      "tabTarget": "Target",
+      "noProducts": "No products registered."
+    }
+  },
+  "applyBuyer": {
+    "stepTitles": {
+      "1": "Basic Info",
+      "2": "Interests & Intro",
+      "3": "Review & Submit"
+    },
+    "stepperAria": "Application steps",
+    "saveServerError": "Failed to save to the server. Your input is still saved on this device.",
+    "loadError": "Couldn't load your application. Please try again in a moment.",
+    "locked": {
+      "back": "Back",
+      "title": "Submitted Application",
+      "description": "Your application can't be edited after submission. If changes are needed, the organizer will reopen it with a change request."
+    },
+    "header": {
+      "title": "Complete Your Buyer Profile",
+      "subtitle": "This is your profile for business matching. Each step is saved, so you can leave and continue later."
+    },
+    "requiredHint": "Please fill in all required fields.",
+    "back": "Back",
+    "next": "Next",
+    "saveExit": "Save & exit",
+    "step1": {
+      "nameKo": "Name (Korean)",
+      "nameEn": "Name (English)",
+      "orgKo": "Organization (Korean)",
+      "orgEn": "Organization (English)",
+      "titleKo": "Title (Korean)",
+      "titleEn": "Title (English)",
+      "email": "Email",
+      "phone": "Phone",
+      "language": "Language",
+      "interpreterNeed": "Interpreter needed",
+      "interpreterYes": "Needed",
+      "interpreterNo": "Not needed",
+      "country": "Country",
+      "orgTypes": "Type",
+      "orgTypesHint": "Select all that apply (optional)",
+      "annualSales": "Annual revenue (USD)",
+      "employeeRange": "Number of employees",
+      "selectPlaceholder": "Select"
+    },
+    "step2": {
+      "interests": "Business fields of interest",
+      "interestsHint": "Select all fields you're looking for. This directly feeds into matching.",
+      "introKo": "Company intro (Korean)",
+      "introKoPlaceholder": "Briefly introduce your organization (optional)",
+      "introEn": "Company intro (English)",
+      "budgetRange": "Available budget (USD)",
+      "adoptionTimeline": "Adoption timeline"
+    },
+    "review": {
+      "incomplete": "Incomplete",
+      "edit": "Edit",
+      "hint": "Review your entries. You can fix anything by clicking 'Edit' on that step.",
+      "name": "Name",
+      "org": "Organization",
+      "title": "Title",
+      "email": "Email",
+      "phone": "Phone",
+      "language": "Language",
+      "interpreterNeed": "Interpreter needed",
+      "country": "Country",
+      "orgTypes": "Type",
+      "annualSales": "Annual revenue",
+      "employeeRange": "Number of employees",
+      "interests": "Areas of interest",
+      "introKo": "Company intro (Korean)",
+      "introEn": "Company intro (English)",
+      "budgetRange": "Available budget",
+      "adoptionTimeline": "Adoption timeline"
+    },
+    "profileHub": {
+      "title": "My Business Matching Profile",
+      "subtitle": "This is your submitted application. Empty fields are shown as '—'. Contact the organizer if you need to make changes.",
+      "loadErrorTitle": "Couldn't load your profile",
+      "loadErrorDescription": "Please try again shortly, or refresh the page. (Check backend connection)",
+      "retry": "Retry"
+    }
+  },
+  "rosterUpload": {
+    "trigger": "Upload roster",
+    "title": "Upload roster",
+    "description": "Upload a roster file (CSV or Excel) to register or update companies and contact accounts by id. Uploading the same file again won't create duplicates.",
+    "templateHeading": "1. Fill in the template",
+    "templateHint": "The template follows the sign-up fields. Delete the example rows (example.com) before filling it in.",
+    "downloadTemplate": "Download template",
+    "columns": {
+      "id": "A unique value per row (required) — re-uploading the same id updates it",
+      "role": "Exhibitor (참가기업) or buyer (바이어)",
+      "name_ko": "Company name in Korean (required)",
+      "name_en": "Company name in English",
+      "country": "Country (for reference)",
+      "contact_name": "Contact person",
+      "contact_email": "Email — the login ID",
+      "contact_phone": "Phone",
+      "content_category": "Category (exhibitors): Animation/Character · Broadcasting · Comics·Webtoon/Game/Music"
+    },
+    "fileHeading": "2. Choose a file",
+    "fileLabel": "Roster file",
+    "chooseFile": "Choose file",
+    "noFile": "No file selected",
+    "passwordHeading": "3. Common password",
+    "passwordLabel": "Common password",
+    "passwordConfirmLabel": "Confirm common password",
+    "passwordHint": "At least 8 characters with letters and numbers. Applied only to new accounts and existing accounts without a password; accounts that already have a password keep it.",
+    "passwordEmptyWarning": "If left blank, newly created accounts have no password and can't log in.",
+    "passwordPolicyError": "The password must be at least 8 characters and include letters and numbers.",
+    "passwordMismatch": "The passwords don't match.",
+    "showPasswordAria": "Show password",
+    "hidePasswordAria": "Hide password",
+    "preview": "Preview",
+    "previewing": "Checking…",
+    "apply": "Apply",
+    "applying": "Applying…",
+    "close": "Close",
+    "previewTitle": "Preview — nothing has been saved yet",
+    "appliedTitle": "Applied",
+    "summary": "New {added} · Updated {updated} · Unchanged {unchanged} · Skipped {skipped}",
+    "accountsPreview": "Will be able to log in {set} · Password kept {kept} · No password {missing} · No account {none}",
+    "accountsApplied": "Password set {set} · Password kept {kept} · No password {missing} · No account {none}",
+    "exampleRowsWarning": "{count} template example rows (example.com emails) are still in the file. Delete them and upload again.",
+    "rowsTruncated": "Showing {shown} of {total} rows, rows that need attention first.",
+    "table": {
+      "row": "Row",
+      "id": "id",
+      "org": "Company",
+      "email": "Email (login ID)",
+      "result": "Result",
+      "account": "Account",
+      "note": "Note"
+    },
+    "result": {
+      "added": "New",
+      "updated": "Updated",
+      "unchanged": "Unchanged",
+      "skipped": "Skipped"
+    },
+    "account": {
+      "created": "New account",
+      "existing": "Existing account",
+      "none": "No account"
+    },
+    "password": {
+      "set": "Password set",
+      "kept": "Password kept",
+      "missing": "No password (can't log in)"
+    },
+    "reason": {
+      "missing_member_id": "The id is empty",
+      "missing_org_name": "The company name is empty",
+      "duplicate_id_in_file": "The same id appears again further down; that row was used instead",
+      "buyer_only": "Sub operators can only register buyers",
+      "out_of_jurisdiction": "Outside your jurisdiction (managed by another operator or an existing company) — ask a super admin",
+      "no_email": "No email, so no account was created",
+      "invalid_email": "The email format is invalid",
+      "duplicate_email_in_file": "The same email already appears in an earlier row",
+      "email_in_use": "This email is already used by another member"
+    },
+    "warning": {
+      "invalid_category": "Unknown category value, so it wasn't saved",
+      "category_conflict": "The category differs from the existing value or another row of the same company, so the existing value was kept"
+    },
+    "error": {
+      "no_session": "Your login session has expired. Log in again and retry.",
+      "forbidden": "You need operator permission for this event.",
+      "unknown_event": "You can't access the selected event.",
+      "no_event": "No event is assigned to you.",
+      "no_file": "Please choose a file.",
+      "network": "Upload failed due to a network error. Please try again.",
+      "upstream_unavailable": "Couldn't reach the server. Please try again shortly.",
+      "PASSWORD_POLICY": "The common password doesn't meet the policy (8+ characters, letters and numbers).",
+      "ROSTER_PASSWORD_COLUMN": "The file contains a password column. Remove it and use the common password field instead.",
+      "generic": "Upload failed: {message}"
+    }
+  },
+  "help": {
+    "buttonLabel": "Help",
+    "panelEyebrow": "Help for this screen",
+    "stepsHeading": "How to use this screen",
+    "tipsHeading": "Good to know",
+    "homeBuyer": {
+      "title": "Home dashboard",
+      "intro": "Your starting screen — today's meetings and to-dos at a glance.",
+      "steps": [
+        "Check upcoming, sent, received, and completed counts in Meeting status. Tap a number to open Meetings.",
+        "Review time, counterpart, and venue in Today's schedule, and tap an item for details.",
+        "If you have received requests, respond by accepting or declining in Meetings.",
+        "Check the latest updates in the Notifications card, or tap View all to open your inbox."
+      ],
+      "tips": [
+        "Use the left sidebar to move between Discover, Meetings, and Profile."
+      ]
+    },
+    "homeExhibitor": {
+      "title": "Home dashboard",
+      "intro": "Your exhibitor starting screen — received meeting requests and today's schedule.",
+      "steps": [
+        "Check upcoming, sent, received, and completed counts in Meeting status. Tap a number to open Meetings.",
+        "Respond to received requests by accepting or declining in Meetings.",
+        "Review time, counterpart, and booth location in Today's schedule.",
+        "Check the latest updates in the Notifications card, or tap View all to open your inbox."
+      ],
+      "tips": [
+        "To be visible to buyers, your profile and application must be fully approved."
+      ]
+    },
+    "discoverBuyer": {
+      "title": "Discover companies",
+      "intro": "Browse participating companies and request meetings with the ones you like.",
+      "steps": [
+        "In the AI recommendations tab, swipe through suggested companies and mark them relevant or not.",
+        "In the All companies tab, narrow results with search, category, and match-rate filters and sorting (relevance, name, booth location).",
+        "Tap a company card to view its details.",
+        "Tap Request meeting to propose a meeting for a time slot you want.",
+        "Bookmark companies you like to collect them in the Favorites tab."
+      ],
+      "tips": [
+        "Track the status of your requests in the Meetings screen."
+      ]
+    },
+    "discoverExhibitor": {
+      "title": "Discover companies",
+      "intro": "Browse visiting buyers and reach out with a meeting request first.",
+      "steps": [
+        "In the AI recommendations tab, swipe through suggested buyers and mark them relevant or not.",
+        "In the All companies tab, narrow results with search, interest-area, and match-rate filters and sorting.",
+        "Tap a card to view its details.",
+        "Tap Request meeting to propose a meeting for a time slot you want.",
+        "Bookmark buyers you like to collect them in the Favorites tab."
+      ],
+      "tips": [
+        "Fill in your profile's business fields and target contact accurately so buyers can find you."
+      ]
+    },
+    "meetingsBuyer": {
+      "title": "My meetings",
+      "intro": "See requested and accepted meetings on a day-by-day timeline and respond to them.",
+      "steps": [
+        "Pick a date from the top tabs to see that day's meeting slots. A red dot marks received requests awaiting your reply.",
+        "Use the action strip at the top to jump straight to received requests and reviews that need writing.",
+        "Select a meeting to see the counterpart, AI match score, time, and venue.",
+        "Accept, decline, or cancel from the detail panel. Declining and cancelling ask for a reason.",
+        "After a meeting ends, record the outcome with Write review."
+      ],
+      "tips": [
+        "Tap an empty time slot to jump to Discover and find a company to fill it."
+      ]
+    },
+    "meetingsExhibitor": {
+      "title": "My meetings",
+      "intro": "Respond to received meeting requests and manage confirmed meetings.",
+      "steps": [
+        "Pick a date from the top tabs to see that day's meetings. A red dot marks received requests awaiting your reply.",
+        "In the action strip, tap a received request to accept or decline it. Declining asks for a reason.",
+        "Select a meeting to see the buyer, AI match score, time, and booth location.",
+        "If your schedule changes, use Cancel to free up the slot.",
+        "After a meeting ends, record the outcome with Write review."
+      ],
+      "tips": [
+        "Marking no-show or attended feeds into the secretariat's tallies."
+      ]
+    },
+    "profileBuyer": {
+      "title": "My profile",
+      "intro": "View the business-matching application you submitted (read-only).",
+      "steps": [
+        "Skim the fields to confirm your submitted information is correct.",
+        "Empty fields are shown as —.",
+        "To change anything, contact the secretariat. You cannot edit it on this screen."
+      ],
+      "tips": [
+        "If the secretariat requests changes, the application reopens for editing."
+      ]
+    },
+    "profileExhibitor": {
+      "title": "My profile",
+      "intro": "View the exhibitor profile you submitted (read-only).",
+      "steps": [
+        "Tap the Basic info, Company, Business fields, and Target tabs to review each section.",
+        "Empty fields are shown as —.",
+        "To change anything, contact the secretariat. You cannot edit it on this screen."
+      ],
+      "tips": [
+        "Preferred buyers and availability on the Target tab affect matching accuracy."
+      ]
+    },
+    "applyBuyer": {
+      "title": "Fill in your application",
+      "intro": "Complete your buyer business-matching application in three steps.",
+      "steps": [
+        "Work through Basic info → Interests → Review. Use the stepper to jump back to any step you've reached.",
+        "Tapping Next validates required fields. If something is missing, it jumps to that field.",
+        "Your entries are saved automatically at each step.",
+        "The last step's Save and exit takes you to the pre-entry screen; you submit from there."
+      ],
+      "tips": [
+        "Filling in the form does not submit it. Tap Submit on the pre-entry screen to file it."
+      ]
+    },
+    "applyExhibitor": {
+      "title": "Fill in your profile",
+      "intro": "Complete your exhibitor business-matching profile in five steps.",
+      "steps": [
+        "Work through Basic info, Business fields, Company, Target contact, and Done in order.",
+        "If changes were requested, read the note at the top and fix the flagged items.",
+        "Your entries are saved automatically at each step.",
+        "On the Done step, check the checklist and use the edit links to fill any missing items.",
+        "After saving, submit from the pre-entry screen to file it."
+      ],
+      "tips": [
+        "Editing is only possible during the application period and while your status is Registered or Changes requested."
+      ]
+    },
+    "notifications": {
+      "title": "Notifications",
+      "intro": "One place for meeting requests, acceptances, cancellations, reminders, and review alerts.",
+      "steps": [
+        "Use the type chips at the top to filter by kind (request, accepted, cancelled, reminder, review requested, review ready).",
+        "Tapping a notification marks it read and jumps to the related meeting.",
+        "Tap Mark all read to clear unread notifications at once."
+      ],
+      "tips": [
+        "If the list is long, use Load more to keep viewing earlier notifications."
+      ]
+    },
+    "welcome": {
+      "title": "Before you enter",
+      "intro": "Shows your application and approval status and the next step to take now.",
+      "steps": [
+        "Read the status card's badge and description to see your current stage (drafting, under review, approved, changes requested, etc.).",
+        "During the application period, use Fill in / Edit to complete your application and Submit to file it.",
+        "If changes were requested, read the note, fix your application, and submit again.",
+        "Once approved and the application period closes, you enter the home screen automatically."
+      ],
+      "tips": [
+        "Your account info and Log out are below the status card."
+      ]
+    },
+    "organizerDashboard": {
+      "title": "Operations dashboard",
+      "intro": "An operator overview of the whole event's business-matching and meeting status (aggregated, read-only).",
+      "steps": [
+        "Check total business matches, completed meetings, no-show rate, review completion, and slot utilization in the top metric cards.",
+        "A red Zero-meeting companies card means some exhibitors have no meetings. Tap Assign to go to Business-matching assignment.",
+        "Use the Registrants / Participants card to compare approved vs. registered participation for exhibitors and buyers.",
+        "Read the Meeting status breakdown and Meetings by hour charts to follow upcoming, completed, no-show, and cancelled flows."
+      ],
+      "tips": [
+        "The red Zero-meeting companies card and the no-show / review meters are the action-needed signals; the rest is informational."
+      ]
+    },
+    "organizerMembers": {
+      "title": "Member management",
+      "intro": "Manage the exhibitor and buyer roster and approve submitted applications.",
+      "steps": [
+        "Switch between the Exhibitors and Buyers tabs and narrow with search, status, and category filters.",
+        "In Upload roster, download the template, fill it in, and upload it. Add a common password to make the accounts log-in ready, check the per-row preview, then apply (rows merge by id, so re-uploading won't duplicate).",
+        "Use Add member to add one person, and each row's Edit, Deactivate, and Delete to tidy the roster.",
+        "Use View application to open a submission and decide Approve, Reject, or Request changes (reject and request-changes require a reason).",
+        "Use Export to download the current list as CSV or Excel."
+      ],
+      "tips": [
+        "Tap a row to open the company detail, where you can view its profile and meeting schedule and fill empty slots.",
+        "Trade-office (sub) accounts see only the buyers they registered and cannot review applications."
+      ]
+    },
+    "organizerForcedMatching": {
+      "title": "Business-matching assignment",
+      "intro": "Fill the empty slots in the company × time-slot schedule, manually or in bulk.",
+      "steps": [
+        "Search rows in the Exhibitors / Buyers tabs and narrow with the Has empty slots and Unassigned filters.",
+        "Tap an empty cell to pick a counterpart from the companies available for that slot and create a meeting (manual assignment).",
+        "To fill just one company, use the ⚡ action on its row to generate a preview, then confirm it.",
+        "To fill everything, use Bulk assign all (AI saturation) to build a draft, then review and Confirm or Discard it.",
+        "In the bulk settings, adjust meeting length (30 / 60 / 90 min), the assignment time window, and the minimum guaranteed meetings per company."
+      ],
+      "tips": [
+        "Past times and slots a participant marked unavailable are never assigned.",
+        "After assigning, check that the Zero-meeting companies count drops on the operations dashboard."
+      ]
+    },
+    "admin": {
+      "title": "Admin console",
+      "intro": "Manage overall operations — events, companies, meetings, interpreters, booths, and more.",
+      "steps": [
+        "Pick the area to manage (events, companies, meetings, etc.) from the left sidebar.",
+        "Use the event switcher at the top to choose the event you're working on; tables and metrics follow the selected event.",
+        "Manage data with the actions at the top-right of each screen (register, export, etc.)."
+      ],
+      "tips": [
+        "Write actions are hidden for read-only accounts."
+      ]
+    },
+    "generalBuyer": {
+      "title": "NABI help",
+      "intro": "There's no dedicated guide for this screen, so here are the basics.",
+      "steps": [
+        "Use the left sidebar to move between Home, Discover, Meetings, Notifications, and Profile.",
+        "Request meetings with the companies you want from Discover.",
+        "Respond to received requests and manage your schedule in Meetings."
+      ],
+      "tips": [
+        "Need help? Use the secretariat contact at the bottom of the sidebar."
+      ]
+    },
+    "generalExhibitor": {
+      "title": "NABI help",
+      "intro": "There's no dedicated guide for this screen, so here are the basics.",
+      "steps": [
+        "Use the left sidebar to move between Home, Discover, Meetings, Notifications, and Profile.",
+        "Accept or decline received meeting requests in Meetings.",
+        "Keep your profile and application accurate so buyers can find you."
+      ],
+      "tips": [
+        "Need help? Use the secretariat contact at the bottom of the sidebar."
+      ]
+    },
+    "generalOrganizer": {
+      "title": "NABI operator help",
+      "intro": "There's no dedicated guide for this screen, so here are the basics.",
+      "steps": [
+        "Check the whole event's business-matching and meeting status on the operations dashboard.",
+        "Tidy the roster and approve applications in Member management.",
+        "Fill empty schedules manually or in bulk in Business-matching assignment."
+      ],
+      "tips": [
+        "If there are zero-meeting companies, handle them first in Business-matching assignment."
+      ]
+    },
+    "tour": {
+      "controls": {
+        "next": "Next",
+        "prev": "Back",
+        "done": "Done"
+      },
+      "replay": "Replay guide",
+      "welcome": {
+        "steps": [
+          {
+            "title": "Your status",
+            "description": "This card shows your application status and what you can do right now."
+          },
+          {
+            "title": "Account & sign out",
+            "description": "Check the account you're signed in as, and sign out here if needed."
+          }
+        ]
+      },
+      "discoverBuyer": {
+        "steps": [
+          {
+            "title": "Choose how to browse",
+            "description": "Switch between AI picks, all companies, and saved companies to find partners."
+          },
+          {
+            "title": "Recommended company",
+            "description": "Companies the AI ranked by fit. Swipe through them to take a look."
+          },
+          {
+            "title": "Request a meeting",
+            "description": "Send a business-matching meeting request to a company you like."
+          },
+          {
+            "title": "Rate the pick",
+            "description": "Tell us whether the pick fit — it makes the next recommendations sharper."
+          }
+        ]
+      },
+      "discoverExhibitor": {
+        "steps": [
+          {
+            "title": "Choose how to browse",
+            "description": "Switch between AI picks, all buyers, and saved buyers to find who to meet."
+          },
+          {
+            "title": "Recommended buyer",
+            "description": "Buyers the AI ranked by fit. Swipe through them to take a look."
+          },
+          {
+            "title": "Request a meeting",
+            "description": "Send a business-matching meeting request to a buyer you like."
+          },
+          {
+            "title": "Rate the pick",
+            "description": "Tell us whether the pick fit — it makes the next recommendations sharper."
+          }
+        ]
+      },
+      "meetingsBuyer": {
+        "steps": [
+          {
+            "title": "Pick a day",
+            "description": "Browse your meetings by event day."
+          },
+          {
+            "title": "Meeting timeline",
+            "description": "Your meetings in time order. Select one to open its details."
+          },
+          {
+            "title": "Details & accept/decline",
+            "description": "Accept or decline requests here, and add meeting notes afterward."
+          }
+        ]
+      },
+      "meetingsExhibitor": {
+        "steps": [
+          {
+            "title": "Pick a day",
+            "description": "Browse your meetings by event day."
+          },
+          {
+            "title": "Meeting timeline",
+            "description": "Your meetings in time order. Select one to open its details."
+          },
+          {
+            "title": "Details & accept/decline",
+            "description": "Accept or decline requests here, and add meeting notes afterward."
+          }
+        ]
+      },
+      "profileBuyer": {
+        "steps": [
+          {
+            "title": "My profile (read-only)",
+            "description": "Review the business-matching application you submitted. To change anything, contact the organizer."
+          }
+        ]
+      },
+      "profileExhibitor": {
+        "steps": [
+          {
+            "title": "My profile (read-only)",
+            "description": "Review the exhibitor profile you submitted. To change anything, contact the organizer."
+          }
+        ]
+      },
+      "applyBuyer": {
+        "steps": [
+          {
+            "title": "Form steps",
+            "description": "The form is split into steps. See where you are here."
+          },
+          {
+            "title": "Fill in your details",
+            "description": "Complete each field — your entries save automatically."
+          },
+          {
+            "title": "Move & submit",
+            "description": "Go back and forward between steps, then submit to start the review."
+          }
+        ]
+      },
+      "applyExhibitor": {
+        "steps": [
+          {
+            "title": "Form steps",
+            "description": "The form is split into steps. See where you are here."
+          },
+          {
+            "title": "Fill in your details",
+            "description": "Complete each field — your entries save automatically."
+          },
+          {
+            "title": "Move & submit",
+            "description": "Go back and forward between steps, then submit to start the review."
+          }
+        ]
+      },
+      "organizerDashboard": {
+        "steps": [
+          {
+            "title": "Key metrics",
+            "description": "Total matches, completed meetings, no-show rate and more at a glance."
+          },
+          {
+            "title": "Zero-meeting exhibitors",
+            "description": "Exhibitors with no meetings yet. If any, re-run assignment to meet the floor."
+          },
+          {
+            "title": "Meeting status mix",
+            "description": "See progress by scheduled, completed, cancelled and no-show shares."
+          },
+          {
+            "title": "Distribution by hour",
+            "description": "Spot busy hours to balance operations. Click a metric to switch series."
+          },
+          {
+            "title": "Admin menu",
+            "description": "Jump to member management and business-matching assignment from here."
+          }
+        ]
+      },
+      "organizerMembers": {
+        "steps": [
+          {
+            "title": "Exhibitors & buyers",
+            "description": "Split the people you manage into exhibitor and buyer tabs."
+          },
+          {
+            "title": "Search by name",
+            "description": "Find a member fast by company name (Korean or English)."
+          },
+          {
+            "title": "Status filters",
+            "description": "Narrow the list by approval status, field and more."
+          },
+          {
+            "title": "Member list",
+            "description": "Open a row to approve, reject or request changes."
+          },
+          {
+            "title": "Export",
+            "description": "Download the current list as a CSV or Excel file."
+          }
+        ]
+      },
+      "organizerForcedMatching": {
+        "steps": [
+          {
+            "title": "Exhibitors & buyers",
+            "description": "Switch the assignment view between exhibitors and buyers."
+          },
+          {
+            "title": "Bulk assign all",
+            "description": "Run saturation assignment to fill empty slots at once — review before confirming."
+          },
+          {
+            "title": "Search & filter",
+            "description": "Use name search and the 'under-assigned' filter to find who to fill first."
+          },
+          {
+            "title": "Schedule grid",
+            "description": "In the company × time grid, click an empty cell to assign or review confirmed results."
+          }
+        ]
+      }
+    },
+    "hints": {
+      "discoverRequest": "Request a business-matching meeting with this company.",
+      "membersExport": "Download the list with the current tab and filters applied.",
+      "fmRun": "Run saturation assignment to fill empty slots at once. Review before confirming."
+    }
+  }
+}
