@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NABI - 미팅 리뷰 프로토타입 (MY-002, THROWAWAY)</title>
+<link rel="stylesheet" href="nabi-ui.css?v=20260607"><!-- 단일 소스 디자인 토큰 -->
+
+<!-- PROTOTYPE: MY-002 미팅 리뷰 — AI 어시스턴트가 리뷰 작성을 도와주는 페이지 -->
+<!-- 공유 플로우: Step1 기본 문항(진행여부/만족도/후속의향) + noshow 분기 → Step2 AI 작성 → 완료 결과 -->
+<!-- P1(AI 인터랙션) × P2(입력 가이드) 변형: -->
+<!--   A. 채팅형      = AI 질문형 프롬프트 (P2-C) -->
+<!--   B. 에디터형    = 구조화 서브필드 직접 편집 (P2-B) -->
+<!--   C. 하이브리드  = 플레이스홀더 자유입력 → AI 카드 + 한줄 다듬기 (P2-A) -->
+<style>
+  /* 디자인 토큰은 nabi-ui.css(단일 소스)에서 상속 — 로컬 :root 제거됨 */
+  body { background: var(--bg-primary); }
+
+  /* ========== VARIANT BAR ========== */
+  .variant-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    display: flex; justify-content: center; align-items: center;
+    background: #1a1a1a; z-index: 9999; border-top: 1px solid #333;
+  }
+  .variant-btn {
+    padding: 12px 18px; font-size: 13px; font-weight: 600;
+    color: #888; cursor: pointer; border: none; background: none;
+    font-family: var(--font-stack); white-space: nowrap; transition: all 0.15s;
+  }
+  .variant-btn:hover { color: #ccc; }
+  .variant-btn.active { color: #fff; border-bottom: 2px solid var(--accent-primary); }
+  .variant-sep { width: 1px; background: #333; margin: 8px 0; }
+  .variant-label {
+    padding: 12px 16px; font-size: 11px; color: #555;
+    font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    font-family: var(--font-stack);
+  }
+  .role-toggle, .view-toggle {
+    display: flex; gap: 0; background: #333; border-radius: 6px;
+    overflow: hidden; margin-right: 12px;
+  }
+  .role-toggle { margin-left: auto; }
+  .role-toggle-btn, .view-toggle-btn {
+    padding: 7px 14px; font-size: 12px; font-weight: 600;
+    color: #888; cursor: pointer; border: none; background: none;
+    font-family: var(--font-stack); transition: all 0.15s;
+  }
+  .role-toggle-btn:hover, .view-toggle-btn:hover { color: #ccc; }
+  .role-toggle-btn.active, .view-toggle-btn.active { color: #fff; background: var(--accent-primary); }
+
+  /* ── 단일 셸 반응형 (nabi-ui.css .app-shell/.app-content 상속) ──
+     review 는 #review-root(=.app-content content-narrow) 한 곳에만 렌더한다.
+     좁음(폰/프리뷰)·넓음(데스크톱) 차이는 @container shell 로 reflow. */
+  #review-root { padding: 0; }
+  @container shell (max-width: 719px) {
+    #review-root { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+    .review-page { height: 100%; flex: 1 1 0; min-height: 0; }
+  }
+  @container shell (min-width: 720px) {
+    .review-page {
+      height: auto; min-height: 640px;
+      border: 1px solid var(--border-default); border-radius: var(--radius-lg);
+      overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.06); margin: 8px 0 24px;
+    }
+    .review-body { max-height: 60vh; }
+  }
+
+  /* ========== REVIEW PAGE ========== */
+  .review-page {
+    display: flex; flex-direction: column; height: 100%;
+    background: var(--bg-primary);
+  }
+  .review-topbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 16px 16px 12px; background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-default); flex-shrink: 0;
+  }
+  .topbar-back {
+    width: 32px; height: 32px; border-radius: var(--radius-sm); border: none;
+    background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .topbar-title { font-size: 17px; font-weight: 800; }
+  .topbar-spacer { flex: 1; }
+  .topbar-meta { font-size: 12px; color: var(--text-tertiary); font-weight: 600; }
+
+  /* Meeting context strip */
+  .review-context {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-default); flex-shrink: 0;
+  }
+  .ctx-logo {
+    width: 42px; height: 42px; border-radius: var(--radius-md);
+    background: var(--accent-subtle); color: var(--accent-primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 800; flex-shrink: 0;
+  }
+  .ctx-info { flex: 1; min-width: 0; }
+  .ctx-company { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+  .ctx-role-chip {
+    font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: var(--radius-full);
+    background: var(--bg-secondary); color: var(--text-tertiary);
+  }
+  .ctx-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+  .ctx-topic { font-size: 12px; color: var(--accent-primary); font-weight: 600; margin-top: 3px; }
+
+  /* Step indicator */
+  .step-indicator {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 16px; background: var(--bg-secondary); flex-shrink: 0;
+  }
+  .step-dot {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; color: var(--text-tertiary);
+  }
+  .step-dot .num {
+    width: 18px; height: 18px; border-radius: 50%; background: #d9d6d1; color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 10px;
+  }
+  .step-dot.active .num { background: var(--accent-primary); }
+  .step-dot.active { color: var(--accent-primary); }
+  .step-dot.done .num { background: var(--accent-green); }
+  .step-dot.done { color: var(--accent-green); }
+  .step-line { width: 18px; height: 2px; background: #d9d6d1; }
+
+  /* Scrollable body */
+  .review-body {
+    flex: 1; overflow-y: auto; min-height: 0;
+    padding: 16px; display: flex; flex-direction: column; gap: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ========== STEP 1: INTAKE ========== */
+  .q-block { display: flex; flex-direction: column; gap: 10px; }
+  .q-label { font-size: 14px; font-weight: 700; }
+  .q-label .req { color: var(--accent-red); margin-left: 2px; }
+  .q-hint { font-size: 12px; color: var(--text-tertiary); margin-top: -4px; }
+  .seg {
+    display: flex; gap: 8px;
+  }
+  .seg-btn {
+    flex: 1; padding: 12px 8px; border-radius: var(--radius-md);
+    border: 1.5px solid var(--border-default); background: var(--bg-elevated);
+    font-size: 13px; font-weight: 700; color: var(--text-secondary);
+    cursor: pointer; font-family: var(--font-stack); transition: all 0.15s;
+  }
+  .seg-btn:hover { border-color: #c9c5bf; }
+  .seg-btn.selected { border-color: var(--accent-primary); background: var(--accent-subtle); color: var(--accent-primary); }
+  .seg-btn.danger.selected { border-color: var(--accent-amber); background: var(--accent-amber-subtle); color: var(--accent-amber); }
+
+  .stars { display: flex; gap: 6px; }
+  .star {
+    font-size: 30px; line-height: 1; cursor: pointer; color: #d9d6d1;
+    transition: transform 0.1s, color 0.1s; user-select: none;
+  }
+  .star:hover { transform: scale(1.12); }
+  .star.filled { color: var(--accent-gold); }
+  .rating-cap { font-size: 12px; color: var(--text-tertiary); font-weight: 600; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 9px 16px; border-radius: var(--radius-full);
+    border: 1.5px solid var(--border-default); background: var(--bg-elevated);
+    font-size: 13px; font-weight: 700; color: var(--text-secondary);
+    cursor: pointer; font-family: var(--font-stack); transition: all 0.15s;
+  }
+  .chip.selected { border-color: var(--accent-green); background: var(--accent-green-subtle); color: var(--accent-green); }
+
+  .divider { height: 1px; background: var(--border-default); margin: 2px 0; }
+  .reveal { animation: fade-in 0.25s ease; }
+  @keyframes fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .noshow-note {
+    padding: 14px; background: var(--accent-amber-subtle);
+    border-radius: var(--radius-md); border: 1px solid #fcd9b6;
+    font-size: 13px; color: var(--accent-amber); line-height: 1.5; font-weight: 600;
+  }
+
+  /* ========== STEP 2 SHARED: AI STRUCTURED OUTPUT ========== */
+  .ai-section {
+    background: var(--bg-elevated); border: 1px solid var(--border-default);
+    border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .ai-section-head { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; }
+  .ai-sq { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+  .ai-sq.blue { background: var(--accent-primary); }
+  .ai-sq.green { background: var(--accent-green); }
+  .ai-sq.amber { background: var(--accent-amber); }
+  .ai-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .ai-list li {
+    position: relative; padding-left: 16px; font-size: 13px; line-height: 1.5;
+    color: var(--text-secondary);
+  }
+  .ai-list li::before {
+    content: ''; position: absolute; left: 2px; top: 8px;
+    width: 5px; height: 5px; border-radius: 50%; background: #c9c5bf;
+  }
+  .ai-list li[contenteditable="true"] {
+    background: var(--bg-secondary); border-radius: 6px; padding: 7px 10px 7px 18px;
+    outline: none; border: 1px solid transparent;
+  }
+  .ai-list li[contenteditable="true"]:focus { border-color: var(--accent-primary); background: var(--accent-subtle); }
+  .ai-list li[contenteditable="true"]::before { left: 7px; top: 15px; }
+
+  .action-list { display: flex; flex-direction: column; gap: 8px; }
+  .action-item {
+    display: flex; align-items: center; gap: 8px; padding: 9px 10px;
+    background: var(--bg-secondary); border-radius: 8px; font-size: 13px;
+  }
+  .action-who {
+    flex-shrink: 0; font-size: 11px; font-weight: 800; padding: 2px 8px;
+    border-radius: var(--radius-full); background: var(--accent-amber-subtle); color: var(--accent-amber);
+  }
+  .action-what { flex: 1; color: var(--text-secondary); outline: none; }
+  .action-what[contenteditable="true"]:focus { background: var(--accent-subtle); border-radius: 4px; }
+  .action-due { flex-shrink: 0; font-size: 11px; font-weight: 700; color: var(--text-tertiary); }
+
+  /* AI assist banner */
+  .ai-banner {
+    display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px;
+    background: var(--accent-subtle); border-radius: var(--radius-md);
+    border: 1px solid #c7dbfb;
+  }
+  .ai-avatar {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--accent-primary);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; flex-shrink: 0;
+  }
+  .ai-banner-text { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; }
+  .ai-banner-text b { color: var(--accent-primary); }
+
+  /* memo / freeform input */
+  .memo {
+    width: 100%; min-height: 110px; padding: 12px;
+    border: 1.5px solid var(--border-default); border-radius: var(--radius-md);
+    font-size: 13px; line-height: 1.55; font-family: var(--font-stack); resize: vertical;
+    color: var(--text-primary); background: var(--bg-elevated);
+  }
+  .memo:focus { outline: none; border-color: var(--accent-primary); }
+  .memo::placeholder { color: #b4afa8; }
+
+  .sample-link {
+    align-self: flex-start; font-size: 12px; font-weight: 700; color: var(--accent-primary);
+    background: none; border: none; cursor: pointer; font-family: var(--font-stack);
+    padding: 0; text-decoration: underline;
+  }
+
+  .ai-run-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 13px; border-radius: var(--radius-md); border: none;
+    background: var(--accent-primary); color: #fff; font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: var(--font-stack); transition: all 0.15s;
+  }
+  .ai-run-btn:hover { opacity: 0.92; }
+  .ai-run-btn:disabled { background: #c9c5bf; cursor: default; }
+  .ai-run-btn.secondary { background: var(--bg-secondary); color: var(--accent-primary); }
+
+  /* loading shimmer */
+  .ai-loading { display: flex; flex-direction: column; gap: 12px; }
+  .shimmer-row { height: 14px; border-radius: 6px; background: linear-gradient(90deg, #efece8 25%, #f7f5f2 50%, #efece8 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  .ai-thinking { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--accent-primary); font-weight: 700; }
+  .dot-pulse { display: inline-flex; gap: 3px; }
+  .dot-pulse span { width: 5px; height: 5px; border-radius: 50%; background: var(--accent-primary); animation: blink 1.2s infinite both; }
+  .dot-pulse span:nth-child(2){ animation-delay: 0.2s; } .dot-pulse span:nth-child(3){ animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100%{ opacity: 0.25; } 40%{ opacity: 1; } }
+
+  /* ========== VARIANT A: CHAT ========== */
+  .chat-thread { display: flex; flex-direction: column; gap: 12px; }
+  .bubble { max-width: 88%; padding: 11px 14px; border-radius: 16px; font-size: 13px; line-height: 1.55; }
+  .bubble.ai { align-self: flex-start; background: var(--bg-secondary); color: var(--text-primary); border-bottom-left-radius: 4px; }
+  .bubble.user { align-self: flex-end; background: var(--accent-primary); color: #fff; border-bottom-right-radius: 4px; }
+  .bubble.ai-card { align-self: stretch; max-width: 100%; background: transparent; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .chat-save-btn {
+    align-self: flex-start; margin-top: 2px; padding: 9px 16px; border-radius: var(--radius-full);
+    border: none; background: var(--accent-green); color: #fff; font-size: 13px; font-weight: 700;
+    cursor: pointer; font-family: var(--font-stack);
+  }
+  .chat-hello { display: flex; gap: 8px; }
+
+  /* chat input footer */
+  .chat-input-bar { display: flex; align-items: flex-end; gap: 8px; width: 100%; }
+  .chat-input {
+    flex: 1; min-height: 40px; max-height: 90px; padding: 10px 12px;
+    border: 1.5px solid var(--border-default); border-radius: var(--radius-lg);
+    font-size: 13px; font-family: var(--font-stack); resize: none; line-height: 1.4;
+    background: var(--bg-elevated); color: var(--text-primary);
+  }
+  .chat-input:focus { outline: none; border-color: var(--accent-primary); }
+  .chat-send {
+    width: 40px; height: 40px; border-radius: 50%; border: none; flex-shrink: 0;
+    background: var(--accent-primary); color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .chat-send:disabled { background: #c9c5bf; }
+
+  /* ========== STEP 3: DONE ========== */
+  .done-banner {
+    display: flex; align-items: center; gap: 12px; padding: 16px;
+    background: var(--accent-green-subtle); border: 1px solid #bbf7d0;
+    border-radius: var(--radius-md);
+  }
+  .done-check {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--accent-green); color: #fff;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .done-title { font-size: 15px; font-weight: 800; }
+  .done-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+
+  .summary-meta { display: flex; gap: 10px; }
+  .meta-card {
+    flex: 1; padding: 12px; background: var(--bg-elevated); border: 1px solid var(--border-default);
+    border-radius: var(--radius-md); text-align: center;
+  }
+  .meta-card-label { font-size: 11px; color: var(--text-tertiary); font-weight: 700; margin-bottom: 5px; }
+  .meta-card-value { font-size: 15px; font-weight: 800; }
+  .meta-stars { color: var(--accent-gold); font-size: 15px; letter-spacing: 1px; }
+  .meta-intent-y { color: var(--accent-green); }
+  .meta-intent-m { color: var(--accent-gold); }
+  .meta-intent-n { color: var(--text-tertiary); }
+
+  .noshow-result {
+    display: flex; align-items: center; gap: 12px; padding: 16px;
+    background: var(--accent-amber-subtle); border: 1px solid #fcd9b6; border-radius: var(--radius-md);
+  }
+  .noshow-result .done-check { background: var(--accent-amber); }
+
+  /* ========== FOOTER ========== */
+  .review-footer {
+    flex-shrink: 0; padding: 12px 16px; background: var(--bg-elevated);
+    border-top: 1px solid var(--border-default); display: flex; gap: 10px;
+  }
+  .ft-btn {
+    flex: 1; padding: 13px; border-radius: var(--radius-md); border: none;
+    font-size: 14px; font-weight: 700; cursor: pointer; font-family: var(--font-stack); transition: all 0.15s;
+  }
+  .ft-btn:hover { opacity: 0.92; }
+  .ft-btn-primary { background: var(--accent-primary); color: #fff; }
+  .ft-btn-primary:disabled { background: #c9c5bf; cursor: default; }
+  .ft-btn-ghost { flex: 0 0 auto; padding: 13px 18px; background: var(--bg-secondary); color: var(--text-secondary); }
+  .ft-btn-amber { background: var(--accent-amber); color: #fff; }
+  .ft-hint { flex: 1; text-align: center; font-size: 12px; color: var(--text-tertiary); align-self: center; }
+</style>
+</head>
+<body class="role-buyer">
+
+<!-- 글로벌 nav(앱바 + 드로어)는 nabi-nav.js가 .app-shell 상단에 주입 -->
+
+<div class="app-shell">
+  <main class="app-main">
+    <div class="app-content content-narrow" id="review-root">
+      <div class="review-page" id="reviewPage">
+        <div class="review-topbar">
+          <button class="topbar-back" onclick="goBack()" aria-label="뒤로">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="topbar-title">미팅 리뷰</div>
+          <div class="topbar-spacer"></div>
+          <div class="topbar-meta" id="topbarMeta">9/18 · 풍산</div>
+        </div>
+
+        <div class="review-context" id="reviewContext"></div>
+        <div class="step-indicator" id="stepIndicator"></div>
+
+        <div class="review-body" id="reviewBody"></div>
+        <div class="review-footer" id="reviewFooter"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ========== VARIANT BAR ========== -->
+<div class="variant-bar">
+  <span class="variant-label">MY-002</span>
+  <div class="variant-sep"></div>
+  <button class="variant-btn active" data-variant="A" onclick="switchVariant('A')">A. 채팅형</button>
+  <button class="variant-btn" data-variant="B" onclick="switchVariant('B')">B. 에디터형</button>
+  <button class="variant-btn" data-variant="C" onclick="switchVariant('C')">C. 하이브리드</button>
+  <div class="role-toggle">
+    <button class="role-toggle-btn active" data-role="buyer" onclick="switchRole('buyer')">바이어</button>
+    <button class="role-toggle-btn" data-role="exhibitor" onclick="switchRole('exhibitor')">참가사</button>
+  </div>
+  <div class="view-toggle">
+    <button class="view-toggle-btn" onclick="setPreview('mobile')">Mobile</button>
+    <button class="view-toggle-btn active" onclick="setPreview('desktop')">Desktop</button>
+  </div>
+</div>
+
+<script>
+// ========== DATA ==========
+const MEETING = {
+  dateLabel: '9월 18일 (목)',
+  time: '10:00 – 10:30',
+  venue: 'B홀 2층 미팅존 2',
+  topic: '155mm 정밀유도탄약 공동개발',
+  buyer:  { name: '김재현', org: '대한국방연구원', logo: 'KD', initials: 'KJ' },
+  seller: { name: '이상훈', org: '풍산', logo: 'PS', initials: 'LS' },
+};
+
+const SAMPLE_INPUT = '155mm 정밀유도탄 사거리를 기존 40km에서 60km까지 늘리는 게 핵심 요구사항이었음. 풍산이 가진 다목적 신관(MPF) 기술로 정밀유도가 가능한지 같이 검토했고, 양산단가랑 2027년 3분기 초도납품 일정도 논의함. 8월 중순까지 풍산이 기술제안서 보내주기로 했고, 우리 쪽 소요검토 결과를 8월 말까지 회신하기로 함. 다음달 말에 2차 실무미팅(영상회의) 잡기로 구두 합의.';
+
+// AI가 구조화한 결과 (시뮬레이션)
+const STRUCTURED = {
+  discussion: [
+    '155mm 정밀유도탄(PGM) 사거리 연장 요구 — 40km → 60km',
+    '풍산 다목적 신관(MPF) 기술의 정밀유도 적용 가능성 검토',
+    '양산 단가 및 초도 납품 일정(2027년 3분기) 협의',
+  ],
+  agreements: [
+    '8월 중순까지 풍산 기술제안서(RFI 대응) 제출',
+    '공동개발 MOU 체결을 위한 2차 실무미팅 추진',
+  ],
+  actions: [
+    { who: '풍산', what: '기술제안서 초안 송부', due: '~8/15' },
+    { who: '바이어', what: '내부 소요검토 결과 회신', due: '~8/22' },
+    { who: '공동', what: '2차 실무미팅 (영상회의)', due: '8월 말' },
+  ],
+};
+
+// ========== STATE ==========
+let currentVariant = 'A';
+let currentRole = 'buyer';
+let currentStep = 'intake';      // intake | compose | done
+let answers = { progressed: null, rating: 0, intent: null }; // progressed: 'yes'|'absent_other'|'absent_me'
+let aiDone = false;              // structured output generated in compose step
+let chatLog = [];               // variant A chat messages
+
+// ========== HELPERS ==========
+function counterpart() { return currentRole === 'buyer' ? MEETING.seller : MEETING.buyer; }
+function intentLabel(v) { return { yes: '있음', maybe: '검토 중', no: '없음' }[v] || '-'; }
+
+function renderContext() {
+  const cp = counterpart();
+  const roleChip = currentRole === 'buyer' ? '참가사' : '바이어';
+  document.getElementById('reviewContext').innerHTML = `
+    <div class="ctx-logo">${cp.logo}</div>
+    <div class="ctx-info">
+      <div class="ctx-company">${cp.org} <span class="ctx-role-chip">${roleChip}</span></div>
+      <div class="ctx-sub">${MEETING.dateLabel} · ${MEETING.time} · ${MEETING.venue}</div>
+      <div class="ctx-topic">${MEETING.topic}</div>
+    </div>`;
+  document.getElementById('topbarMeta').textContent = `9/18 · ${cp.org}`;
+}
+
+function renderStepIndicator() {
+  const steps = [ {k:'intake', n:'1', t:'기본 문항'}, {k:'compose', n:'2', t:'내용 정리'}, {k:'done', n:'3', t:'완료'} ];
+  const order = ['intake','compose','done'];
+  const cur = order.indexOf(currentStep);
+  document.getElementById('stepIndicator').innerHTML = steps.map((s, i) => {
+    const cls = i < cur ? 'done' : (i === cur ? 'active' : '');
+    const mark = i < cur ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : s.n;
+    const line = i < steps.length - 1 ? '<div class="step-line"></div>' : '';
+    return `<div class="step-dot ${cls}"><span class="num">${mark}</span>${s.t}</div>${line}`;
+  }).join('');
+}
+
+// ========== MAIN RENDER ==========
+function render() {
+  renderContext();
+  renderStepIndicator();
+  const body = document.getElementById('reviewBody');
+  const footer = document.getElementById('reviewFooter');
+  if (currentStep === 'intake')      { body.innerHTML = intakeHTML();  footer.innerHTML = intakeFooter(); }
+  else if (currentStep === 'compose'){ body.innerHTML = composeHTML(); footer.innerHTML = composeFooter(); afterCompose(); }
+  else                                { body.innerHTML = doneHTML();    footer.innerHTML = doneFooter(); }
+  body.scrollTop = 0;
+}
+
+// ========== STEP 1: INTAKE ==========
+function intakeHTML() {
+  const p = answers.progressed;
+  const isNoshow = p === 'absent_other' || p === 'absent_me';
+  let html = `
+    <div class="q-block">
+      <div class="q-label">1. 미팅이 진행되었나요?<span class="req">*</span></div>
+      <div class="seg">
+        <button class="seg-btn ${p==='yes'?'selected':''}" onclick="setProgressed('yes')">진행됨</button>
+        <button class="seg-btn danger ${p==='absent_other'?'selected':''}" onclick="setProgressed('absent_other')">상대방 불참</button>
+        <button class="seg-btn danger ${p==='absent_me'?'selected':''}" onclick="setProgressed('absent_me')">내가 불참</button>
+      </div>
+    </div>`;
+
+  if (p === 'yes') {
+    html += `
+    <div class="divider"></div>
+    <div class="q-block reveal">
+      <div class="q-label">2. 미팅은 어떠셨나요?</div>
+      <div class="q-hint">매칭 품질 평가에 사용됩니다</div>
+      <div class="stars">${[1,2,3,4,5].map(i => `<span class="star ${i<=answers.rating?'filled':''}" onclick="setRating(${i})">★</span>`).join('')}</div>
+      ${answers.rating ? `<div class="rating-cap">${['','별로였어요','아쉬웠어요','보통이에요','좋았어요','아주 좋았어요'][answers.rating]}</div>` : ''}
+    </div>
+    <div class="divider"></div>
+    <div class="q-block reveal">
+      <div class="q-label">3. 후속 진행 의향이 있으신가요?<span class="req">*</span></div>
+      <div class="q-hint">매칭 효과를 측정하는 핵심 지표예요</div>
+      <div class="chips">
+        <button class="chip ${answers.intent==='yes'?'selected':''}" onclick="setIntent('yes')">있음</button>
+        <button class="chip ${answers.intent==='maybe'?'selected':''}" onclick="setIntent('maybe')">검토 중</button>
+        <button class="chip ${answers.intent==='no'?'selected':''}" onclick="setIntent('no')">없음</button>
+      </div>
+    </div>`;
+  } else if (isNoshow) {
+    const who = p === 'absent_other' ? '상대방이 참석하지 않은' : '내가 참석하지 못한';
+    html += `
+    <div class="q-block reveal">
+      <div class="noshow-note">${who} 미팅으로 기록됩니다. 운영팀이 양측 응답을 확인한 뒤 노쇼로 최종 처리해요. 별도 작성 없이 바로 저장됩니다.</div>
+    </div>`;
+  }
+  return html;
+}
+
+function intakeFooter() {
+  const p = answers.progressed;
+  if (p === null) return `<div class="ft-hint">위 문항에 답하면 다음으로 진행할 수 있어요</div>`;
+  if (p === 'absent_other' || p === 'absent_me') {
+    return `<button class="ft-btn ft-btn-amber" onclick="saveNoshow()">노쇼로 저장</button>`;
+  }
+  const ready = !!answers.intent;
+  return `<button class="ft-btn ft-btn-primary" ${ready?'':'disabled'} onclick="${ready?'gotoCompose()':''}">${ready ? '다음: 미팅 내용 정리' : '후속 진행 의향을 선택해주세요'}</button>`;
+}
+
+function setProgressed(v) { answers.progressed = v; if (v !== 'yes') { answers.rating = 0; answers.intent = null; } render(); }
+function setRating(v) { answers.rating = v; render(); }
+function setIntent(v) { answers.intent = v; render(); }
+function saveNoshow() { currentStep = 'done'; render(); }
+function gotoCompose() { aiDone = false; chatLog = []; currentStep = 'compose'; render(); }
+
+// ========== STEP 2: COMPOSE (variant-specific) ==========
+function composeHTML() {
+  if (currentVariant === 'A') return composeChatHTML();
+  if (currentVariant === 'B') return composeEditorHTML();
+  return composeHybridHTML();
+}
+
+function composeFooter() {
+  if (currentVariant === 'A') {
+    // chat send bar
+    return `<div class="chat-input-bar">
+        <textarea class="chat-input" id="chatInput" rows="1" placeholder="${aiDone?'수정하거나 덧붙일 내용을 알려주세요':'미팅에서 논의한 내용을 적어주세요'}" oninput="autoGrow(this)"></textarea>
+        <button class="chat-send" id="chatSend" onclick="chatSend()" aria-label="전송">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>`;
+  }
+  return `<button class="ft-btn ft-btn-ghost" onclick="gotoIntake()">이전</button>
+          <button class="ft-btn ft-btn-primary" id="saveBtn" ${aiDone?'':'disabled'} onclick="${aiDone?'saveReview()':''}">${aiDone?'저장하고 완료':'먼저 AI로 정리해주세요'}</button>`;
+}
+
+function gotoIntake() { currentStep = 'intake'; render(); }
+
+// ----- Variant A: 채팅형 -----
+function composeChatHTML() {
+  if (chatLog.length === 0) {
+    chatLog.push({ from: 'ai', kind: 'text', html: `안녕하세요! ${counterpart().org}와의 미팅, 어떠셨나요?<br>아래 세 가지를 편하게 적어주시면 제가 깔끔하게 정리해 드릴게요.<br><br>① <b>무엇을 논의</b>했는지<br>② <b>무엇을 합의</b>했는지<br>③ <b>다음에 할 일</b>은 무엇인지` });
+  }
+  const thread = chatLog.map(m => renderChatMsg(m)).join('');
+  const helper = aiDone ? '' : `<button class="sample-link" onclick="fillSampleChat()">예시 답변으로 채우기</button>`;
+  return `<div class="chat-thread">${thread}</div>${helper}`;
+}
+
+function renderChatMsg(m) {
+  if (m.kind === 'text') return `<div class="bubble ${m.from}">${m.html}</div>`;
+  if (m.kind === 'thinking') return `<div class="bubble ai"><span class="ai-thinking">정리하고 있어요 <span class="dot-pulse"><span></span><span></span><span></span></span></span></div>`;
+  if (m.kind === 'card') {
+    return `<div class="bubble ai">이렇게 정리해봤어요. 맞는지 확인해 주세요 👇</div>
+      <div class="bubble ai-card">${structuredHTML(false)}</div>
+      <button class="chat-save-btn" onclick="saveReview()">이 내용으로 저장 →</button>`;
+  }
+  return '';
+}
+
+function fillSampleChat() {
+  const input = document.getElementById('chatInput');
+  if (input) { input.value = SAMPLE_INPUT; autoGrow(input); input.focus(); }
+}
+
+function chatSend() {
+  const input = document.getElementById('chatInput');
+  const txt = (input && input.value.trim()) || '';
+  if (!txt) return;
+  chatLog = chatLog.filter(m => m.kind !== 'thinking');
+  chatLog.push({ from: 'user', kind: 'text', html: escapeHtml(txt) });
+  if (!aiDone) {
+    chatLog.push({ from: 'ai', kind: 'thinking' });
+    renderComposeOnly();
+    setTimeout(() => {
+      chatLog = chatLog.filter(m => m.kind !== 'thinking');
+      chatLog.push({ from: 'ai', kind: 'card' });
+      aiDone = true;
+      render();
+    }, 1100);
+  } else {
+    // refine
+    chatLog.push({ from: 'ai', kind: 'thinking' });
+    renderComposeOnly();
+    setTimeout(() => {
+      chatLog = chatLog.filter(m => m.kind !== 'thinking');
+      STRUCTURED.discussion.push(txt);
+      chatLog.push({ from: 'ai', kind: 'text', html: '반영했어요. 논의사항에 추가했습니다 ✅' });
+      chatLog.push({ from: 'ai', kind: 'card' });
+      render();
+    }, 900);
+  }
+}
+
+// ----- Variant B: 에디터형 -----
+function composeEditorHTML() {
+  if (!aiDone) {
+    return `
+      <div class="ai-banner">
+        <div class="ai-avatar">AI</div>
+        <div class="ai-banner-text">미팅 메모를 자유롭게 적고 <b>AI로 정리</b>를 누르면, 아래 세 항목으로 구조화해 드려요. 정리된 내용은 직접 수정할 수 있어요.</div>
+      </div>
+      <textarea class="memo" id="memoInput" placeholder="예) 155mm 정밀유도탄 사거리 연장 요구를 받았고, 풍산 신관 기술로 가능한지 검토함. 8월에 기술제안서 받기로 함..."></textarea>
+      <button class="sample-link" onclick="fillSampleMemo()">예시 메모로 채우기</button>
+      <button class="ai-run-btn" onclick="runEditorAI()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v3m0 12v3M5.6 5.6l2.1 2.1m8.6 8.6l2.1 2.1M3 12h3m12 0h3"/></svg>
+        AI로 정리
+      </button>
+      <div id="editorAiSlot"></div>`;
+  }
+  // editable structured fields
+  return `
+    <div class="ai-banner">
+      <div class="ai-avatar">AI</div>
+      <div class="ai-banner-text">정리했어요. 각 항목을 <b>탭하면 바로 수정</b>할 수 있어요. 끝나면 저장하세요.</div>
+    </div>
+    ${structuredHTML(true)}`;
+}
+
+function fillSampleMemo() {
+  const m = document.getElementById('memoInput');
+  if (m) { m.value = SAMPLE_INPUT; m.focus(); }
+}
+
+function runEditorAI() {
+  const slot = document.getElementById('editorAiSlot');
+  if (slot) slot.innerHTML = loadingHTML();
+  document.querySelector('.ai-run-btn').disabled = true;
+  setTimeout(() => { aiDone = true; render(); }, 1100);
+}
+
+// ----- Variant C: 하이브리드 -----
+function composeHybridHTML() {
+  if (!aiDone) {
+    return `
+      <div class="ai-banner">
+        <div class="ai-avatar">AI</div>
+        <div class="ai-banner-text">미팅 내용을 한 곳에 자유롭게 적어주세요. <b>AI로 정리하기</b>를 누르면 카드로 만들어 드리고, 마음에 안 들면 한 줄로 더 다듬을 수 있어요.</div>
+      </div>
+      <textarea class="memo" id="memoInput" style="min-height:140px" placeholder="미팅에서 어떤 제품·기술을 논의했고, 무엇을 합의했고, 다음에 무엇을 하기로 했는지 자유롭게 적어주세요."></textarea>
+      <button class="sample-link" onclick="fillSampleMemo()">예시로 채우기</button>
+      <button class="ai-run-btn" onclick="runHybridAI()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v3m0 12v3M5.6 5.6l2.1 2.1m8.6 8.6l2.1 2.1M3 12h3m12 0h3"/></svg>
+        AI로 정리하기
+      </button>
+      <div id="hybridAiSlot"></div>`;
+  }
+  return `
+    ${structuredHTML(false)}
+    <div class="ai-banner">
+      <div class="ai-avatar">AI</div>
+      <div class="ai-banner-text">한 줄로 더 다듬어 드릴까요? (예: "납품 일정 빼줘", "예산 얘기 추가")</div>
+    </div>
+    <div class="chat-input-bar">
+      <textarea class="chat-input" id="refineInput" rows="1" placeholder="수정 요청을 한 줄로 적어주세요" oninput="autoGrow(this)"></textarea>
+      <button class="chat-send" onclick="hybridRefine()" aria-label="다듬기">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>`;
+}
+
+function runHybridAI() {
+  const slot = document.getElementById('hybridAiSlot');
+  if (slot) slot.innerHTML = loadingHTML();
+  document.querySelector('.ai-run-btn').disabled = true;
+  setTimeout(() => { aiDone = true; render(); }, 1100);
+}
+
+function hybridRefine() {
+  const inp = document.getElementById('refineInput');
+  const txt = (inp && inp.value.trim()) || '';
+  if (!txt) return;
+  STRUCTURED.discussion.push(txt + ' (반영 요청)');
+  render();
+}
+
+// ----- shared structured renderer -----
+function structuredHTML(editable) {
+  const ed = editable ? 'contenteditable="true"' : '';
+  return `
+    <div class="ai-section">
+      <div class="ai-section-head"><span class="ai-sq blue"></span> 핵심 논의사항</div>
+      <ul class="ai-list">${STRUCTURED.discussion.map(d => `<li ${ed}>${escapeHtml(d)}</li>`).join('')}</ul>
+    </div>
+    <div class="ai-section">
+      <div class="ai-section-head"><span class="ai-sq green"></span> 합의 사항</div>
+      <ul class="ai-list">${STRUCTURED.agreements.map(d => `<li ${ed}>${escapeHtml(d)}</li>`).join('')}</ul>
+    </div>
+    <div class="ai-section">
+      <div class="ai-section-head"><span class="ai-sq amber"></span> 후속 액션</div>
+      <div class="action-list">${STRUCTURED.actions.map(a => `
+        <div class="action-item">
+          <span class="action-who">${a.who}</span>
+          <span class="action-what" ${ed}>${escapeHtml(a.what)}</span>
+          <span class="action-due">${a.due}</span>
+        </div>`).join('')}</div>
+    </div>`;
+}
+
+function loadingHTML() {
+  return `<div class="ai-loading" style="margin-top:14px">
+      <div class="ai-thinking">AI가 정리하고 있어요 <span class="dot-pulse"><span></span><span></span><span></span></span></div>
+      <div class="shimmer-row" style="width:90%"></div>
+      <div class="shimmer-row" style="width:75%"></div>
+      <div class="shimmer-row" style="width:82%"></div>
+    </div>`;
+}
+
+function afterCompose() {
+  // scroll chat to bottom
+  const body = document.getElementById('reviewBody');
+  if (currentVariant === 'A') body.scrollTop = body.scrollHeight;
+}
+
+function renderComposeOnly() {
+  document.getElementById('reviewBody').innerHTML = composeHTML();
+  afterCompose();
+}
+
+function saveReview() {
+  // read back editor edits (variant B keeps edits in DOM)
+  const lists = document.querySelectorAll('.ai-list');
+  if (lists.length === 3 && currentVariant === 'B') {
+    STRUCTURED.discussion = [...lists[0].querySelectorAll('li')].map(li => li.textContent.trim()).filter(Boolean);
+    STRUCTURED.agreements = [...lists[1].querySelectorAll('li')].map(li => li.textContent.trim()).filter(Boolean);
+    const whats = [...document.querySelectorAll('.action-what')].map(s => s.textContent.trim());
+    STRUCTURED.actions = STRUCTURED.actions.map((a, i) => ({ ...a, what: whats[i] || a.what }));
+  }
+  currentStep = 'done'; render();
+}
+
+// ========== STEP 3: DONE ==========
+function doneHTML() {
+  const isNoshow = answers.progressed === 'absent_other' || answers.progressed === 'absent_me';
+  if (isNoshow) {
+    const who = answers.progressed === 'absent_other' ? '상대방 불참' : '내 불참';
+    return `
+      <div class="noshow-result">
+        <div class="done-check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/><circle cx="12" cy="12" r="9"/></svg></div>
+        <div><div class="done-title">노쇼로 기록되었습니다</div><div class="done-sub">사유: ${who} · 운영팀 확인 후 최종 처리됩니다</div></div>
+      </div>
+      <div class="ai-banner">
+        <div class="ai-avatar">i</div>
+        <div class="ai-banner-text">진행되지 않은 미팅은 만족도·후속의향을 받지 않아요. 잘못 표시했다면 <b>다시 작성</b>을 눌러주세요.</div>
+      </div>`;
+  }
+  const ic = answers.intent;
+  const intentCls = ic === 'yes' ? 'meta-intent-y' : (ic === 'maybe' ? 'meta-intent-m' : 'meta-intent-n');
+  return `
+    <div class="done-banner">
+      <div class="done-check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div><div class="done-title">리뷰가 저장되었습니다</div><div class="done-sub">상대방에게도 동일한 결과가 공유돼요</div></div>
+    </div>
+    <div class="summary-meta">
+      <div class="meta-card"><div class="meta-card-label">미팅 만족도</div><div class="meta-card-value meta-stars">${'★'.repeat(answers.rating)}${'☆'.repeat(5-answers.rating)}</div></div>
+      <div class="meta-card"><div class="meta-card-label">후속 진행 의향</div><div class="meta-card-value ${intentCls}">${intentLabel(ic)}</div></div>
+    </div>
+    ${structuredHTML(false)}`;
+}
+
+function doneFooter() {
+  const isNoshow = answers.progressed === 'absent_other' || answers.progressed === 'absent_me';
+  if (isNoshow) {
+    return `<button class="ft-btn ft-btn-ghost" onclick="gotoIntake()">다시 작성</button>
+            <button class="ft-btn ft-btn-primary" onclick="location.href='prototype-my-meetings.html'">내 미팅으로</button>`;
+  }
+  // P3: 작성 후 재진입 시 수정 허용
+  return `<button class="ft-btn ft-btn-ghost" onclick="editAgain()">수정</button>
+          <button class="ft-btn ft-btn-primary" onclick="location.href='prototype-my-meetings.html'">내 미팅으로</button>`;
+}
+
+function editAgain() { currentStep = 'compose'; render(); }
+
+// ========== NAV / TOGGLES ==========
+function goBack() {
+  if (currentStep === 'compose') { gotoIntake(); return; }
+  if (currentStep === 'done') { currentStep = answers.progressed === 'yes' ? 'compose' : 'intake'; render(); return; }
+  location.href = 'prototype-my-meetings.html';
+}
+
+function switchVariant(v) {
+  currentVariant = v;
+  document.querySelectorAll('.variant-btn').forEach(b => b.classList.toggle('active', b.dataset.variant === v));
+  // reset compose sub-state so each design is compared fresh
+  if (currentStep === 'compose') { aiDone = false; chatLog = []; }
+  render();
+}
+
+function switchRole(role) {
+  currentRole = role;
+  document.querySelectorAll('.role-toggle-btn').forEach(b => b.classList.toggle('active', b.dataset.role === role));
+  document.body.classList.toggle('role-buyer', role === 'buyer');
+  document.body.classList.toggle('role-exhibitor', role === 'exhibitor');
+  const me = role === 'buyer' ? MEETING.buyer : MEETING.seller;
+  if (window.__nabiSetUser) window.__nabiSetUser(me.name, me.initials);
+  if (currentStep === 'compose') { aiDone = false; chatLog = []; }
+  render();
+}
+
+function setPreview(mode) {
+  document.body.classList.toggle('preview-mobile', mode === 'mobile');
+  document.querySelectorAll('.view-toggle-btn').forEach(function (b) {
+    b.classList.toggle('active', b.textContent.trim().toLowerCase().indexOf(mode) !== -1);
+  });
+}
+
+// ========== UTIL ==========
+function autoGrow(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 90) + 'px'; }
+function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// ========== INIT ==========
+render();
+</script>
+
+<script>
+  window.NABI_NAV_ACTIVE = 'meetings';
+  window.NABI_NAV_USER = { name: '김재현', avatar: 'KJ' };
+</script>
+<script src="nabi-nav.js?v=20260607"></script>
+
+<script>
+/* 기본 데스크톱. ?view=mobile 로 모바일 프리뷰 확인 가능. */
+if (new URLSearchParams(location.search).get('view') === 'mobile') setPreview('mobile');
+</script>
+</body>
+</html>

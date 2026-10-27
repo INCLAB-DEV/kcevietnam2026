@@ -1,0 +1,24 @@
+# 빌드 컨텍스트에서 제외 — 컨테이너 안에서 npm ci로 새로 설치하고 next build로 새로 생성한다.
+node_modules/
+.next/
+out/
+
+# 테스트/린트 산출물
+coverage/
+.turbo/
+
+# VCS/IDE
+.git/
+.gitignore
+.DS_Store
+
+# 로컬 환경설정 (빌드는 build-args로 NEXT_PUBLIC_*을 주입)
+.env
+.env.local
+.env*.local
+
+# 문서
+docs/
+CONTEXT.md
+AGENTS.md
+README.md

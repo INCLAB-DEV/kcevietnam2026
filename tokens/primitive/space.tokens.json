@@ -1,0 +1,13 @@
+{
+  "$description": "NABI spacing scale — 4px base. CSS names --space-N preserved for prototype compatibility.",
+  "space": {
+    "1":  { "$type": "dimension", "$value": "4px",  "$extensions": { "com.nabi.css": "--space-1" } },
+    "2":  { "$type": "dimension", "$value": "8px",  "$extensions": { "com.nabi.css": "--space-2" } },
+    "3":  { "$type": "dimension", "$value": "12px", "$extensions": { "com.nabi.css": "--space-3" } },
+    "4":  { "$type": "dimension", "$value": "16px", "$extensions": { "com.nabi.css": "--space-4" } },
+    "5":  { "$type": "dimension", "$value": "20px", "$extensions": { "com.nabi.css": "--space-5" } },
+    "6":  { "$type": "dimension", "$value": "24px", "$extensions": { "com.nabi.css": "--space-6" } },
+    "8":  { "$type": "dimension", "$value": "32px", "$extensions": { "com.nabi.css": "--space-8" } },
+    "10": { "$type": "dimension", "$value": "40px", "$extensions": { "com.nabi.css": "--space-10" } }
+  }
+}

@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NABI - 내 프로필 프로토타입 (BM-004/005, THROWAWAY)</title>
+<link rel="stylesheet" href="nabi-ui.css?v=20260607"><!-- 단일 소스 토큰+크롬 -->
+<!-- PROTOTYPE: 3 variants of BM-004(buyer)/BM-005(seller) profile navigation hub.
+     Question: "What should the profile summary + nav hub + edit entry point look like?"
+     BM-004: /profile (buyer) | BM-005: /exhibitor/profile (seller)
+     Edit: /apply?step=N&from=profile (buyer) | /exhibitor/apply?step=N&from=profile (seller)
+     Related: BM-001 buyer apply: prototype-apply.html | BM-002 seller apply: prototype-apply-seller.html -->
+<style>
+  /* 토큰·리셋·크롬은 nabi-ui.css(단일 소스)에서 상속 */
+
+  /* 변주 스위처/뷰 토글 크롬은 nabi-ui.css(.variant-bar/.view-toggle/.role-toggle)에서 상속 */
+  .variant-sep { width: 1px; background: #333; margin: 8px 0; align-self: stretch; }
+  .variant-label {
+    padding: 12px 16px;
+    font-size: 11px;
+    color: #555;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: var(--font-stack);
+  }
+
+  /* ── 단일 셸: 콘텐츠는 #profilePage(=.app-content) 한 곳에만 렌더.
+     모바일↔데스크톱 차이는 body.preview-mobile(셸 폭 390px)로 reflow. ── */
+  .screen { width: 100%; display: none; }
+  .screen.active { display: block; }
+
+  .top-bar {
+    position: sticky;
+    top: 0;
+    background: var(--bg-primary);
+    padding: 16px 20px 12px;
+    z-index: 10;
+    border-bottom: 1px solid var(--border-default);
+  }
+  .top-bar-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .top-bar-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+  .content-area { padding: 16px 20px 24px; }
+
+  /* ========== PROFILE HEADER ========== */
+  .profile-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .profile-avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--accent-subtle);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; color: var(--accent-primary); flex-shrink: 0;
+  }
+  .profile-name { font-size: 17px; font-weight: 700; }
+  .profile-org { font-size: 13px; color: var(--text-secondary); margin-top: 1px; }
+  .profile-role-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: var(--radius-full); margin-top: 4px;
+  }
+  .badge-buyer { background: #eff6ff; color: #2563eb; }
+  .badge-seller { background: #f0fdf4; color: #16a34a; }
+
+  /* ========== COMPLETION ========== */
+  .completion-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .completion-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .completion-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+  .completion-pct { font-size: 22px; font-weight: 800; color: var(--accent-primary); }
+  .completion-bar-track { width: 100%; height: 8px; background: var(--bg-secondary); border-radius: var(--radius-full); overflow: hidden; }
+  .completion-bar-fill { height: 100%; border-radius: var(--radius-full); background: linear-gradient(90deg, #2563eb, #3b82f6); transition: width 0.5s ease; }
+  .completion-hint { font-size: 12px; color: var(--text-tertiary); margin-top: 8px; line-height: 1.4; }
+
+  /* ========== NAV HUB (shortcut cards) ========== */
+  .nav-hub {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .nav-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .nav-card:hover { border-color: var(--accent-primary); box-shadow: 0 2px 8px rgba(37,99,235,0.08); }
+  .nav-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .nav-count { font-size: 18px; font-weight: 800; color: var(--accent-primary); }
+  .nav-label { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+  .nav-arrow { margin-left: auto; font-size: 14px; color: var(--text-tertiary); }
+
+  /* ========== SECTION CARD ========== */
+  .section-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .section-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; }
+  .section-title-row { display: flex; align-items: center; gap: 8px; }
+  .section-icon {
+    width: 28px; height: 28px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  .section-icon.blue { background: var(--accent-subtle); color: var(--accent-primary); }
+  .section-icon.green { background: #f0fdf4; color: var(--status-success); }
+  .section-icon.orange { background: #fff7ed; color: var(--status-warning); }
+  .section-icon.purple { background: var(--accent-subtle); color: var(--accent-primary); } /* AI: 보라 금지 → accent */
+  .section-title { font-size: 14px; font-weight: 600; }
+  .section-status { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: var(--radius-full); }
+  .status-done { background: #f0fdf4; color: var(--status-success); }
+  .status-incomplete { background: #fff7ed; color: var(--status-warning); }
+  .edit-btn {
+    font-size: 12px; font-weight: 600; color: var(--accent-primary);
+    background: none; border: none; cursor: pointer; padding: 4px 10px;
+    border-radius: var(--radius-sm); font-family: var(--font-stack);
+    transition: background 0.15s; display: flex; align-items: center; gap: 4px;
+  }
+  .edit-btn:hover { background: var(--accent-subtle); }
+  .section-body { padding: 0 16px 14px; font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+  .section-divider { height: 1px; background: var(--border-default); margin: 0 16px; }
+
+  /* ========== CHIPS ========== */
+  .chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .chip {
+    display: inline-flex; align-items: center; padding: 5px 12px;
+    border-radius: var(--radius-full); font-size: 12px; font-weight: 500;
+    background: var(--accent-subtle); color: var(--accent-primary); white-space: nowrap;
+  }
+  .chip.ai { background: var(--accent-subtle); color: var(--accent-primary); border: 1px dashed var(--accent-primary); }
+
+  /* ========== INFO ROW ========== */
+  .info-row { display: flex; align-items: flex-start; padding: 10px 0; }
+  .info-row + .info-row { border-top: 1px solid #f5f3f0; }
+  .info-label { font-size: 12px; color: var(--text-tertiary); width: 80px; flex-shrink: 0; padding-top: 1px; }
+  .info-value { font-size: 13px; color: var(--text-primary); flex: 1; line-height: 1.5; }
+
+  /* ========== CTA BANNER ========== */
+  .cta-banner {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border-radius: var(--radius-md); padding: 16px; color: white;
+    margin-bottom: 12px; cursor: pointer; transition: transform 0.15s;
+  }
+  .cta-banner:hover { transform: scale(0.99); }
+  .cta-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .cta-desc { font-size: 12px; opacity: 0.85; line-height: 1.4; }
+
+  /* ========== ACCORDION (Variant B) ========== */
+  .accordion-card {
+    background: var(--bg-elevated); border: 1px solid var(--border-default);
+    border-radius: var(--radius-md); margin-bottom: 8px; overflow: hidden;
+  }
+  .accordion-trigger {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; cursor: pointer; width: 100%;
+    border: none; background: none; font-family: var(--font-stack); text-align: left;
+    transition: background 0.15s;
+  }
+  .accordion-trigger:hover { background: #faf9f7; }
+  .accordion-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+  .accordion-chevron { font-size: 16px; color: var(--text-tertiary); transition: transform 0.2s; flex-shrink: 0; }
+  .accordion-card.open .accordion-chevron { transform: rotate(90deg); }
+  .accordion-body {
+    display: none; padding: 0 16px 14px; font-size: 13px;
+    color: var(--text-secondary); line-height: 1.6; border-top: 1px solid var(--border-default);
+  }
+  .accordion-card.open .accordion-body { display: block; padding-top: 12px; }
+  .accordion-right { display: flex; align-items: center; gap: 8px; }
+
+  /* ========== BENTO (Variant C) ========== */
+  .bento-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .bento-card {
+    background: var(--bg-elevated); border: 1px solid var(--border-default);
+    border-radius: var(--radius-md); padding: 14px; position: relative;
+    cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .bento-card:hover { border-color: var(--accent-primary); box-shadow: 0 2px 8px rgba(37,99,235,0.1); }
+  .bento-card.full-width { grid-column: 1 / -1; }
+  .bento-icon { width: 32px; height: 32px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 15px; margin-bottom: 10px; }
+  .bento-title { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  .bento-value { font-size: 14px; font-weight: 600; color: var(--text-primary); line-height: 1.4; }
+  .bento-status { position: absolute; top: 10px; right: 10px; width: 8px; height: 8px; border-radius: 50%; }
+  .dot-done { background: var(--status-success); }
+
+  /* ========== ENHANCE STRIP ========== */
+  .enhance-strip {
+    background: var(--accent-subtle); border: 1px solid #bfdbfe;
+    border-radius: var(--radius-md); padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px; cursor: pointer; transition: background 0.15s;
+  }
+  .enhance-strip:hover { background: #dbeafe; }
+  .enhance-icon { font-size: 20px; flex-shrink: 0; }
+  .enhance-text { font-size: 12px; color: var(--accent-primary); font-weight: 600; line-height: 1.4; }
+  .enhance-arrow { margin-left: auto; font-size: 14px; color: var(--accent-primary); }
+
+  /* ========== PERIOD NOTICE ========== */
+  .period-notice {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+    border-radius: var(--radius-sm); font-size: 12px; margin-bottom: 16px; line-height: 1.4;
+  }
+  .period-active { background: #f0fdf4; color: var(--status-success); border: 1px solid #bbf7d0; }
+
+  .bottom-spacer { height: 40px; }
+</style>
+</head>
+<body>
+
+<!-- ========== VARIANT SWITCHER BAR ========== -->
+<div class="variant-bar">
+  <span class="variant-label" id="bar-label">BM-004</span>
+  <div class="variant-sep"></div>
+  <button class="variant-btn active" onclick="switchVariant('A')">A 카드 스택</button>
+  <div class="variant-sep"></div>
+  <button class="variant-btn" onclick="switchVariant('B')">B 아코디언</button>
+  <div class="variant-sep"></div>
+  <button class="variant-btn" onclick="switchVariant('C')">C 벤토 대시보드</button>
+  <div class="variant-sep"></div>
+  <div class="role-toggle">
+    <button class="role-toggle-btn active" onclick="switchRole('buyer')">바이어</button>
+    <button class="role-toggle-btn" onclick="switchRole('seller')">참가사</button>
+  </div>
+  <div class="view-toggle">
+    <button class="view-toggle-btn" onclick="setPreview('mobile')">Mobile</button>
+    <button class="view-toggle-btn active" onclick="setPreview('desktop')">Desktop</button>
+  </div>
+</div>
+
+<!-- 글로벌 nav(app-bar + 드로어)는 nabi-nav.js가 .app-shell 상단에 주입 -->
+<div class="app-shell">
+  <main class="app-main">
+    <div class="app-content content-form" id="profilePage">
+
+  <!-- ==================== VARIANT A: Card Stack ==================== -->
+  <div class="screen active" id="variant-A">
+    <div class="top-bar">
+      <div class="top-bar-title" id="a-title">내 프로필</div>
+      <div class="top-bar-sub" id="a-route">/profile</div>
+    </div>
+    <div class="content-area">
+      <div class="profile-header">
+        <div class="profile-avatar" id="a-avatar">김</div>
+        <div>
+          <div class="profile-name" id="a-name">김도현</div>
+          <div class="profile-org" id="a-org">방위사업청 · 사업관리관</div>
+          <div><span class="profile-role-badge badge-buyer" id="a-badge">바이어</span></div>
+        </div>
+      </div>
+
+      <div class="period-notice period-active">
+        <span>🟢</span>
+        <span>비즈매칭 신청기간 진행 중 · 수정 가능 (D-7)</span>
+      </div>
+
+      <!-- Completion -->
+      <div class="completion-card">
+        <div class="completion-top">
+          <span class="completion-label">프로필 완성도</span>
+          <span class="completion-pct" id="a-pct">85%</span>
+        </div>
+        <div class="completion-bar-track">
+          <div class="completion-bar-fill" id="a-bar" style="width: 85%"></div>
+        </div>
+        <div class="completion-hint" id="a-hint">상세 니즈를 보강하면 매칭률이 올라갑니다</div>
+      </div>
+
+      <!-- NAV HUB: shortcut cards -->
+      <div class="nav-hub" id="a-nav">
+        <div class="nav-card" onclick="alert('→ /discover (AI 추천 탭)')">
+          <div class="nav-icon" style="background: var(--accent-subtle); color: var(--accent-primary);">🤝</div>
+          <div>
+            <div class="nav-count">3건</div>
+            <div class="nav-label">AI 매칭 도착</div>
+          </div>
+          <span class="nav-arrow">›</span>
+        </div>
+        <div class="nav-card" onclick="alert('→ /meetings')">
+          <div class="nav-icon" style="background: #f0fdf4; color: var(--status-success);">📅</div>
+          <div>
+            <div class="nav-count">2건</div>
+            <div class="nav-label">확정 미팅</div>
+          </div>
+          <span class="nav-arrow">›</span>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="cta-banner" id="a-cta">
+        <div class="cta-title" id="a-cta-title">프로필 보강하기</div>
+        <div class="cta-desc" id="a-cta-desc">정확한 추천을 받으려면 니즈를 상세히 입력하세요</div>
+      </div>
+
+      <!-- Section 1: Basic Info (readonly) -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title-row">
+            <div class="section-icon blue">👤</div>
+            <div class="section-title">기본 정보</div>
+          </div>
+          <span class="section-status status-done">완료</span>
+        </div>
+        <div class="section-divider"></div>
+        <div class="section-body" id="a-basic"></div>
+      </div>
+
+      <!-- Section 2 -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title-row">
+            <div class="section-icon green">🏷️</div>
+            <div class="section-title" id="a-s2-title">관심 분야</div>
+          </div>
+          <button class="edit-btn" id="a-s2-edit" onclick="editStep(2)">수정 ›</button>
+        </div>
+        <div class="section-divider"></div>
+        <div class="section-body" id="a-s2-body"></div>
+      </div>
+
+      <!-- Section 3 -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title-row">
+            <div class="section-icon purple">🤖</div>
+            <div class="section-title" id="a-s3-title">상세 니즈 &amp; AI 키워드</div>
+          </div>
+          <button class="edit-btn" id="a-s3-edit" onclick="editStep(3)">수정 ›</button>
+        </div>
+        <div class="section-divider"></div>
+        <div class="section-body" id="a-s3-body"></div>
+      </div>
+
+      <!-- Section 4 -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title-row">
+            <div class="section-icon orange">📊</div>
+            <div class="section-title" id="a-s4-title">예산 &amp; 도입 일정</div>
+          </div>
+          <button class="edit-btn" id="a-s4-edit" onclick="editStep(4)">수정 ›</button>
+        </div>
+        <div class="section-divider"></div>
+        <div class="section-body" id="a-s4-body"></div>
+      </div>
+
+      <div class="bottom-spacer"></div>
+    </div>
+  </div>
+
+  <!-- ==================== VARIANT B: Accordion ==================== -->
+  <div class="screen" id="variant-B">
+    <div class="top-bar">
+      <div class="top-bar-title" id="b-title">내 프로필</div>
+      <div class="top-bar-sub" id="b-route">/profile</div>
+    </div>
+    <div class="content-area">
+      <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
+        <div class="profile-avatar" id="b-avatar">김</div>
+        <div style="flex: 1">
+          <div class="profile-name" id="b-name">김도현</div>
+          <div class="profile-org" id="b-org">방위사업청 · 사업관리관</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="font-size: 24px; font-weight: 800; color: var(--accent-primary);" id="b-pct">85%</div>
+          <div style="font-size: 10px; color: var(--text-tertiary);">완성도</div>
+        </div>
+      </div>
+
+      <div class="completion-bar-track" style="margin-bottom: 12px;">
+        <div class="completion-bar-fill" id="b-bar" style="width: 85%"></div>
+      </div>
+
+      <!-- NAV HUB -->
+      <div class="nav-hub" id="b-nav">
+        <div class="nav-card" onclick="alert('→ /discover')">
+          <div class="nav-icon" style="background: var(--accent-subtle); color: var(--accent-primary);">🤝</div>
+          <div>
+            <div class="nav-count">3건</div>
+            <div class="nav-label">AI 매칭</div>
+          </div>
+          <span class="nav-arrow">›</span>
+        </div>
+        <div class="nav-card" onclick="alert('→ /meetings')">
+          <div class="nav-icon" style="background: #f0fdf4; color: var(--status-success);">📅</div>
+          <div>
+            <div class="nav-count">2건</div>
+            <div class="nav-label">확정 미팅</div>
+          </div>
+          <span class="nav-arrow">›</span>
+        </div>
+      </div>
+
+      <div class="enhance-strip" id="b-cta">
+        <span class="enhance-icon">✨</span>
+        <span class="enhance-text" id="b-cta-text">프로필 보강하기 — 상세 니즈를 입력하면 매칭률↑</span>
+        <span class="enhance-arrow">›</span>
+      </div>
+
+      <!-- Accordion: Basic Info -->
+      <div class="accordion-card open">
+        <button class="accordion-trigger" onclick="toggleAccordion(this)">
+          <div class="accordion-left">
+            <div class="section-icon blue">👤</div>
+            <div class="section-title">기본 정보</div>
+          </div>
+          <div class="accordion-right">
+            <span class="section-status status-done">완료</span>
+            <span class="accordion-chevron">›</span>
+          </div>
+        </button>
+        <div class="accordion-body" id="b-basic"></div>
+      </div>
+
+      <!-- Accordion: Section 2 -->
+      <div class="accordion-card">
+        <button class="accordion-trigger" onclick="toggleAccordion(this)">
+          <div class="accordion-left">
+            <div class="section-icon green">🏷️</div>
+            <div class="section-title" id="b-s2-title">관심 분야</div>
+          </div>
+          <div class="accordion-right">
+            <span class="section-status status-done">완료</span>
+            <span class="accordion-chevron">›</span>
+          </div>
+        </button>
+        <div class="accordion-body" id="b-s2-body"></div>
+      </div>
+
+      <!-- Accordion: Section 3 -->
+      <div class="accordion-card">
+        <button class="accordion-trigger" onclick="toggleAccordion(this)">
+          <div class="accordion-left">
+            <div class="section-icon purple">🤖</div>
+            <div class="section-title" id="b-s3-title">상세 니즈 &amp; AI 키워드</div>
+          </div>
+          <div class="accordion-right">
+            <span class="section-status status-done">완료</span>
+            <span class="accordion-chevron">›</span>
+          </div>
+        </button>
+        <div class="accordion-body" id="b-s3-body"></div>
+      </div>
+
+      <!-- Accordion: Section 4 -->
+      <div class="accordion-card">
+        <button class="accordion-trigger" onclick="toggleAccordion(this)">
+          <div class="accordion-left">
+            <div class="section-icon orange">📊</div>
+            <div class="section-title" id="b-s4-title">예산 &amp; 도입 일정</div>
+          </div>
+          <div class="accordion-right">
+            <span class="section-status status-done">완료</span>
+            <span class="accordion-chevron">›</span>
+          </div>
+        </button>
+        <div class="accordion-body" id="b-s4-body"></div>
+      </div>
+
+      <div class="bottom-spacer"></div>
+    </div>
+  </div>
+
+  <!-- ==================== VARIANT C: Bento Dashboard ==================== -->
+  <div class="screen" id="variant-C">
+    <div class="top-bar">
+      <div class="top-bar-title" id="c-title">내 프로필</div>
+      <div class="top-bar-sub" id="c-route">/profile</div>
+    </div>
+    <div class="content-area">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+        <div class="profile-avatar" id="c-avatar" style="width: 44px; height: 44px; font-size: 17px;">김</div>
+        <div style="flex: 1;">
+          <div style="font-size: 15px; font-weight: 700;" id="c-name">김도현</div>
+          <div style="font-size: 12px; color: var(--text-tertiary);" id="c-org">방위사업청 · 사업관리관</div>
+        </div>
+        <span class="profile-role-badge badge-buyer" id="c-badge">바이어</span>
+      </div>
+
+      <!-- Completion ring + nav hub combined -->
+      <div style="display: flex; align-items: center; gap: 16px; background: var(--bg-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px;">
+        <div style="position: relative; width: 64px; height: 64px; flex-shrink: 0;">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="28" fill="none" stroke="#f0eeeb" stroke-width="6"/>
+            <circle cx="32" cy="32" r="28" fill="none" stroke="#2563eb" stroke-width="6"
+              stroke-dasharray="175.93" id="c-ring" stroke-dashoffset="26.39"
+              stroke-linecap="round" transform="rotate(-90 32 32)"
+              style="transition: stroke-dashoffset 0.5s ease"/>
+          </svg>
+          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: var(--accent-primary);" id="c-pct">85%</div>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">프로필 완성도</div>
+          <div style="display: flex; gap: 12px; font-size: 12px;">
+            <span style="color: var(--accent-primary); font-weight: 600; cursor: pointer;" onclick="alert('→ /discover')">🤝 매칭 3건 ›</span>
+            <span style="color: var(--status-success); font-weight: 600; cursor: pointer;" onclick="alert('→ /meetings')">📅 미팅 2건 ›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bento Grid -->
+      <div class="bento-grid" id="c-grid">
+        <div class="bento-card" onclick="alert('기본 정보는 수정할 수 없습니다')">
+          <div class="bento-status dot-done"></div>
+          <div class="bento-icon" style="background: var(--accent-subtle); color: var(--accent-primary);">👤</div>
+          <div class="bento-title">기본 정보</div>
+          <div class="bento-value" id="c-basic"></div>
+        </div>
+
+        <div class="bento-card" onclick="editStep(2)">
+          <div class="bento-status dot-done"></div>
+          <div class="bento-icon" style="background: #f0fdf4; color: var(--status-success);">🏷️</div>
+          <div class="bento-title" id="c-s2-title">관심 분야</div>
+          <div class="bento-value" id="c-s2-val"></div>
+        </div>
+
+        <div class="bento-card" onclick="editStep(4)">
+          <div class="bento-status dot-done"></div>
+          <div class="bento-icon" style="background: #fff7ed; color: var(--status-warning);">📊</div>
+          <div class="bento-title" id="c-s4-title">예산 규모</div>
+          <div class="bento-value" id="c-s4-val"></div>
+        </div>
+
+        <div class="bento-card" onclick="editStep(4)">
+          <div class="bento-status dot-done"></div>
+          <div class="bento-icon" style="background: #fff7ed; color: var(--status-warning);">📅</div>
+          <div class="bento-title" id="c-s4b-title">도입 시기</div>
+          <div class="bento-value" id="c-s4b-val"></div>
+        </div>
+
+        <div class="bento-card full-width" onclick="editStep(3)">
+          <div class="bento-status dot-done"></div>
+          <div class="bento-icon" style="background: var(--accent-subtle); color: var(--accent-primary);">🤖</div>
+          <div class="bento-title" id="c-s3-title">상세 니즈 &amp; AI 키워드</div>
+          <div class="bento-value" id="c-s3-val" style="font-weight: 400; font-size: 13px; line-height: 1.5; margin-bottom: 8px;"></div>
+          <div class="chip-list" id="c-s3-chips"></div>
+        </div>
+      </div>
+
+      <div class="cta-banner" id="c-cta">
+        <div class="cta-title" id="c-cta-title">프로필 보강하기</div>
+        <div class="cta-desc" id="c-cta-desc">정확한 추천을 받으려면 니즈를 상세히 입력하세요</div>
+      </div>
+
+      <div class="bottom-spacer"></div>
+    </div>
+  </div>
+
+    </div><!-- /#profilePage -->
+  </main>
+</div>
+
+<script>
+let currentVariant = 'A';
+let currentRole = 'buyer';
+
+const BUYER = {
+  pageId: 'BM-004', route: '/profile', applyRoute: '/apply',
+  avatar: '김', name: '김도현', org: '방위사업청 · 사업관리관',
+  badge: '바이어', badgeClass: 'badge-buyer', pct: 85,
+  ctaTitle: '프로필 보강하기', ctaDesc: '정확한 추천을 받으려면 니즈를 상세히 입력하세요',
+  hint: '상세 니즈를 보강하면 매칭률이 올라갑니다',
+  s2Title: '관심 분야',
+  s2Body: '<div class="chip-list"><span class="chip">#감시정찰</span><span class="chip">#드론</span><span class="chip">#야간장비</span><span class="chip">#통신장비</span></div>',
+  s3Title: '상세 니즈 & AI 키워드',
+  s3Body: '<div style="margin-bottom:10px;line-height:1.6">산악 지형 야간 감시용 소형 드론 시스템 도입 검토 중. 적외선 카메라 탑재, 자율 귀환, 저소음 요구. 기존 C4I 체계 연동 필수.</div><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px;font-weight:600">AI 추출 키워드</div><div class="chip-list"><span class="chip ai">소형 드론</span><span class="chip ai">야간 감시</span><span class="chip ai">적외선 카메라</span><span class="chip ai">ISR (정보·감시·정찰)</span><span class="chip ai">C4I 연동</span></div>',
+  s4Title: '예산 & 도입 일정',
+  s4Body: '<div class="info-row"><span class="info-label">예산 규모</span><span class="info-value">5억원 ~ 10억원</span></div><div class="info-row"><span class="info-label">도입 시기</span><span class="info-value">1년 이내</span></div>',
+  basic: '<div class="info-row"><span class="info-label">이름</span><span class="info-value">김도현</span></div><div class="info-row"><span class="info-label">소속</span><span class="info-value">방위사업청</span></div><div class="info-row"><span class="info-label">직책</span><span class="info-value">사업관리관</span></div>',
+  bentoBasic: '김도현<br><span style="font-size:12px;color:var(--text-tertiary);font-weight:400">방위사업청</span>',
+  bentoS2: '<div class="chip-list"><span class="chip" style="font-size:11px;padding:3px 8px">#감시정찰</span><span class="chip" style="font-size:11px;padding:3px 8px">#드론</span><span style="font-size:11px;color:var(--text-tertiary)">+2</span></div>',
+  bentoS3Val: '산악 지형 야간 감시용 소형 드론 시스템 도입 검토 중...',
+  bentoS3Chips: '<span class="chip ai" style="font-size:11px;padding:3px 8px">소형 드론</span><span class="chip ai" style="font-size:11px;padding:3px 8px">야간 감시</span><span class="chip ai" style="font-size:11px;padding:3px 8px">ISR</span><span class="chip ai" style="font-size:11px;padding:3px 8px">C4I</span>',
+  bentoS4Val: '5억~10억', bentoS4bVal: '1년 이내',
+  bentoS4Title: '예산 규모', bentoS4bTitle: '도입 시기',
+};
+
+const SELLER = {
+  pageId: 'BM-005', route: '/exhibitor/profile', applyRoute: '/exhibitor/apply',
+  avatar: '한', name: '(주)한화에어로스페이스', org: 'A홀 B-12 · 김철수 부장',
+  badge: '참가사', badgeClass: 'badge-seller', pct: 90,
+  ctaTitle: '프로필 보강하기', ctaDesc: '프로필을 채울수록 바이어 매칭률이 올라갑니다',
+  hint: '기업 소개를 보강하면 바이어 노출이 늘어납니다',
+  s2Title: '전시 품목',
+  s2Body: '<div class="chip-list"><span class="chip">#소형 정찰드론</span><span class="chip">#감시 시스템</span><span class="chip">#야간 카메라</span></div><div style="margin-top:8px;font-size:13px;color:var(--text-secondary);line-height:1.5">소형 정찰드론 KD-100: 3kg급 야간 감시 특화 모델. 적외선/주간 듀얼 카메라, 자율 귀환.</div>',
+  s3Title: '기업 소개 & AI 키워드',
+  s3Body: '<div style="margin-bottom:10px;line-height:1.6">방산 전자광학/항공우주 전문기업. 산악/도심 환경 특화 소형 드론 ISR 솔루션 보유. 국내외 10개국 수출 실적.</div><div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px;font-weight:600">AI 추출 키워드</div><div class="chip-list"><span class="chip ai">ISR 드론</span><span class="chip ai">전자광학</span><span class="chip ai">야간 감시</span><span class="chip ai">소형 UAV</span><span class="chip ai">C4I 연동</span></div>',
+  s4Title: '타겟 바이어',
+  s4Body: '<div class="chip-list"><span class="chip">#군 (육군·해병대)</span><span class="chip">#정부기관</span><span class="chip">#방산업체</span><span class="chip">#해외 군·정부</span></div>',
+  basic: '<div class="info-row"><span class="info-label">기업명</span><span class="info-value">(주)한화에어로스페이스</span></div><div class="info-row"><span class="info-label">부스</span><span class="info-value">A홀 B-12</span></div><div class="info-row"><span class="info-label">담당자</span><span class="info-value">김철수 부장</span></div>',
+  bentoBasic: '한화에어로스페이스<br><span style="font-size:12px;color:var(--text-tertiary);font-weight:400">A홀 B-12</span>',
+  bentoS2: '<div class="chip-list"><span class="chip" style="font-size:11px;padding:3px 8px">#정찰드론</span><span class="chip" style="font-size:11px;padding:3px 8px">#감시</span><span style="font-size:11px;color:var(--text-tertiary)">+1</span></div>',
+  bentoS3Val: '방산 전자광학/항공우주 전문기업. 소형 드론 ISR 솔루션 보유...',
+  bentoS3Chips: '<span class="chip ai" style="font-size:11px;padding:3px 8px">ISR 드론</span><span class="chip ai" style="font-size:11px;padding:3px 8px">전자광학</span><span class="chip ai" style="font-size:11px;padding:3px 8px">야간 감시</span><span class="chip ai" style="font-size:11px;padding:3px 8px">소형 UAV</span>',
+  bentoS4Val: '군 · 정부기관', bentoS4bVal: '방산업체 · 해외',
+  bentoS4Title: '타겟 바이어 1', bentoS4bTitle: '타겟 바이어 2',
+};
+
+function editStep(step) {
+  const d = currentRole === 'buyer' ? BUYER : SELLER;
+  alert('→ ' + d.applyRoute + '?step=' + step + '&from=profile\n저장 후 ' + d.route + ' 로 복귀');
+}
+
+function switchVariant(v) {
+  currentVariant = v;
+  document.querySelectorAll('.variant-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.variant-btn').forEach(b => { if (b.textContent.startsWith(v)) b.classList.add('active'); });
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('variant-' + v).classList.add('active');
+}
+
+// 개발용 미리보기 토글 — 별도 DOM/재렌더 없이 셸 폭만 제약(컨테이너 쿼리가 reflow)
+function setPreview(mode) {
+  document.body.classList.toggle('preview-mobile', mode === 'mobile');
+  document.querySelectorAll('.view-toggle-btn').forEach(function(b){ b.classList.toggle('active', b.textContent.trim().toLowerCase().indexOf(mode) !== -1); });
+}
+
+function switchRole(role) {
+  currentRole = role;
+  document.querySelectorAll('.role-toggle-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.role-toggle-btn').forEach(b => {
+    if ((role === 'buyer' && b.textContent === '바이어') || (role === 'seller' && b.textContent === '참가사')) b.classList.add('active');
+  });
+  applyData();
+}
+
+function el(id) { return document.getElementById(id); }
+
+function applyData() {
+  const d = currentRole === 'buyer' ? BUYER : SELLER;
+  const circ = 2 * Math.PI * 28;
+  const offset = circ * (1 - d.pct / 100);
+
+  // Bar label
+  el('bar-label').textContent = d.pageId;
+  if (window.__nabiSetUser) window.__nabiSetUser(d.name, d.avatar);
+
+  // Variant A
+  el('a-title').textContent = '내 프로필';
+  el('a-route').textContent = d.route;
+  el('a-avatar').textContent = d.avatar;
+  el('a-name').textContent = d.name;
+  el('a-org').textContent = d.org;
+  el('a-badge').textContent = d.badge;
+  el('a-badge').className = 'profile-role-badge ' + d.badgeClass;
+  el('a-pct').textContent = d.pct + '%';
+  el('a-bar').style.width = d.pct + '%';
+  el('a-hint').textContent = d.hint;
+  el('a-cta-title').textContent = d.ctaTitle;
+  el('a-cta-desc').textContent = d.ctaDesc;
+  el('a-basic').innerHTML = d.basic;
+  el('a-s2-title').textContent = d.s2Title;
+  el('a-s2-body').innerHTML = d.s2Body;
+  el('a-s3-title').textContent = d.s3Title;
+  el('a-s3-body').innerHTML = d.s3Body;
+  el('a-s4-title').textContent = d.s4Title;
+  el('a-s4-body').innerHTML = d.s4Body;
+
+  // Variant B
+  el('b-title').textContent = '내 프로필';
+  el('b-route').textContent = d.route;
+  el('b-avatar').textContent = d.avatar;
+  el('b-name').textContent = d.name;
+  el('b-org').textContent = d.org;
+  el('b-pct').textContent = d.pct + '%';
+  el('b-bar').style.width = d.pct + '%';
+  el('b-cta-text').textContent = d.ctaDesc;
+  el('b-basic').innerHTML = d.basic;
+  el('b-s2-title').textContent = d.s2Title;
+  el('b-s2-body').innerHTML = '<div style="display:flex;justify-content:space-between;align-items:flex-start">' + d.s2Body + '<button class="edit-btn" style="flex-shrink:0" onclick="editStep(2)">수정 ›</button></div>';
+  el('b-s3-title').textContent = d.s3Title;
+  el('b-s3-body').innerHTML = '<div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1">' + d.s3Body + '</div><button class="edit-btn" style="flex-shrink:0" onclick="editStep(3)">수정 ›</button></div>';
+  el('b-s4-title').textContent = d.s4Title;
+  el('b-s4-body').innerHTML = '<div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1">' + d.s4Body + '</div><button class="edit-btn" style="flex-shrink:0" onclick="editStep(4)">수정 ›</button></div>';
+
+  // Variant C
+  el('c-title').textContent = '내 프로필';
+  el('c-route').textContent = d.route;
+  el('c-avatar').textContent = d.avatar;
+  el('c-name').textContent = d.name;
+  el('c-org').textContent = d.org;
+  el('c-badge').textContent = d.badge;
+  el('c-badge').className = 'profile-role-badge ' + d.badgeClass;
+  el('c-pct').textContent = d.pct + '%';
+  el('c-ring').setAttribute('stroke-dashoffset', offset.toFixed(2));
+  el('c-basic').innerHTML = d.bentoBasic;
+  el('c-s2-title').textContent = d.s2Title;
+  el('c-s2-val').innerHTML = d.bentoS2;
+  el('c-s3-title').textContent = d.s3Title;
+  el('c-s3-val').textContent = d.bentoS3Val;
+  el('c-s3-chips').innerHTML = d.bentoS3Chips;
+  el('c-s4-title').textContent = d.bentoS4Title;
+  el('c-s4-val').textContent = d.bentoS4Val;
+  el('c-s4b-title').textContent = d.bentoS4bTitle;
+  el('c-s4b-val').textContent = d.bentoS4bVal;
+  el('c-cta-title').textContent = d.ctaTitle;
+  el('c-cta-desc').textContent = d.ctaDesc;
+}
+
+function toggleAccordion(trigger) {
+  trigger.closest('.accordion-card').classList.toggle('open');
+}
+
+// Init from URL params
+const params = new URLSearchParams(location.search);
+if (params.get('v')) switchVariant(params.get('v').toUpperCase());
+if (params.get('role')) switchRole(params.get('role'));
+applyData();
+</script>
+
+<script>
+  window.NABI_NAV_ACTIVE = 'profile';
+  window.NABI_NAV_USER = { name: '김도현', avatar: '김' };
+</script>
+<script src="nabi-nav.js?v=20260607"></script>
+
+<script>
+/* 기본 = 데스크톱(셸 전체폭). ?view=mobile 로 폰 프리뷰 시작 가능. */
+(function () {
+  if (new URLSearchParams(location.search).get('view') === 'mobile') setPreview('mobile');
+})();
+</script>
+</body>
+</html>

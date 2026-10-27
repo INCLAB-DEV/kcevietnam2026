@@ -1,0 +1,37 @@
+{
+  "$description": "NABI primitive color palette — raw values only. Never bind directly; semantic tokens alias these. Colors are PLACEHOLDER until the NABI color system is finalized (RGB-light primary concept approved, purple banned).",
+  "color": {
+    "white":    { "$type": "color", "$value": "#ffffff" },
+    "offwhite": { "$type": "color", "$value": "#fdfcfb" },
+    "stone": {
+      "50":  { "$type": "color", "$value": "#f5f3f0" },
+      "200": { "$type": "color", "$value": "#e5e2de" },
+      "500": { "$type": "color", "$value": "#777169" }
+    },
+    "gray": {
+      "700": { "$type": "color", "$value": "#4a4a4a" }
+    },
+    "ink": {
+      "950": { "$type": "color", "$value": "#08090a" }
+    },
+    "blue": {
+      "50":  { "$type": "color", "$value": "#eff6ff" },
+      "600": { "$type": "color", "$value": "#2563eb" }
+    },
+    "green": {
+      "50":  { "$type": "color", "$value": "#f0fdf4" },
+      "600": { "$type": "color", "$value": "#16a34a" }
+    },
+    "red": {
+      "50":  { "$type": "color", "$value": "#fef2f2" },
+      "600": { "$type": "color", "$value": "#dc2626" }
+    },
+    "orange": {
+      "50":  { "$type": "color", "$value": "#fff7ed" },
+      "600": { "$type": "color", "$value": "#ea580c" }
+    },
+    "amber": {
+      "500": { "$type": "color", "$value": "#f59e0b" }
+    }
+  }
+}

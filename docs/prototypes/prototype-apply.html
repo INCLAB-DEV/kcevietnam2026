@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NABI - 바이어 프로필 작성 프로토타입 (BM-001, THROWAWAY)</title>
+<link rel="stylesheet" href="nabi-ui.css?v=20260607">
+<!-- PROTOTYPE: 3 variants of BM-001 buyer apply flow. Question: "What should the 5-step 1-action-1-page flow look like?" -->
+<!-- BM-002 seller prototype: prototype-apply-seller.html -->
+<style>
+  /* 토큰·리셋·크롬·variant-bar·view-toggle·app-shell·content-form·preview-mobile 은
+     nabi-ui.css(단일 소스)에서 상속. 레거시 기기 프레임/데스크톱 카드 정의는 제거됨. */
+  body { background: var(--bg-primary); }
+
+  /* ── 단일 셸 반응형 ──
+     모든 변형(A/B/C 위저드)을 #apply-root(=.app-content.content-form) 한 곳에 단 한 번 렌더.
+     좁음(폰/프리뷰) vs 넓음(데스크톱) 차이는 @container shell 규칙으로 reflow. */
+
+  /* ========== VARIANT CONTAINERS ========== */
+  .variant { display: none; }
+  .variant.active { display: flex; flex-direction: column; }
+
+  /* 넓음(데스크톱, ≥720cqi): 자연 높이로 흐르고 위저드 카드가 폭을 채움 */
+  @container shell (min-width: 720px) {
+    .va-progress { padding: 28px 0 16px; }
+    .va-content { padding: 8px 0 16px; }
+    .va-title { font-size: 24px; }
+    .va-desc { font-size: 15px; }
+    .va-fields { overflow: visible; padding-bottom: 8px; }
+    .va-bottom { padding: 20px 0 32px; display: flex; flex-direction: column; align-items: center; }
+    .va-bottom .btn-primary,
+    .va-bottom .btn-secondary { max-width: 560px; width: 100%; }
+    .va-bottom .va-bottom-row { justify-content: center; max-width: 560px; width: 100%; }
+    .va-bottom .va-bottom-row .btn-primary { flex: 1; }
+    .va-complete { padding: 56px 0; }
+    .vb-header { padding: 28px 0 20px; }
+    .vb-header-title { font-size: 20px; }
+    .vb-step-header { padding: 18px 0; }
+    .vb-step-body { padding: 0 0 24px 40px; }
+    .vb-steps { overflow: visible; padding-bottom: 24px; }
+    #vb-complete { padding: 56px 0; }
+    .vc-container { background: #ffffff; }
+    .vc-header { padding: 18px 0; }
+    .vc-messages { padding: 24px 0; min-height: 400px; overflow: visible; }
+    .vc-msg { max-width: 70%; font-size: 15px; }
+    .vc-input-area { padding: 16px 0 28px; }
+    .vc-summary-card { max-width: 520px; }
+    .vc-action-area { max-width: 520px; }
+  }
+
+  /* ========================================
+     COMMON COMPONENTS
+     ======================================== */
+  .btn-primary {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font-stack);
+    transition: opacity 0.2s;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 14px;
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1.5px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-stack);
+  }
+
+  .input-group { margin-bottom: 20px; }
+  .input-label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .input-hint {
+    font-size: 12px;
+    color: var(--accent-primary);
+    margin-top: 6px;
+    line-height: 1.5;
+    background: var(--accent-subtle);
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+  }
+  .input-field {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1.5px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-family: var(--font-stack);
+    outline: none;
+    transition: border-color 0.2s;
+    background: var(--bg-elevated);
+  }
+  .input-field:focus { border-color: var(--accent-primary); }
+  .input-field.readonly {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    pointer-events: none;
+  }
+  textarea.input-field { min-height: 80px; resize: vertical; line-height: 1.6; }
+
+  .keyword-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .keyword-chip {
+    padding: 10px 16px;
+    border: 1.5px solid var(--border-default);
+    border-radius: var(--radius-full);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--bg-elevated);
+  }
+  .keyword-chip:hover { border-color: var(--accent-primary); }
+  .keyword-chip.selected {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+  }
+
+  .ai-suggest {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: #f0f7ff;
+    border: 1px dashed var(--accent-primary);
+    border-radius: var(--radius-md);
+    animation: fadeIn 0.3s ease;
+  }
+  .ai-suggest-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ai-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--accent-primary);
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    color: var(--accent-primary);
+    cursor: pointer;
+    margin: 4px;
+  }
+  .ai-chip:hover { background: var(--accent-subtle); }
+  .ai-chip.added { background: var(--accent-primary); color: white; }
+
+  .inline-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 14px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    color: var(--status-error);
+    font-weight: 500;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    animation: fadeIn 0.2s ease;
+  }
+  .inline-alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fillGraph { from { width: 0; } }
+
+  /* ========================================
+     VARIANT A - TOSS STYLE (Full-screen cards, big type, step dots)
+     ======================================== */
+  .va-step { display: none; flex-direction: column; animation: fadeIn 0.3s ease; }
+  .va-step.active { display: flex; }
+
+  .va-progress {
+    display: flex;
+    align-items: center;
+    padding: 20px 24px 16px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .va-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--border-default);
+    transition: all 0.3s;
+  }
+  .va-dot.done { background: var(--accent-primary); }
+  .va-dot.current {
+    background: var(--accent-primary);
+    width: 28px;
+    border-radius: 5px;
+  }
+  .va-graph {
+    display: none;
+  }
+  .va-graph-fill {
+    height: 100%;
+    background: var(--accent-primary);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+    animation: fillGraph 0.5s ease;
+  }
+
+  .va-content {
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .va-step-label {
+    font-size: 13px;
+    color: var(--accent-primary);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .va-title {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+  .va-desc {
+    font-size: 14px;
+    color: var(--text-tertiary);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .va-fields { padding-bottom: 16px; }
+  .va-bottom {
+    padding: 16px 24px 32px;
+    flex-shrink: 0;
+  }
+  .va-bottom-row {
+    display: flex;
+    gap: 10px;
+  }
+  .va-btn-prev {
+    padding: 16px 20px;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border: 1.5px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-stack);
+    white-space: nowrap;
+  }
+  .va-btn-prev:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+
+  /* Readonly info card for step 1 */
+  .va-info-card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .va-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-default);
+    font-size: 15px;
+  }
+  .va-info-row:last-child { border-bottom: none; }
+  .va-info-label { color: var(--text-tertiary); font-weight: 500; }
+  .va-info-value { font-weight: 600; }
+
+  /* Complete screen */
+  .va-complete {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 24px;
+    flex: 1;
+  }
+  .va-check {
+    width: 64px; height: 64px;
+    background: var(--status-success);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: white;
+    margin-bottom: 20px;
+  }
+
+  /* ========================================
+     VARIANT B - STEPPER FORM (Accordion steps, all visible)
+     ======================================== */
+  .vb-container {
+    display: flex;
+    flex-direction: column;
+  }
+  .vb-header {
+    padding: 20px 20px 16px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-default);
+    flex-shrink: 0;
+  }
+  .vb-header-title { font-size: 18px; font-weight: 800; }
+  .vb-header-sub { font-size: 13px; color: var(--text-tertiary); margin-top: 4px; }
+
+  .vb-steps {
+    padding: 0 0 24px;
+  }
+  .vb-step {
+    border-bottom: 1px solid var(--border-default);
+  }
+  .vb-step-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .vb-step-header:hover { background: var(--bg-secondary); }
+  .vb-step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--border-default);
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .vb-step.active .vb-step-num {
+    background: var(--accent-primary);
+    color: white;
+  }
+  .vb-step.done .vb-step-num {
+    background: var(--status-success);
+    color: white;
+  }
+  .vb-step-title { font-size: 15px; font-weight: 600; }
+  .vb-step-badge {
+    margin-left: auto;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-weight: 600;
+  }
+  .vb-step.done .vb-step-badge {
+    background: #dcfce7;
+    color: var(--status-success);
+  }
+  .vb-step.active .vb-step-badge {
+    background: var(--accent-subtle);
+    color: var(--accent-primary);
+  }
+  .vb-step-body {
+    display: none;
+    padding: 0 20px 20px 60px;
+    animation: fadeIn 0.2s ease;
+  }
+  .vb-step.active .vb-step-body { display: block; }
+  .vb-step-action {
+    margin-top: 12px;
+  }
+
+  .vb-progress-bar {
+    height: 3px;
+    background: var(--bg-secondary);
+    position: relative;
+  }
+  .vb-progress-fill {
+    height: 100%;
+    background: var(--accent-primary);
+    transition: width 0.5s ease;
+  }
+
+  /* ========================================
+     VARIANT C - CONVERSATIONAL (Chat-like Q&A)
+     ======================================== */
+  .vc-container {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary);
+    min-height: 60vh;
+  }
+  .vc-header {
+    padding: 16px 20px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-default);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .vc-avatar {
+    width: 36px; height: 36px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .vc-header-text { font-size: 15px; font-weight: 700; }
+  .vc-header-sub { font-size: 12px; color: var(--text-tertiary); }
+  .vc-step-pills {
+    margin-left: auto;
+    display: flex;
+    gap: 4px;
+  }
+  .vc-pill {
+    width: 20px; height: 6px;
+    border-radius: 3px;
+    background: var(--border-default);
+  }
+  .vc-pill.done { background: var(--accent-primary); }
+  .vc-pill.current { background: var(--accent-primary); width: 32px; }
+
+  .vc-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .vc-msg {
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    animation: fadeIn 0.3s ease;
+  }
+  .vc-msg.bot {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-bottom-left-radius: 4px;
+    align-self: flex-start;
+  }
+  .vc-msg.user {
+    background: var(--accent-primary);
+    color: white;
+    border-bottom-right-radius: 4px;
+    align-self: flex-end;
+  }
+  .vc-msg.info {
+    background: var(--accent-subtle);
+    border: 1px solid #dbeafe;
+    border-radius: var(--radius-md);
+    align-self: stretch;
+    max-width: 100%;
+    text-align: center;
+    font-size: 13px;
+    color: var(--accent-primary);
+    font-weight: 500;
+  }
+
+  .vc-input-area {
+    padding: 12px 16px 28px;
+    background: var(--bg-elevated);
+    border-top: 1px solid var(--border-default);
+    flex-shrink: 0;
+  }
+  .vc-input-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .vc-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1.5px solid var(--border-default);
+    border-radius: 24px;
+    font-size: 14px;
+    font-family: var(--font-stack);
+    outline: none;
+    resize: none;
+    max-height: 80px;
+  }
+  .vc-input:focus { border-color: var(--accent-primary); }
+  .vc-send {
+    width: 40px; height: 40px;
+    background: var(--accent-primary);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .vc-quick-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 0 0;
+  }
+  .vc-quick-tag {
+    padding: 8px 14px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    cursor: pointer;
+    font-family: var(--font-stack);
+    transition: all 0.15s;
+  }
+  .vc-quick-tag:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+  }
+  .vc-quick-tag.selected {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+  }
+
+  .vc-action-area {
+    padding: 0 4px;
+    animation: fadeIn 0.3s ease;
+  }
+  .vc-action-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font-stack);
+    transition: opacity 0.2s;
+    animation: fadeIn 0.2s ease;
+  }
+  .vc-action-btn:hover { opacity: 0.9; }
+  .vc-action-btn.secondary {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1.5px solid var(--border-default);
+  }
+
+  /* Summary card in chat */
+  .vc-summary-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    align-self: stretch;
+    max-width: 100%;
+  }
+  .vc-summary-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .vc-summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--bg-secondary);
+    font-size: 13px;
+  }
+  .vc-summary-row:last-child { border-bottom: none; }
+</style>
+</head>
+<body>
+
+<!-- 글로벌 nav(app-bar + 드로어)는 nabi-nav.js가 .app-shell 상단에 주입 -->
+<div class="app-shell">
+  <main class="app-main">
+    <div class="app-content content-form" id="apply-root">
+
+  <!-- ==========================================
+       VARIANT A - TOSS STYLE
+       ========================================== -->
+  <div class="variant active" id="varA">
+
+    <!-- Step 1: Basic info -->
+    <div class="va-step active" id="va-step-1">
+      <div class="va-progress">
+        <div class="va-dot current"></div>
+        <div class="va-dot"></div>
+        <div class="va-dot"></div>
+        <div class="va-dot"></div>
+        <div class="va-dot"></div>
+        <div class="va-graph"><div class="va-graph-fill" style="width:20%"></div></div>
+      </div>
+      <div class="va-content">
+        <div class="va-step-label">1단계</div>
+        <div class="va-title">기본 정보를 확인해주세요</div>
+        <div class="va-desc">개인화 링크를 통해 확인된 정보입니다</div>
+        <div class="va-fields">
+          <div style="font-size:12px; font-weight:600; color:var(--text-tertiary); margin-bottom:8px;">기관 정보</div>
+          <div class="va-info-card">
+            <div class="va-info-row">
+              <span class="va-info-label">기관명</span>
+              <span class="va-info-value">육군 제2군단</span>
+            </div>
+            <div class="va-info-row">
+              <span class="va-info-label">국적</span>
+              <span class="va-info-value">대한민국</span>
+            </div>
+          </div>
+          <div style="font-size:12px; font-weight:600; color:var(--text-tertiary); margin-bottom:8px; margin-top:16px;">작성자 정보</div>
+          <div class="va-info-card">
+            <div class="va-info-row">
+              <span class="va-info-label">이름</span>
+              <span class="va-info-value">강시우</span>
+            </div>
+            <div class="va-info-row">
+              <span class="va-info-label">직위</span>
+              <span class="va-info-value">대위</span>
+            </div>
+            <div class="va-info-row">
+              <span class="va-info-label">이메일</span>
+              <span class="va-info-value">buyer@example.com</span>
+            </div>
+            <div class="va-info-row">
+              <span class="va-info-label">전화번호</span>
+              <span class="va-info-value">010-0000-0000</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="va-bottom">
+        <button class="btn-primary" onclick="vaNext(2)">정보가 맞습니다</button>
+        <div style="text-align:center; margin-top:12px;">
+          <span onclick="document.getElementById('va-wrong-info').style.display='block'; this.style.display='none';" style="font-size:13px; color:var(--text-tertiary); cursor:pointer; text-decoration:underline;">정보가 다릅니다</span>
+          <div id="va-wrong-info" style="display:none; margin-top:12px; padding:14px 16px; background:var(--bg-secondary); border-radius:var(--radius-md); text-align:left;">
+            <div style="font-size:13px; font-weight:600; margin-bottom:8px;">정보 수정은 운영사무국에 문의해주세요</div>
+            <div style="font-size:13px; color:var(--text-secondary); line-height:1.6;">
+              DX Korea 2026 운영사무국<br>
+              &#128222; 02-xxxx-xxxx<br>
+              &#128231; support@dxkorea.kr
+            </div>
+            <div style="font-size:12px; color:var(--text-tertiary); margin-top:10px;">현재 정보로 우선 진행할 수 있습니다</div>
+            <button class="btn-secondary" onclick="vaNext(2)" style="margin-top:10px; font-size:13px; padding:10px;">현재 정보로 진행하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Interest areas -->
+    <div class="va-step" id="va-step-2">
+      <div class="va-progress">
+        <div class="va-dot done"></div>
+        <div class="va-dot current"></div>
+        <div class="va-dot"></div>
+        <div class="va-dot"></div>
+        <div class="va-dot"></div>
+        <div class="va-graph"><div class="va-graph-fill" style="width:40%"></div></div>
+      </div>
+      <div class="va-content">
+        <div class="va-step-label">2단계</div>
+        <div class="va-title">어떤 분야에 관심이 있으신가요?</div>
+        <div class="va-desc">선택한 분야의 기업과 우선 매칭됩니다</div>
+        <div class="va-fields">
+          <div style="font-size:13px; font-weight:600; color:var(--text-tertiary); margin-bottom:10px;">방산 분야</div>
+          <div class="keyword-grid">
+            <div class="keyword-chip" onclick="this.classList.toggle('selected')">무인기/드론</div>
+            <div class="keyword-chip" onclick="this.classList.toggle('selected')">통신장비</div>
+            <div class="keyword-chip" onclick="this.classList.toggle('selected')">감시/정찰</div>
+            <div class="keyword-chip" onclick="this.classList.toggle('selected')">사이버보안</div>
+            <div class="keyword-chip" onclick="this.classList.toggle('selected')">함정/해양</div>
+            <div class="keyword-chip" onclick="this.classList.toggle('selected')">항공/우주</div>
+            <div class="keyword-chip" onclick="this.classList.toggle('selected')">지상무기</div>
+            <div class="keyword-chip" onclick="this.classList.toggle('selected')">센서/광학</div>
+          </div>
+          <div style="font-size:13px; font-weight:600; color:var(--text-tertiary); margin-bottom:10px;">기술/소재</div>
+          <div class="keyword-grid">
+            <div class="keyword-chip" onclick="this.classList.toggle('selected')">복합소재</div>
+            <div class="keyword-chip" onclick="this.classList.toggle('selected')">전자전</div>
+            <div class="keyword-chip" onclick="this.classList.toggle('selected')">AI/자율주행</div>
+            <div class="keyword-chip" onclick="this.classList.toggle('selected')">시뮬레이션</div>
+            <div class="keyword-chip" onclick="this.classList.toggle('selected')">에너지/배터리</div>
+            <div class="keyword-chip" onclick="this.classList.toggle('selected')">방호/보호</div>
+          </div>
+        </div>
+      </div>
+      <div class="va-bottom">
+        <div class="va-bottom-row">
+          <button class="va-btn-prev" onclick="vaGoTo(1)">&larr; 이전</button>
+          <button class="btn-primary" onclick="vaNext(3)">다음</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Detailed needs -->
+    <div class="va-step" id="va-step-3">
+      <div class="va-progress">
+        <div class="va-dot done"></div>
+        <div class="va-dot done"></div>
+        <div class="va-dot current"></div>
+        <div class="va-dot"></div>
+        <div class="va-dot"></div>
+        <div class="va-graph"><div class="va-graph-fill" style="width:60%"></div></div>
+      </div>
+      <div class="va-content">
+        <div class="va-step-label">3단계</div>
+        <div class="va-title">상세 니즈를 알려주세요</div>
+        <div class="va-desc">구체적일수록 정확한 매칭 파트너를 찾아드려요</div>
+        <div class="va-fields">
+          <div class="input-group">
+            <label class="input-label">찾고 있는 제품/기술</label>
+            <textarea class="input-field" placeholder="예: 야간 감시가 가능한 소형 드론" oninput="vaCheckAI(this)"></textarea>
+            <div class="input-hint">구체적인 제품명을 적으면 해당 제품을 전시하는 기업과 바로 매칭됩니다</div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">운용 환경/용도</label>
+            <textarea class="input-field" placeholder="예: 산악 지형, 해상 감시" style="min-height:60px" oninput="vaCheckAI(this)"></textarea>
+            <div class="input-hint">같은 장비도 운용 환경에 따라 적합한 기업이 다릅니다</div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">요구 스펙/조건 (선택)</label>
+            <textarea class="input-field" placeholder="예: 비행시간 2시간 이상, 적외선 카메라 탑재" style="min-height:60px"></textarea>
+          </div>
+          <div class="input-group">
+            <label class="input-label">도입 단계</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <div class="keyword-chip" onclick="vaSelectOne(this)" style="font-size:13px;">정보 수집</div>
+              <div class="keyword-chip" onclick="vaSelectOne(this)" style="font-size:13px;">비교 검토</div>
+              <div class="keyword-chip" onclick="vaSelectOne(this)" style="font-size:13px;">구매 확정</div>
+            </div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">기관 유형</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <div class="keyword-chip" onclick="vaSelectOne(this)" style="font-size:13px;">군</div>
+              <div class="keyword-chip" onclick="vaSelectOne(this)" style="font-size:13px;">정부/공공기관</div>
+              <div class="keyword-chip" onclick="vaSelectOne(this)" style="font-size:13px;">방산 기업</div>
+              <div class="keyword-chip" onclick="vaSelectOne(this)" style="font-size:13px;">민간 기업</div>
+              <div class="keyword-chip" onclick="vaSelectOne(this)" style="font-size:13px;">연구/학계</div>
+            </div>
+          </div>
+
+          <div class="ai-suggest" id="va-ai-suggest" style="display:none;">
+            <div class="ai-suggest-title">&#129302; AI 키워드 추천</div>
+            <div>
+              <span class="ai-chip" onclick="this.classList.toggle('added')">+ 소형 드론</span>
+              <span class="ai-chip" onclick="this.classList.toggle('added')">+ 야간 감시</span>
+              <span class="ai-chip" onclick="this.classList.toggle('added')">+ 적외선</span>
+              <span class="ai-chip" onclick="this.classList.toggle('added')">+ ISR</span>
+              <span class="ai-chip" onclick="this.classList.toggle('added')">+ 산악 운용</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="va-bottom">
+        <div class="va-bottom-row">
+          <button class="va-btn-prev" onclick="vaGoTo(2)">&larr; 이전</button>
+          <button class="btn-primary" onclick="vaNext(4)">다음</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Budget/Timeline -->
+    <div class="va-step" id="va-step-4">
+      <div class="va-progress">
+        <div class="va-dot done"></div>
+        <div class="va-dot done"></div>
+        <div class="va-dot done"></div>
+        <div class="va-dot current"></div>
+        <div class="va-dot"></div>
+        <div class="va-graph"><div class="va-graph-fill" style="width:80%"></div></div>
+      </div>
+      <div class="va-content">
+        <div class="va-step-label">4단계</div>
+        <div class="va-title">예산과 일정을 알려주세요</div>
+        <div class="va-desc">조건이 맞는 기업을 우선 매칭합니다</div>
+        <div class="va-fields">
+          <div class="input-group">
+            <label class="input-label">예산 범위</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <div style="flex:1;">
+                <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">최소</div>
+                <input class="input-field" type="text" placeholder="0원" style="text-align:center;">
+              </div>
+              <span style="color:var(--text-tertiary); font-size:18px; margin-top:16px;">~</span>
+              <div style="flex:1;">
+                <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">최대</div>
+                <input class="input-field" type="text" placeholder="제한 없음" style="text-align:center;">
+              </div>
+            </div>
+            <div class="input-hint">예산 범위를 알려주시면 가격대가 맞는 기업을 우선 매칭해드려요</div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">도입 시기</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <div class="keyword-chip" onclick="vaSelectOne(this)" style="font-size:13px;">6개월 내</div>
+              <div class="keyword-chip" onclick="vaSelectOne(this)" style="font-size:13px;">1년 내</div>
+              <div class="keyword-chip" onclick="vaSelectOne(this)" style="font-size:13px;">2년 내</div>
+              <div class="keyword-chip" onclick="vaSelectOne(this)" style="font-size:13px;">미정</div>
+            </div>
+            <div class="input-hint">도입이 급할수록 즉시 납품 가능한 기업이 우선 매칭됩니다</div>
+          </div>
+
+          <div style="margin-top:8px; padding-top:16px; border-top:1px solid var(--border-default);">
+            <div style="font-size:13px; color:var(--text-tertiary); font-weight:600; margin-bottom:12px;">더 정확한 매칭을 위해 (선택)</div>
+            <div class="input-group">
+              <label class="input-label">현재 도입 현황</label>
+              <textarea class="input-field" placeholder="예: OO드론 1세대 운용 중" style="min-height:60px"></textarea>
+              <div class="input-hint">현재 사용 중인 장비를 알려주시면, 업그레이드에 적합한 기업을 우선 매칭해드려요</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="va-bottom">
+        <div class="va-bottom-row">
+          <button class="va-btn-prev" onclick="vaGoTo(3)">&larr; 이전</button>
+          <button class="btn-primary" onclick="vaNext(5)">다음</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 5: Complete -->
+    <div class="va-step" id="va-step-5">
+      <div class="va-progress">
+        <div class="va-dot done"></div>
+        <div class="va-dot done"></div>
+        <div class="va-dot done"></div>
+        <div class="va-dot done"></div>
+        <div class="va-dot done"></div>
+        <div class="va-graph"><div class="va-graph-fill" style="width:100%"></div></div>
+      </div>
+      <div class="va-complete">
+        <div class="va-check">&#10003;</div>
+        <div class="va-title">프로필 작성 완료!</div>
+        <div class="va-desc" style="margin-bottom:24px;">
+          비즈매칭 신청기간 종료 후<br>
+          AI가 최적의 매칭 파트너를 찾아드립니다.<br>
+          결과는 이메일로 알려드릴게요.
+        </div>
+        <div style="width:100%; background:var(--bg-secondary); border-radius:var(--radius-md); padding:16px; text-align:left; margin-bottom:20px;">
+          <div style="font-size:13px; color:var(--text-tertiary); margin-bottom:4px;">비즈매칭 신청기간</div>
+          <div style="font-size:15px; font-weight:700;">8/26 (화) ~ 9/11 (목)</div>
+        </div>
+        <button onclick="location.href='prototype-discover.html'" style="width:100%; padding:14px; background:var(--accent-primary); color:#fff; border:none; border-radius:var(--radius-md); font-size:15px; font-weight:700; cursor:pointer; font-family:var(--font-sans);">기업 탐색하러 가기 &rarr;</button>
+        <button class="btn-secondary" onclick="alert('내 프로필 조회 화면(/profile)으로 이동')" style="margin-top:8px;">내 프로필 확인하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       VARIANT B - STEPPER FORM
+       ========================================== -->
+  <div class="variant" id="varB">
+    <div class="vb-container">
+      <div class="vb-header">
+        <div class="vb-header-title">비즈매칭 프로필 작성</div>
+        <div class="vb-header-sub">강시우 대위 &middot; 바이어</div>
+      </div>
+      <div class="vb-progress-bar">
+        <div class="vb-progress-fill" id="vb-progress" style="width:0%"></div>
+      </div>
+
+      <div class="vb-steps">
+        <!-- Step 1 -->
+        <div class="vb-step active" id="vb-s1">
+          <div class="vb-step-header" onclick="vbToggle(1)">
+            <div class="vb-step-num">1</div>
+            <div class="vb-step-title">기본정보 확인</div>
+            <span class="vb-step-badge">진행 중</span>
+          </div>
+          <div class="vb-step-body">
+            <div style="font-size:11px; font-weight:600; color:var(--text-tertiary); margin-bottom:6px;">기관 정보</div>
+            <div class="va-info-card" style="margin:0;">
+              <div class="va-info-row"><span class="va-info-label">기관명</span><span class="va-info-value">육군 제2군단</span></div>
+              <div class="va-info-row"><span class="va-info-label">국적</span><span class="va-info-value">대한민국</span></div>
+            </div>
+            <div style="font-size:11px; font-weight:600; color:var(--text-tertiary); margin:12px 0 6px;">작성자 정보</div>
+            <div class="va-info-card" style="margin:0;">
+              <div class="va-info-row"><span class="va-info-label">이름</span><span class="va-info-value">강시우</span></div>
+              <div class="va-info-row"><span class="va-info-label">직위</span><span class="va-info-value">대위</span></div>
+              <div class="va-info-row"><span class="va-info-label">이메일</span><span class="va-info-value">buyer@example.com</span></div>
+              <div class="va-info-row"><span class="va-info-label">전화번호</span><span class="va-info-value">010-0000-0000</span></div>
+            </div>
+            <div style="margin-top:10px;">
+              <span onclick="document.getElementById('vb-wrong-info').style.display=document.getElementById('vb-wrong-info').style.display==='none'?'block':'none';" style="font-size:12px; color:var(--text-tertiary); cursor:pointer; text-decoration:underline;">정보가 다릅니다</span>
+              <div id="vb-wrong-info" style="display:none; margin-top:8px; padding:12px; background:var(--bg-secondary); border-radius:var(--radius-sm); font-size:12px; line-height:1.6;">
+                <div style="font-weight:600; margin-bottom:4px;">정보 수정은 운영사무국에 문의해주세요</div>
+                <div style="color:var(--text-secondary);">&#128222; 02-xxxx-xxxx &middot; &#128231; support@dxkorea.kr</div>
+                <div style="color:var(--text-tertiary); margin-top:6px;">현재 정보로 우선 진행할 수 있습니다</div>
+              </div>
+            </div>
+            <div class="vb-step-action">
+              <button class="btn-primary" onclick="vbComplete(1)" style="font-size:14px; padding:12px;">정보가 맞습니다</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="vb-step" id="vb-s2">
+          <div class="vb-step-header" onclick="vbToggle(2)">
+            <div class="vb-step-num">2</div>
+            <div class="vb-step-title">관심 분야 선택</div>
+            <span class="vb-step-badge"></span>
+          </div>
+          <div class="vb-step-body">
+            <div style="font-size:12px; color:var(--accent-primary); margin-bottom:10px; background:var(--accent-subtle); padding:8px 10px; border-radius:6px;">선택한 분야의 기업과 우선 매칭됩니다 (최소 1개)</div>
+            <div class="keyword-grid">
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">무인기/드론</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">통신장비</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">감시/정찰</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">사이버보안</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">함정/해양</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">항공/우주</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">지상무기</div>
+              <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:13px;">센서/광학</div>
+            </div>
+            <div class="vb-step-action">
+              <button class="btn-primary" onclick="vbComplete(2)" style="font-size:14px; padding:12px;">다음 단계</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="vb-step" id="vb-s3">
+          <div class="vb-step-header" onclick="vbToggle(3)">
+            <div class="vb-step-num">3</div>
+            <div class="vb-step-title">상세 니즈 입력</div>
+            <span class="vb-step-badge"></span>
+          </div>
+          <div class="vb-step-body">
+            <div class="input-group">
+              <label class="input-label">찾고 있는 제품/기술</label>
+              <textarea class="input-field" placeholder="예: 야간 감시가 가능한 소형 드론" style="min-height:60px"></textarea>
+              <div class="input-hint">구체적인 제품명을 적으면 해당 제품을 전시하는 기업과 바로 매칭됩니다</div>
+            </div>
+            <div class="input-group">
+              <label class="input-label">운용 환경/용도</label>
+              <input class="input-field" placeholder="예: 산악 지형, 해상 감시">
+            </div>
+            <div class="input-group">
+              <label class="input-label">기관 유형</label>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:12px; padding:6px 12px;">군</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:12px; padding:6px 12px;">정부</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:12px; padding:6px 12px;">방산 기업</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:12px; padding:6px 12px;">민간</div>
+                <div class="keyword-chip" onclick="this.classList.toggle('selected')" style="font-size:12px; padding:6px 12px;">연구/학계</div>
+              </div>
+            </div>
+            <div class="vb-step-action">
+              <button class="btn-primary" onclick="vbComplete(3)" style="font-size:14px; padding:12px;">다음 단계</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="vb-step" id="vb-s4">
+          <div class="vb-step-header" onclick="vbToggle(4)">
+            <div class="vb-step-num">4</div>
+            <div class="vb-step-title">예산 / 도입시기</div>
+            <span class="vb-step-badge"></span>
+          </div>
+          <div class="vb-step-body">
+            <div class="input-group">
+              <label class="input-label">예산 범위</label>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input class="input-field" placeholder="최소" style="flex:1; text-align:center; font-size:14px; padding:10px;">
+                <span style="color:var(--text-tertiary);">~</span>
+                <input class="input-field" placeholder="최대" style="flex:1; text-align:center; font-size:14px; padding:10px;">
+              </div>
+            </div>
+            <div class="input-group">
+              <label class="input-label">도입 시기</label>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <div class="keyword-chip" onclick="vaSelectOne(this)" style="font-size:12px; padding:6px 12px;">6개월 내</div>
+                <div class="keyword-chip" onclick="vaSelectOne(this)" style="font-size:12px; padding:6px 12px;">1년 내</div>
+                <div class="keyword-chip" onclick="vaSelectOne(this)" style="font-size:12px; padding:6px 12px;">2년 내</div>
+                <div class="keyword-chip" onclick="vaSelectOne(this)" style="font-size:12px; padding:6px 12px;">미정</div>
+              </div>
+            </div>
+            <div class="vb-step-action">
+              <button class="btn-primary" id="vb-complete-btn" onclick="vbTryComplete()" style="font-size:14px; padding:12px;">프로필 완성</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 완료 화면 (아코디언 대체) -->
+      <div id="vb-complete" style="display:none; flex:1; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:40px 24px;">
+        <div class="va-check" style="margin-bottom:20px;">&#10003;</div>
+        <div style="font-size:20px; font-weight:800; margin-bottom:8px;">프로필 작성 완료!</div>
+        <div style="font-size:14px; color:var(--text-tertiary); line-height:1.6; margin-bottom:24px;">
+          비즈매칭 신청기간 종료 후<br>
+          AI가 최적의 매칭 파트너를 찾아드립니다.<br>
+          결과는 이메일로 알려드릴게요.
+        </div>
+        <div style="width:100%; background:var(--bg-secondary); border-radius:var(--radius-md); padding:16px; text-align:left; margin-bottom:20px;">
+          <div style="font-size:13px; color:var(--text-tertiary); margin-bottom:4px;">비즈매칭 신청기간</div>
+          <div style="font-size:15px; font-weight:700;">8/26 (화) ~ 9/11 (목)</div>
+        </div>
+        <button onclick="location.href='prototype-discover.html'" style="width:100%; padding:14px; background:var(--accent-primary); color:#fff; border:none; border-radius:var(--radius-md); font-size:15px; font-weight:700; cursor:pointer; font-family:var(--font-sans);">기업 탐색하러 가기 &rarr;</button>
+        <button class="btn-secondary" onclick="alert('내 프로필 조회 화면(/profile)으로 이동')" style="margin-top:8px;">내 프로필 확인하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       VARIANT C - CONVERSATIONAL
+       ========================================== -->
+  <div class="variant" id="varC">
+    <div class="vc-container">
+      <div class="vc-header">
+        <div class="vc-avatar">N</div>
+        <div>
+          <div class="vc-header-text">NABI</div>
+          <div class="vc-header-sub">비즈매칭 프로필 작성</div>
+        </div>
+        <div class="vc-step-pills" id="vc-pills">
+          <div class="vc-pill current"></div>
+          <div class="vc-pill"></div>
+          <div class="vc-pill"></div>
+          <div class="vc-pill"></div>
+          <div class="vc-pill"></div>
+        </div>
+      </div>
+
+      <div class="vc-messages" id="vc-msgs">
+        <div class="vc-msg bot">
+          안녕하세요! &#128075; 비즈매칭 프로필 작성을 시작할게요.<br><br>먼저 기본 정보를 확인해주세요.
+        </div>
+
+        <div class="vc-msg info" style="text-align:left;">
+          <div style="font-size:12px; font-weight:600; color:var(--text-tertiary); margin-bottom:6px;">기관 정보</div>
+          <div>&#127970; 육군 제2군단 &middot; 대한민국</div>
+          <div style="font-size:12px; font-weight:600; color:var(--text-tertiary); margin:10px 0 6px;">작성자 정보</div>
+          <div>&#128100; 강시우 대위</div>
+          <div style="margin-top:2px; font-size:12px; color:var(--text-secondary);">&#128231; buyer@example.com<br>&#128222; 010-0000-0000</div>
+        </div>
+
+        <div class="vc-action-area" id="vc-action-1">
+          <button class="vc-action-btn" onclick="vcConfirmStep1(true)">정보가 맞습니다</button>
+          <button class="vc-action-btn secondary" style="margin-top:6px;" onclick="vcConfirmStep1(false)">정보가 다릅니다</button>
+        </div>
+      </div>
+
+      <div class="vc-input-area" id="vc-input-area">
+        <div class="vc-input-wrap">
+          <textarea class="vc-input" rows="1" placeholder="메시지를 입력하세요..." id="vc-input"></textarea>
+          <button class="vc-send" onclick="vcSend()">&#9654;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- VARIANT SWITCHER BAR -->
+<div class="variant-bar">
+  <div class="variant-label">VARIANT</div>
+  <button class="variant-btn active" onclick="switchVariant('A', this)">A &middot; 토스 스타일</button>
+  <div class="variant-sep"></div>
+  <button class="variant-btn" onclick="switchVariant('B', this)">B &middot; 아코디언 스텝</button>
+  <div class="variant-sep"></div>
+  <button class="variant-btn" onclick="switchVariant('C', this)">C &middot; 대화형</button>
+  <div class="view-toggle">
+    <button class="view-toggle-btn" onclick="setPreview('mobile')"><span style="font-size:14px;">&#128241;</span> Mobile</button>
+    <button class="view-toggle-btn active" onclick="setPreview('desktop')"><span style="font-size:14px;">&#128187;</span> Desktop</button>
+  </div>
+</div>
+
+<script>
+/* ==========================================
+   PREVIEW TOGGLE (개발용 폭 미리보기 — 단일 셸 폭만 토글)
+   ========================================== */
+function setPreview(mode) {
+  document.body.classList.toggle('preview-mobile', mode === 'mobile');
+  document.querySelectorAll('.view-toggle-btn').forEach(function(b) {
+    b.classList.toggle('active', b.textContent.trim().toLowerCase().indexOf(mode) !== -1);
+  });
+}
+
+/* ==========================================
+   VARIANT SWITCHER
+   ========================================== */
+function switchVariant(v, el) {
+  document.querySelectorAll('.variant').forEach(function(d) { d.classList.remove('active'); });
+  document.getElementById('var' + v).classList.add('active');
+  document.querySelectorAll('.variant-btn').forEach(function(b) { b.classList.remove('active'); });
+  if (el) el.classList.add('active');
+}
+
+// Keyboard nav
+document.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  var variants = ['A','B','C'];
+  var cur = document.querySelector('.variant.active').id.replace('var','');
+  var idx = variants.indexOf(cur);
+  if (e.key === 'ArrowLeft') { idx = (idx - 1 + 3) % 3; switchVariant(variants[idx], document.querySelectorAll('.variant-btn')[idx]); }
+  if (e.key === 'ArrowRight') { idx = (idx + 1) % 3; switchVariant(variants[idx], document.querySelectorAll('.variant-btn')[idx]); }
+});
+
+/* ==========================================
+   VARIANT A - TOSS STYLE
+   ========================================== */
+function showInlineAlert(stepEl, msg) {
+  // Remove existing alert in this step
+  var existing = stepEl.querySelector('.inline-alert');
+  if (existing) existing.remove();
+  var alert = document.createElement('div');
+  alert.className = 'inline-alert';
+  alert.innerHTML = '<span class="inline-alert-icon">&#9888;</span><span>' + msg + '</span>';
+  // Insert at top of fields area or step body
+  var target = stepEl.querySelector('.va-fields') || stepEl.querySelector('.vb-step-body') || stepEl.querySelector('.va-content');
+  if (target) {
+    target.insertBefore(alert, target.firstChild);
+    target.scrollTop = 0;
+  }
+  // Auto-remove after 4s
+  setTimeout(function() { if (alert.parentNode) alert.remove(); }, 4000);
+}
+
+function clearInlineAlert(stepEl) {
+  var existing = stepEl.querySelector('.inline-alert');
+  if (existing) existing.remove();
+}
+
+function vaValidateStep(currentStep) {
+  var stepEl = document.getElementById('va-step-' + currentStep);
+  clearInlineAlert(stepEl);
+  if (currentStep === 1) return true;
+  if (currentStep === 2) {
+    var selected = document.querySelectorAll('#va-step-2 .keyword-chip.selected');
+    if (selected.length === 0) {
+      showInlineAlert(stepEl, '관심 분야를 최소 1개 선택해주세요.');
+      return false;
+    }
+    return true;
+  }
+  if (currentStep === 3) {
+    var texts = document.querySelectorAll('#va-step-3 textarea');
+    var hasProduct = texts[0] && texts[0].value.trim().length > 0;
+    if (!hasProduct) {
+      showInlineAlert(stepEl, '찾고 있는 제품/기술을 입력해주세요. 구체적으로 적을수록 정확한 매칭 파트너를 찾아드려요.');
+      texts[0].focus();
+      return false;
+    }
+    return true;
+  }
+  if (currentStep === 4) return true;
+  return true;
+}
+
+function vaGoTo(step) {
+  document.querySelectorAll('#varA .va-step').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('va-step-' + step).classList.add('active');
+}
+
+function vaNext(step) {
+  var currentStep = step - 1;
+  if (currentStep >= 1 && !vaValidateStep(currentStep)) return;
+  vaGoTo(step);
+}
+
+function vaSelectOne(el) {
+  el.parentElement.querySelectorAll('.keyword-chip').forEach(function(c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+}
+
+function vaCheckAI(el) {
+  var suggest = document.getElementById('va-ai-suggest');
+  if (el.value.length > 10) {
+    suggest.style.display = 'block';
+  }
+}
+
+/* ==========================================
+   VARIANT B - STEPPER
+   ========================================== */
+function vbToggle(n) {
+  var step = document.getElementById('vb-s' + n);
+  if (step.classList.contains('active')) {
+    step.classList.remove('active');
+  } else {
+    document.querySelectorAll('#varB .vb-step').forEach(function(s) { s.classList.remove('active'); });
+    step.classList.add('active');
+  }
+}
+
+function vbValidateStep(n) {
+  var step = document.getElementById('vb-s' + n);
+  clearInlineAlert(step);
+  if (n === 2) {
+    var selected = step.querySelectorAll('.keyword-chip.selected');
+    if (selected.length === 0) {
+      showInlineAlert(step, '관심 분야를 최소 1개 선택해주세요.');
+      return false;
+    }
+  }
+  if (n === 3) {
+    var textarea = step.querySelector('textarea');
+    if (!textarea || textarea.value.trim().length === 0) {
+      showInlineAlert(step, '찾고 있는 제품/기술을 입력해주세요. 구체적으로 적을수록 정확한 매칭 파트너를 찾아드려요.');
+      if (textarea) textarea.focus();
+      return false;
+    }
+  }
+  return true;
+}
+
+function vbComplete(n) {
+  if (!vbValidateStep(n)) return;
+
+  var step = document.getElementById('vb-s' + n);
+  step.classList.remove('active');
+  step.classList.add('done');
+  step.querySelector('.vb-step-num').innerHTML = '&#10003;';
+  step.querySelector('.vb-step-badge').textContent = '완료';
+
+  var next = document.getElementById('vb-s' + (n + 1));
+  if (next) {
+    next.classList.add('active');
+    next.querySelector('.vb-step-badge').textContent = '진행 중';
+  }
+
+  var progress = (n + 1) * 25;
+  document.getElementById('vb-progress').style.width = Math.min(progress, 100) + '%';
+}
+
+function vbTryComplete() {
+  var s2 = document.getElementById('vb-s2');
+  var s3 = document.getElementById('vb-s3');
+  var s4 = document.getElementById('vb-s4');
+  var incomplete = [];
+  if (!s2.classList.contains('done')) incomplete.push('관심 분야 선택');
+  if (!s3.classList.contains('done')) incomplete.push('상세 니즈 입력');
+  clearInlineAlert(s4);
+  if (incomplete.length > 0) {
+    showInlineAlert(s4, '아직 완료되지 않은 단계가 있습니다: ' + incomplete.join(', ') + '. 해당 단계를 먼저 완료해주세요.');
+    return;
+  }
+  vbShowComplete();
+}
+
+function vbShowComplete() {
+  // 4단계 완료 처리
+  var step4 = document.getElementById('vb-s4');
+  step4.classList.remove('active');
+  step4.classList.add('done');
+  step4.querySelector('.vb-step-num').innerHTML = '&#10003;';
+  step4.querySelector('.vb-step-badge').textContent = '완료';
+  document.getElementById('vb-progress').style.width = '100%';
+
+  // 아코디언 숨기고 완료 화면 표시
+  document.querySelector('#varB .vb-steps').style.display = 'none';
+  var complete = document.getElementById('vb-complete');
+  complete.style.display = 'flex';
+}
+
+function vbBackToSteps() {
+  document.querySelector('#varB .vb-steps').style.display = '';
+  document.getElementById('vb-complete').style.display = 'none';
+  // Step 4를 다시 열기
+  var step4 = document.getElementById('vb-s4');
+  step4.classList.remove('done');
+  step4.classList.add('active');
+  step4.querySelector('.vb-step-num').textContent = '4';
+  step4.querySelector('.vb-step-badge').textContent = '진행 중';
+  document.getElementById('vb-progress').style.width = '75%';
+}
+
+/* ==========================================
+   VARIANT C - CONVERSATIONAL
+   ========================================== */
+var vcStep = 1;
+var vcMsgs;
+
+function vcInit() {
+  vcMsgs = document.getElementById('vc-msgs');
+}
+setTimeout(vcInit, 0);
+
+function vcScrollBottom() {
+  setTimeout(function() { vcMsgs.scrollTop = vcMsgs.scrollHeight; }, 50);
+}
+
+function vcAddBot(html) {
+  var el = document.createElement('div');
+  el.className = 'vc-msg bot';
+  el.innerHTML = html;
+  vcMsgs.appendChild(el);
+  vcScrollBottom();
+  return el;
+}
+
+function vcAddUser(text) {
+  var el = document.createElement('div');
+  el.className = 'vc-msg user';
+  el.textContent = text;
+  vcMsgs.appendChild(el);
+  vcScrollBottom();
+}
+
+function vcAddAction(html) {
+  var el = document.createElement('div');
+  el.className = 'vc-action-area';
+  el.innerHTML = html;
+  vcMsgs.appendChild(el);
+  vcScrollBottom();
+  return el;
+}
+
+function vcRemoveAction(el) {
+  if (el && el.parentNode) el.remove();
+}
+
+function vcUpdatePills(step) {
+  var pills = document.querySelectorAll('#vc-pills .vc-pill');
+  pills.forEach(function(p, i) {
+    p.classList.remove('done', 'current');
+    if (i < step - 1) p.classList.add('done');
+    if (i === step - 1) p.classList.add('current');
+  });
+}
+
+function vcConfirmStep1(correct) {
+  var area = document.getElementById('vc-action-1');
+  vcRemoveAction(area);
+
+  if (correct) {
+    vcAddUser('정보가 맞습니다');
+    vcGoToStep2();
+  } else {
+    vcAddUser('정보가 다릅니다');
+    vcAddBot('정보 수정은 운영사무국에 문의해주세요.<br>&#128222; 02-xxxx-xxxx &middot; &#128231; support@dxkorea.kr');
+    var actionHtml = '<button class="vc-action-btn" onclick="vcWrongInfoProceed(this)">현재 정보로 진행하기</button>';
+    vcAddAction(actionHtml);
+  }
+}
+
+function vcWrongInfoProceed(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddUser('현재 정보로 진행합니다');
+  vcGoToStep2();
+}
+
+function vcGoToStep2() {
+  vcStep = 2;
+  vcUpdatePills(2);
+
+  setTimeout(function() {
+    vcAddBot('어떤 분야에 관심이 있으신가요? <span style="font-size:12px; color:var(--text-tertiary);">(여러 개 선택 가능)</span>');
+
+    var actionHtml = '<div class="vc-quick-tags" id="vc-tags">' +
+      '<div class="vc-quick-tag" onclick="vcSelectTag(this)">무인기/드론</div>' +
+      '<div class="vc-quick-tag" onclick="vcSelectTag(this)">통신장비</div>' +
+      '<div class="vc-quick-tag" onclick="vcSelectTag(this)">감시/정찰</div>' +
+      '<div class="vc-quick-tag" onclick="vcSelectTag(this)">사이버보안</div>' +
+      '<div class="vc-quick-tag" onclick="vcSelectTag(this)">센서/광학</div>' +
+      '<div class="vc-quick-tag" onclick="vcSelectTag(this)">AI/자율주행</div>' +
+      '<div class="vc-quick-tag" onclick="vcSelectTag(this)">함정/해양</div>' +
+      '<div class="vc-quick-tag" onclick="vcSelectTag(this)">항공/우주</div>' +
+      '</div>' +
+      '<button class="vc-action-btn" style="display:none;" onclick="vcConfirmStep2FromAction(this)">선택 완료</button>';
+    vcAddAction(actionHtml);
+  }, 400);
+}
+
+function vcConfirmStep2FromAction(btn) {
+  var area = btn.closest('.vc-action-area');
+  var selected = area.querySelectorAll('.vc-quick-tag.selected');
+  if (selected.length === 0) return;
+  var text = Array.from(selected).map(function(t) { return t.textContent; }).join(', ');
+  vcRemoveAction(area);
+  vcAddUser(text);
+  vcStep = 3;
+  vcUpdatePills(3);
+
+  setTimeout(function() {
+    vcAddBot('좋아요! <strong>' + text + '</strong> 분야군요. &#128077;<br><br>구체적으로 어떤 제품이나 기술을 찾고 계신가요?<br><span style="font-size:12px; color:var(--text-tertiary);">용도나 환경도 함께 알려주시면 더 정확하게 매칭해드려요.</span>');
+    vcAddBot('<span style="font-size:13px; color:var(--text-tertiary);">예시: "야간 감시가 가능한 소형 드론, 산악 지형에서 운용, 적외선 카메라 탑재"</span>');
+    document.getElementById('vc-input').focus();
+  }, 400);
+}
+
+function vcSelectTag(el) {
+  el.classList.toggle('selected');
+  // Show/hide confirm button
+  var area = el.closest('.vc-action-area') || el.closest('#vc-action-2');
+  if (area) {
+    var btn = area.querySelector('.vc-action-btn');
+    var selected = area.querySelectorAll('.vc-quick-tag.selected');
+    if (btn) btn.style.display = selected.length > 0 ? 'block' : 'none';
+  }
+}
+
+// Step 2: 관심 분야 선택 완료
+function vcConfirmStep2() {
+  var area = document.getElementById('vc-action-2');
+  var selected = area.querySelectorAll('.vc-quick-tag.selected');
+  if (selected.length === 0) return;
+  var text = Array.from(selected).map(function(t) { return t.textContent; }).join(', ');
+  vcRemoveAction(area);
+  vcAddUser(text);
+
+  setTimeout(function() {
+    vcAddBot('좋아요! <strong>' + text + '</strong> 분야군요. &#128077;<br><br>구체적으로 어떤 제품이나 기술을 찾고 계신가요?<br><span style="font-size:12px; color:var(--text-tertiary);">용도나 환경도 함께 알려주시면 더 정확하게 매칭해드려요.</span>');
+    // Show text input area
+    document.getElementById('vc-input').placeholder = '메시지를 입력하세요...';
+    vcAddBot('<span style="font-size:13px; color:var(--text-tertiary);">예시: "야간 감시가 가능한 소형 드론, 산악 지형에서 운용, 적외선 카메라 탑재"</span>');
+    document.getElementById('vc-input').focus();
+    vcStep = 3;
+  }, 400);
+}
+
+// Step 3: 상세 니즈 텍스트 전송 → 추가 입력 or 다음
+var vcStep3Inputs = [];
+
+function vcHandleStep3(text) {
+  vcStep3Inputs.push(text);
+  setTimeout(function() {
+    vcAddBot('입력해주셨군요. &#128077; 더 추가할 내용이 있으신가요?');
+    var actionHtml = '<button class="vc-action-btn secondary" onclick="vcStep3More(this)">더 입력하기</button>' +
+      '<button class="vc-action-btn" style="margin-top:6px;" onclick="vcStep3Done(this)">입력 완료, 다음으로</button>';
+    vcAddAction(actionHtml);
+  }, 400);
+}
+
+function vcStep3More(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddBot('추가로 알려주세요. 용도, 환경, 조건 등 자유롭게 입력하시면 됩니다.');
+  document.getElementById('vc-input').focus();
+  vcStep = 3; // stay in step 3
+}
+
+function vcStep3Done(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddUser('입력 완료');
+
+  // AI 키워드 추출
+  setTimeout(function() {
+    var botEl = vcAddBot('입력하신 내용을 분석하고 있어요...');
+    setTimeout(function() {
+      botEl.innerHTML = '입력하신 내용에서 키워드를 추출했어요. &#129302;<br>추가할 키워드를 탭해주세요.';
+      var actionHtml = '<div class="vc-quick-tags">';
+      ['소형 드론','야간 감시','적외선 카메라','산악 운용','ISR'].forEach(function(k) {
+        actionHtml += '<div class="vc-quick-tag" onclick="vcSelectTag(this)">+ ' + k + '</div>';
+      });
+      actionHtml += '</div>';
+      actionHtml += '<button class="vc-action-btn" style="display:none;" onclick="vcConfirmStep3(this)">키워드 확정</button>';
+      actionHtml += '<button class="vc-action-btn secondary" style="margin-top:6px;" onclick="vcSkipStep3(this)">건너뛰기</button>';
+      vcAddAction(actionHtml);
+    }, 800);
+  }, 400);
+}
+
+function vcConfirmStep3(btn) {
+  var area = btn.closest('.vc-action-area');
+  var selected = area.querySelectorAll('.vc-quick-tag.selected');
+  var text = selected.length > 0 ? Array.from(selected).map(function(t) { return t.textContent.replace('+ ',''); }).join(', ') : '(없음)';
+  vcRemoveAction(area);
+  vcAddUser('키워드 추가: ' + text);
+  vcShowStep4();
+}
+
+function vcSkipStep3(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddUser('키워드 건너뛰기');
+  vcShowStep4();
+}
+
+// Step 4: 예산/도입시기
+function vcShowStep4() {
+  vcStep = 4;
+  vcUpdatePills(4);
+  setTimeout(function() {
+    vcAddBot('거의 다 왔어요! &#128170;<br><br>예산 범위와 도입 시기를 알려주시면 조건에 맞는 기업을 우선 매칭해드릴게요.');
+    var actionHtml = '<div style="margin-bottom:10px;">' +
+      '<div style="font-size:12px; font-weight:600; color:var(--text-tertiary); margin-bottom:6px;">도입 시기</div>' +
+      '<div class="vc-quick-tags">' +
+      '<div class="vc-quick-tag" onclick="vcSelectOne(this)">6개월 내</div>' +
+      '<div class="vc-quick-tag" onclick="vcSelectOne(this)">1년 내</div>' +
+      '<div class="vc-quick-tag" onclick="vcSelectOne(this)">2년 내</div>' +
+      '<div class="vc-quick-tag" onclick="vcSelectOne(this)">미정</div>' +
+      '</div></div>';
+    actionHtml += '<button class="vc-action-btn" onclick="vcConfirmStep4(this)">다음</button>';
+    actionHtml += '<button class="vc-action-btn secondary" style="margin-top:6px;" onclick="vcSkipStep4(this)">건너뛰기 (선택사항)</button>';
+    vcAddAction(actionHtml);
+    document.getElementById('vc-input').placeholder = '메시지를 입력하세요...';
+  }, 400);
+}
+
+function vcSelectOne(el) {
+  el.parentElement.querySelectorAll('.vc-quick-tag').forEach(function(t) { t.classList.remove('selected'); });
+  el.classList.add('selected');
+}
+
+function vcConfirmStep4(btn) {
+  var area = btn.closest('.vc-action-area');
+  var timeline = area.querySelector('.vc-quick-tag.selected');
+  var timeText = timeline ? timeline.textContent : '미정';
+  var budgetInput = document.getElementById('vc-input');
+  var budget = budgetInput.value.trim() || '미입력';
+  vcRemoveAction(area);
+  vcAddUser('도입 시기: ' + timeText + ', 예산: ' + budget);
+  budgetInput.value = '';
+  vcShowComplete();
+}
+
+function vcSkipStep4(btn) {
+  var area = btn.closest('.vc-action-area');
+  vcRemoveAction(area);
+  vcAddUser('예산/도입시기 건너뛰기');
+  vcShowComplete();
+}
+
+// Step 5: 완료
+function vcShowComplete() {
+  vcStep = 6;
+  vcUpdatePills(5);
+  setTimeout(function() {
+    var card = document.createElement('div');
+    card.className = 'vc-summary-card';
+    card.innerHTML = '<div class="vc-summary-title">&#10003; 프로필 작성 완료!</div>' +
+      '<div class="vc-summary-row"><span>관심 분야</span><span>무인기/드론, 감시/정찰</span></div>' +
+      '<div class="vc-summary-row"><span>키워드</span><span>소형 드론, 야간 감시, 적외선</span></div>' +
+      '<div class="vc-summary-row"><span>도입 시기</span><span>1년 내</span></div>' +
+      '<div style="text-align:center; margin-top:12px; font-size:13px; color:var(--text-tertiary);">신청기간 종료 후 매칭 결과를 알려드릴게요</div>' +
+      '<div style="text-align:center; margin-top:16px;"><button class="vc-action-btn" onclick="location.href=\'prototype-discover.html\'" style="padding:12px 24px; font-size:14px; font-weight:700; display:inline-block; background:var(--accent-primary); color:#fff; border:none; border-radius:var(--radius-md); cursor:pointer;">기업 탐색하러 가기 &rarr;</button><br><button class="vc-action-btn" onclick="alert(\'내 프로필 조회 화면(/profile)으로 이동\')" style="width:auto; padding:10px 20px; font-size:13px; display:inline-block; margin-top:10px;">내 프로필 확인하기</button></div>';
+    vcMsgs.appendChild(card);
+    vcScrollBottom();
+    // Hide input area
+    document.getElementById('vc-input-area').style.display = 'none';
+  }, 400);
+}
+
+// Text input send
+function vcSend() {
+  var input = document.getElementById('vc-input');
+  var text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  vcAddUser(text);
+
+  if (vcStep === 3) {
+    vcHandleStep3(text);
+  }
+}
+
+/* ──────────────────────────────────────────────
+   visitor 진입(사전 정보 없음): 1단계(기본정보 확인) 생략 → 2단계부터
+   사용: prototype-apply.html?role=visitor
+   ────────────────────────────────────────────── */
+(function visitorSkipStep1(){
+  if (new URLSearchParams(location.search).get('role') !== 'visitor') return;
+  function run(){
+    // A(토스): 1단계 패널 제거 → 2단계 표시
+    var a1 = document.getElementById('va-step-1'); if (a1) a1.remove();
+    if (typeof vaGoTo === 'function') { try { vaGoTo(2); } catch(e){} }
+    // B(아코디언): 1단계 제거 → 2단계 열기
+    var b1 = document.getElementById('vb-s1'); if (b1) b1.remove();
+    if (typeof vbToggle === 'function') { try { vbToggle(2); } catch(e){} }
+    // C(대화형): 기본정보 확인 인사/액션 비우고 2단계부터
+    var cm = document.getElementById('vc-msgs'); if (cm) cm.innerHTML = '';
+    if (typeof vcGoToStep2 === 'function') { try { vcGoToStep2(); } catch(e){} }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else setTimeout(run, 0);
+})();
+</script>
+
+<script>
+  window.NABI_NAV_ACTIVE = 'profile';
+  window.NABI_NAV_USER = { name: '강시우', avatar: '강' };
+</script>
+<script src="nabi-nav.js?v=20260607"></script>
+
+<script>
+/* 기본: 데스크톱(넓은 셸). ?view=mobile 로 모바일 폭 프리뷰. */
+(function () {
+  if (new URLSearchParams(location.search).get('view') === 'mobile') setPreview('mobile');
+})();
+</script>
+</body>
+</html>

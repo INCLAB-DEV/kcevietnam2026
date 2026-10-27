@@ -1,0 +1,22 @@
+# 로컬 개발/CI용 Postgres. 운영은 AWS RDS(외주 인프라). 마이그레이션 up/down 검증에 사용.
+# ⚠ 2026-08 기준 잠정 미사용: 이 머신에 Docker 미설치라 로컬은 Homebrew postgresql@17을 직접 쓴다
+# (backend/README.md "개발 셋업" 참고). 삭제하지 않고 보존 — Docker 재도입 시 그대로 다시 쓴다.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: nabi
+      POSTGRES_PASSWORD: nabi
+      POSTGRES_DB: nabi
+    ports:
+      - "5432:5432"
+    volumes:
+      - nabi_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nabi"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  nabi_pgdata:

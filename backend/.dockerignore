@@ -1,0 +1,26 @@
+# 빌드 컨텍스트에서 제외 — Dockerfile은 app/alembic.ini/migrations/pyproject.toml/uv.lock만 COPY한다.
+.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# 테스트/샘플 데이터(PII 아님이지만 이미지에 넣을 이유 없음)
+tests/
+sample_data/
+
+# 문서 — 이미지 크기만 늘림
+docs/
+CONTEXT.md
+README.md
+
+# 로컬 개발용
+docker-compose.yml
+.env
+.env.example
+
+# VCS/IDE
+.git/
+.gitignore
+.DS_Store

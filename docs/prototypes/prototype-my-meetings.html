@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NABI - 내 미팅 프로토타입 (MY-001, THROWAWAY)</title>
+<link rel="stylesheet" href="nabi-ui.css?v=20260607">
+<!-- PROTOTYPE: 2 variants of MY-001 meeting timeline -->
+<!-- Variant A: 가로 스크롤 타임라인 — 30분 슬롯, 슬롯 터치→하단 패널 -->
+<!-- Variant B: 카드 리스트 — 미팅만 카드로, 시간순 세로 리스트 -->
+<style>
+  /* 토큰·리셋·크롬·dev 바(.variant-bar/.role-toggle/.view-toggle)·셸은 nabi-ui.css(단일 소스)에서 상속 */
+  body { background: var(--bg-primary); }
+
+  /* ── 단일 셸 반응형 (nabi-ui.css .app-shell/.app-content 상속) ──
+     my-meetings 는 #meetings-root(=.app-content, 폭 클래스 없음=1040px 기본) 하나에만 렌더.
+     좁음(폰/프리뷰) = 풀하이트 타임라인/카드, 넓음(데스크톱) = 가로폭 활용. */
+
+  /* ========== MY MEETINGS PAGE ========== */
+  .meetings-page {
+    display: flex; flex-direction: column; height: 100%;
+    background: var(--bg-primary);
+  }
+
+  /* Header */
+  .meetings-header {
+    padding: 16px 20px 0; background: var(--bg-elevated);
+    flex-shrink: 0;
+  }
+  .meetings-header-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2px;
+  }
+  .meetings-title { font-size: 22px; font-weight: 800; }
+  .meetings-badge {
+    padding: 3px 10px; background: var(--accent-red-subtle); color: var(--accent-red);
+    border-radius: var(--radius-full); font-size: 12px; font-weight: 700;
+  }
+  .meetings-subtitle {
+    font-size: 13px; color: var(--text-tertiary); margin-bottom: 14px;
+  }
+
+  /* Day Tabs */
+  .day-tabs {
+    display: flex; border-bottom: 1px solid var(--border-default);
+    background: var(--bg-elevated);
+  }
+  .meetings-header .day-tabs { margin: 0 -20px; padding: 0 20px; }
+  .day-tab {
+    flex: 1; padding: 10px 0; text-align: center; font-size: 13px; font-weight: 600;
+    color: var(--text-tertiary); cursor: pointer; border: none; background: none;
+    font-family: var(--font-stack); border-bottom: 2px solid transparent;
+    transition: all 0.2s; position: relative;
+  }
+  .day-tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+  .day-tab-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 16px; height: 16px; padding: 0 4px;
+    background: var(--accent-red); color: white;
+    border-radius: var(--radius-full); font-size: 10px; font-weight: 700;
+    margin-left: 4px; vertical-align: middle;
+  }
+
+  /* ========== VARIANT A: HORIZONTAL TIMELINE ========== */
+  /* 변형 노출은 body.variant-A / body.variant-B 클래스로 제어 (인라인 display 미사용) */
+  .timeline-area {
+    flex: 1; display: flex; flex-direction: column; min-height: 0;
+  }
+  body.variant-B .timeline-area { display: none; }
+
+  /* Now indicator */
+  .now-bar {
+    padding: 8px 20px; background: var(--bg-secondary);
+    font-size: 12px; color: var(--text-tertiary); font-weight: 600;
+    flex-shrink: 0; display: flex; align-items: center; gap: 6px;
+  }
+  .now-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--accent-red);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Timeline scroll */
+  .timeline-scroll {
+    flex: 1; overflow-x: auto; overflow-y: hidden;
+    padding: 16px 0 16px 20px;
+    -webkit-overflow-scrolling: touch;
+    display: flex; align-items: stretch; gap: 0;
+    scrollbar-width: none;
+    cursor: grab;                 /* 데스크톱: 드래그로 밀 수 있음 */
+    position: relative;           /* 현재 시간선(.now-line)의 기준 */
+  }
+  /* 현재 시간선 — 오늘 날짜에만, 타임라인과 함께 스크롤 */
+  .now-line {
+    position: absolute; top: 8px; bottom: 8px; width: 2px;
+    background: var(--accent-red); z-index: 6; pointer-events: none;
+  }
+  .now-line-dot {
+    position: absolute; top: -3px; left: 50%; transform: translateX(-50%);
+    width: 9px; height: 9px; border-radius: 50%; background: var(--accent-red);
+  }
+  .now-line-label {
+    position: absolute; top: 6px; left: 8px; white-space: nowrap;
+    font-size: 10px; font-weight: 700; color: #fff; background: var(--accent-red);
+    padding: 2px 7px; border-radius: var(--radius-full);
+  }
+  .timeline-scroll.dragging { cursor: grabbing; user-select: none; }
+  .timeline-scroll::-webkit-scrollbar { display: none; }
+  /* 데스크톱: 슬림 스크롤바 노출(마우스 사용자에게 스크롤 가능 표시) */
+  @container shell (min-width: 720px) {
+    .timeline-scroll { scrollbar-width: thin; scrollbar-color: var(--border-default) transparent; }
+    .timeline-scroll::-webkit-scrollbar { display: block; height: 8px; }
+    .timeline-scroll::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 4px; }
+    .timeline-scroll::-webkit-scrollbar-track { background: transparent; }
+  }
+
+  .slot {
+    flex-shrink: 0; width: 64px; display: flex; flex-direction: column;
+    align-items: center; cursor: pointer; transition: all 0.15s;
+    padding: 8px 4px; border-radius: var(--radius-sm);
+    position: relative;
+  }
+  .slot:last-child { margin-right: 20px; }
+  .slot.selected { background: var(--accent-subtle); }
+  .slot-time {
+    font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+    margin-bottom: 8px;
+  }
+  .slot-block {
+    width: 48px; flex: 1; min-height: 80px; border-radius: var(--radius-sm);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; transition: all 0.15s; border: 2px solid transparent;
+  }
+  .slot.selected .slot-block { border-color: var(--accent-primary); }
+
+  /* Slot colors */
+  .slot-block.empty { background: var(--bg-secondary); }
+  .slot-block.accepted { background: var(--accent-green-subtle); border-color: var(--accent-green); }
+  .slot-block.proposed { background: var(--accent-red-subtle); border-color: var(--accent-red); }
+  .slot-block.completed { background: var(--accent-green-subtle); border-color: rgba(22, 163, 74, 0.4); }
+  .slot-block.noshow { background: var(--accent-amber-subtle); border-color: var(--accent-amber); }
+  .slot-block.rejected, .slot-block.cancelled { background: var(--bg-secondary); opacity: 0.5; }
+
+  /* 멀티슬롯(예: 1시간 30분) 연결 블록 — 칸 사이 간격 제거 + 내부 보더/라운드 제거로 한 바처럼 연결 */
+  .slot.span-cell { padding-left: 0; padding-right: 0; }
+  .slot.span-cell .slot-block { width: 100%; }
+  .slot-block.span-start { border-top-right-radius: 0; border-bottom-right-radius: 0; border-right-width: 0; }
+  .slot-block.span-mid   { border-radius: 0; border-left-width: 0; border-right-width: 0; }
+  .slot-block.span-end   { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left-width: 0; }
+
+  .slot-icon { font-size: 16px; line-height: 1; }
+  .slot-name {
+    font-size: 9px; font-weight: 700; color: var(--text-secondary);
+    text-align: center; line-height: 1.2; max-width: 44px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .slot-status {
+    font-size: 8px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .slot-block.accepted .slot-status { color: var(--accent-green); }
+  .slot-block.proposed .slot-status { color: var(--accent-red); }
+  .slot-block.completed .slot-status { color: var(--accent-green); }
+  .slot-block.noshow .slot-status { color: var(--accent-amber); }
+
+  /* ========== BOTTOM PANEL ========== */
+  .bottom-panel {
+    flex-shrink: 0; background: var(--bg-elevated);
+    border-top: 1px solid var(--border-default);
+    padding: 12px 20px; min-height: 0;
+    transition: all 0.25s ease;
+  }
+
+  /* Empty slot panel */
+  .panel-empty { text-align: center; padding: 8px 0; }
+  .panel-empty-text {
+    font-size: 13px; color: var(--text-tertiary); margin-bottom: 8px;
+  }
+  .panel-empty-cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 20px; background: var(--accent-subtle);
+    color: var(--accent-primary); border-radius: var(--radius-full);
+    font-size: 13px; font-weight: 700; cursor: pointer; border: none;
+    font-family: var(--font-stack); transition: all 0.15s;
+  }
+  .panel-empty-cta:hover { background: var(--accent-primary); color: white; }
+
+  /* Meeting slot panel */
+  .panel-meeting { display: flex; flex-direction: column; gap: 8px; }
+  .panel-top { display: flex; align-items: center; gap: 10px; }
+  .panel-logo {
+    width: 36px; height: 36px; border-radius: var(--radius-sm);
+    background: var(--bg-secondary); display: flex; align-items: center;
+    justify-content: center; font-size: 14px; font-weight: 800;
+    color: var(--text-tertiary); flex-shrink: 0;
+  }
+  .panel-info { flex: 1; min-width: 0; }
+  .panel-company { font-size: 14px; font-weight: 800; }
+  .panel-venue { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
+  .panel-status-badge {
+    display: inline-block; padding: 2px 8px; border-radius: var(--radius-full);
+    font-size: 11px; font-weight: 700; vertical-align: middle; margin-left: 4px;
+  }
+  .panel-status-badge.accepted { background: var(--accent-green-subtle); color: var(--accent-green); }
+  .panel-status-badge.proposed { background: var(--accent-red-subtle); color: var(--accent-red); }
+  .panel-status-badge.completed { background: var(--accent-green-subtle); color: var(--accent-green); }
+  .panel-status-badge.noshow { background: var(--accent-amber-subtle); color: var(--accent-amber); }
+  .panel-status-badge.rejected { background: var(--bg-secondary); color: var(--text-tertiary); }
+  .panel-status-badge.cancelled { background: var(--bg-secondary); color: var(--text-tertiary); }
+
+  .panel-hint { font-size: 12.5px; color: var(--text-tertiary); margin-bottom: 10px; line-height: 1.4; }
+  .panel-hint b { color: var(--text-secondary); font-weight: 700; }
+  .panel-actions { display: flex; gap: 8px; }
+  .panel-btn {
+    flex: 1; padding: 10px; border-radius: var(--radius-md);
+    font-size: 14px; font-weight: 700; border: none; cursor: pointer;
+    font-family: var(--font-stack); transition: all 0.15s;
+  }
+  .panel-btn:hover { opacity: 0.9; }
+  .panel-btn-primary { background: var(--accent-primary); color: white; }
+  .panel-btn-accept { background: var(--accent-green); color: white; }
+  .panel-btn-reject {
+    background: var(--bg-secondary); color: var(--text-secondary);
+  }
+  .panel-btn-cancel { background: var(--bg-secondary); color: var(--accent-red); }
+  .panel-btn-review { background: var(--accent-primary); color: white; }
+
+  /* ========== VARIANT B: CARD LIST ========== */
+  .card-list-area {
+    flex: 1; overflow-y: auto; padding: 12px 20px;
+    display: none; flex-direction: column; gap: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+  body.variant-B .card-list-area { display: flex; }
+  .meeting-card {
+    background: var(--bg-elevated); border-radius: var(--radius-md);
+    border: 1px solid var(--border-default); padding: 14px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .meeting-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .meeting-card.selected { border-color: var(--accent-primary); box-shadow: 0 0 0 1px var(--accent-primary); }
+  .meeting-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .meeting-card-time {
+    font-size: 13px; font-weight: 800; color: var(--text-primary);
+    min-width: 90px;
+  }
+  .meeting-card-status {
+    padding: 3px 8px; border-radius: var(--radius-full);
+    font-size: 10px; font-weight: 700;
+  }
+  .meeting-card-status.accepted { background: var(--accent-green-subtle); color: var(--accent-green); }
+  .meeting-card-status.proposed { background: var(--accent-red-subtle); color: var(--accent-red); }
+  .meeting-card-status.completed { background: var(--accent-green-subtle); color: var(--accent-green); }
+  .meeting-card-status.noshow { background: var(--accent-amber-subtle); color: var(--accent-amber); }
+  .meeting-card-body { display: flex; align-items: center; gap: 10px; }
+  .meeting-card-logo {
+    width: 36px; height: 36px; border-radius: var(--radius-sm);
+    background: var(--bg-secondary); display: flex; align-items: center;
+    justify-content: center; font-size: 14px; font-weight: 800;
+    color: var(--text-tertiary); flex-shrink: 0;
+  }
+  .meeting-card-info { flex: 1; min-width: 0; }
+  .meeting-card-name { font-size: 14px; font-weight: 700; }
+  .meeting-card-venue { font-size: 12px; color: var(--text-tertiary); }
+  .meeting-card-needs {
+    margin-top: 8px; padding: 6px 10px; background: var(--accent-subtle);
+    border-radius: var(--radius-sm); font-size: 11px; color: var(--accent-primary);
+    line-height: 1.3; display: none;
+  }
+  body.role-exhibitor .meeting-card-needs { display: block; }
+  .meeting-card-actions {
+    display: flex; gap: 6px; margin-top: 10px;
+  }
+  .meeting-card-btn {
+    flex: 1; padding: 9px; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 700; border: none; cursor: pointer;
+    font-family: var(--font-stack); transition: all 0.15s;
+  }
+
+  /* Card list empty day */
+  .card-list-empty {
+    text-align: center; padding: 60px 20px;
+  }
+  .card-list-empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+  .card-list-empty-text { font-size: 14px; color: var(--text-tertiary); line-height: 1.5; }
+
+  /* ========== REJECT/CANCEL MODAL ========== */
+  .modal-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.4);
+    z-index: 100; display: none; transition: opacity 0.3s;
+  }
+  .modal-overlay.show { display: block; }
+  .action-modal {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: var(--bg-elevated); border-radius: 20px 20px 0 0;
+    z-index: 101; display: none; flex-direction: column;
+    max-height: 70%; box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
+    transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .action-modal.show { display: flex; transform: translateY(0); }
+  .action-modal-handle {
+    width: 36px; height: 4px; background: #d4d1cd; border-radius: 2px;
+    margin: 10px auto 6px; flex-shrink: 0;
+  }
+  .action-modal-header { padding: 4px 20px 16px; flex-shrink: 0; }
+  .action-modal-title { font-size: 18px; font-weight: 800; }
+  .action-modal-subtitle { font-size: 13px; color: var(--text-tertiary); margin-top: 4px; }
+  .action-modal-body { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
+  .reason-chip {
+    display: inline-block; padding: 8px 16px; margin: 0 6px 8px 0;
+    background: var(--bg-secondary); border: 1px solid var(--border-default);
+    border-radius: var(--radius-full); font-size: 13px; font-weight: 600;
+    color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+    font-family: var(--font-stack);
+  }
+  .reason-chip.selected { background: var(--accent-subtle); border-color: var(--accent-primary); color: var(--accent-primary); }
+  .reason-input {
+    width: 100%; padding: 12px; margin-top: 12px;
+    border: 1px solid var(--border-default); border-radius: var(--radius-md);
+    font-size: 14px; font-family: var(--font-stack); resize: none; height: 80px;
+    color: var(--text-primary); background: var(--bg-primary);
+  }
+  .reason-input:focus { outline: none; border-color: var(--accent-primary); }
+  .action-modal-footer {
+    padding: 16px 20px; border-top: 1px solid var(--border-default);
+    flex-shrink: 0; display: flex; gap: 10px;
+  }
+  .action-modal-btn {
+    flex: 1; padding: 14px; border-radius: var(--radius-md);
+    font-size: 15px; font-weight: 700; border: none; cursor: pointer;
+    font-family: var(--font-stack);
+  }
+
+  /* Cancel warning */
+  .cancel-warning {
+    padding: 12px; background: var(--accent-amber-subtle);
+    border-radius: var(--radius-sm); margin-bottom: 16px;
+    font-size: 13px; color: var(--accent-amber); line-height: 1.5;
+    font-weight: 600;
+  }
+
+  /* ========== EMPTY STATE ========== */
+  .empty-state {
+    flex: 1; display: none; flex-direction: column;
+    align-items: center; justify-content: center; padding: 40px 32px;
+    text-align: center;
+  }
+  .empty-icon {
+    width: 64px; height: 64px; border-radius: 50%; background: var(--bg-secondary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; margin-bottom: 16px; color: var(--text-tertiary);
+  }
+  .empty-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .empty-desc { font-size: 14px; color: var(--text-tertiary); line-height: 1.5; margin-bottom: 20px; }
+  .empty-cta {
+    padding: 12px 24px; background: var(--accent-primary); color: white;
+    border-radius: var(--radius-full); font-size: 14px; font-weight: 700;
+    border: none; cursor: pointer; font-family: var(--font-stack);
+  }
+
+  /* ========== 단일 셸 반응형 ========== */
+  /* #meetings-root: 패딩 제거(앱은 풀블리드), 모달 앵커용 position:relative */
+  #meetings-root { padding: 0; position: relative; }
+
+  /* 좁음(폰/프리뷰): 기존 풀하이트 앱 경험 유지 */
+  @container shell (max-width: 719px) {
+    #meetings-root { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+    .meetings-page { flex: 1 1 0; min-height: 0; }
+  }
+
+  /* 넓음(데스크톱): 자연 높이로 흐르고 타임라인이 가로폭을 채움 */
+  @container shell (min-width: 720px) {
+    .meetings-page { height: auto; }
+    .meetings-header { padding: 24px 24px 0; border-bottom: 1px solid var(--border-default); }
+    .meetings-header .day-tabs { margin: 16px -24px 0; padding: 0 24px; }
+    .meetings-title { font-size: 26px; }
+    /* 타임라인: 더 이상 좁은 카드에 갇히지 않음 — 넉넉한 컬럼으로 가로폭 활용 */
+    .timeline-area { min-height: 420px; }
+    .timeline-scroll { padding: 24px 24px; gap: 4px; }
+    .slot { width: 84px; padding: 10px 4px; }
+    .slot-block { width: 64px; min-height: 120px; }
+    .slot-icon { font-size: 20px; }
+    .slot-name { font-size: 11px; max-width: 60px; }
+    .slot-status { font-size: 9px; }
+    .bottom-panel { padding: 16px 24px; }
+    /* 카드 리스트(B): 데스크톱은 2열 그리드 */
+    body.variant-B .card-list-area { padding: 20px 24px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; align-content: start; }
+    .now-bar { padding: 10px 24px; }
+    /* 모달: 데스크톱에서는 화면 중앙 시트로 */
+    .action-modal { max-width: 460px; left: 50%; right: auto; transform: translate(-50%, 100%); border-radius: 20px; bottom: auto; top: 50%; }
+    .action-modal.show { transform: translate(-50%, -50%); }
+  }
+</style>
+</head>
+<body>
+
+<!-- 글로벌 nav(app-bar + 드로어)는 nabi-nav.js가 .app-shell 상단에 주입 -->
+
+<!-- 단일 셸: 콘텐츠를 #meetings-root 한 곳에만 렌더. 모바일↔데스크톱은 @container shell 로 reflow -->
+<div class="app-shell">
+  <main class="app-main">
+    <div class="app-content" id="meetings-root">
+  <div class="meetings-page" id="meetingsPage">
+    <!-- Header -->
+    <div class="meetings-header">
+      <div class="meetings-header-row">
+        <div class="meetings-title">내 미팅</div>
+        <div class="meetings-badge" id="totalBadge">3건 대기</div>
+      </div>
+      <div class="meetings-subtitle" id="headerSubtitle">DX Korea 2026 | 일산 킨텍스</div>
+      <div class="day-tabs" id="dayTabs"></div>
+    </div>
+
+    <!-- Variant A: Timeline -->
+    <div class="timeline-area" id="timelineArea">
+      <div class="now-bar" id="nowBar">
+        <div class="now-dot"></div>
+        <span>현재 09:45 | 다음 미팅 10:00 한화시스템</span>
+      </div>
+      <div class="timeline-scroll" id="timelineScroll"></div>
+      <div class="bottom-panel" id="bottomPanel">
+        <div class="panel-empty">
+          <div class="panel-empty-text">슬롯을 선택하면 미팅 정보가 표시됩니다</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Variant B: Card List -->
+    <div class="card-list-area" id="cardListArea"></div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div class="empty-title" id="emptyTitle">아직 미팅이 없습니다</div>
+      <div class="empty-desc" id="emptyDesc">관심 기업을 탐색해보세요</div>
+      <button class="empty-cta" id="emptyCta">기업 탐색하기</button>
+    </div>
+
+  </div>
+
+  <!-- Reject Modal -->
+  <div class="modal-overlay" id="modalOverlay"></div>
+  <div class="action-modal" id="rejectModal">
+    <div class="action-modal-handle"></div>
+    <div class="action-modal-header">
+      <div class="action-modal-title">미팅 거절</div>
+      <div class="action-modal-subtitle">사유를 선택해주세요</div>
+    </div>
+    <div class="action-modal-body">
+      <div>
+        <span class="reason-chip" onclick="this.classList.toggle('selected')">관심 분야 불일치</span>
+        <span class="reason-chip" onclick="this.classList.toggle('selected')">일정 불가</span>
+        <span class="reason-chip" onclick="this.classList.toggle('selected')">기타</span>
+      </div>
+      <textarea class="reason-input" placeholder="추가 사유를 입력해주세요 (선택)"></textarea>
+    </div>
+    <div class="action-modal-footer">
+      <button class="action-modal-btn" style="background:var(--bg-secondary);color:var(--text-secondary);" onclick="closeModal()">취소</button>
+      <button class="action-modal-btn" style="background:var(--accent-red);color:white;" onclick="closeModal()">거절 확인</button>
+    </div>
+  </div>
+
+  <!-- Cancel Modal -->
+  <div class="action-modal" id="cancelModal">
+    <div class="action-modal-handle"></div>
+    <div class="action-modal-header">
+      <div class="action-modal-title">미팅 취소</div>
+    </div>
+    <div class="action-modal-body">
+      <div class="cancel-warning">특별한 사유 없이 취소하면 AI 매칭 추천에서 우선순위가 낮아질 수 있습니다</div>
+      <div>
+        <span class="reason-chip" onclick="this.classList.toggle('selected')">일정 변경</span>
+        <span class="reason-chip" onclick="this.classList.toggle('selected')">참석 불가</span>
+        <span class="reason-chip" onclick="this.classList.toggle('selected')">기타</span>
+      </div>
+      <textarea class="reason-input" placeholder="취소 사유를 입력해주세요 (선택)"></textarea>
+    </div>
+    <div class="action-modal-footer">
+      <button class="action-modal-btn" style="background:var(--bg-secondary);color:var(--text-secondary);" onclick="closeModal()">돌아가기</button>
+      <button class="action-modal-btn" style="background:var(--accent-red);color:white;" onclick="closeModal()">취소 확인</button>
+    </div>
+  </div>
+    </div><!-- /#meetings-root -->
+  </main>
+</div><!-- /.app-shell -->
+
+<!-- ========== VARIANT BAR ========== -->
+<div class="variant-bar">
+  <span class="variant-label">MY-001</span>
+  <div class="variant-sep"></div>
+  <button class="variant-btn active" data-variant="A" onclick="switchVariant('A')">A. 타임라인</button>
+  <button class="variant-btn" data-variant="B" onclick="switchVariant('B')">B. 카드 리스트</button>
+  <div class="variant-sep"></div>
+  <div class="role-toggle">
+    <button class="role-toggle-btn active" data-role="buyer" onclick="switchRole('buyer')">바이어</button>
+    <button class="role-toggle-btn" data-role="exhibitor" onclick="switchRole('exhibitor')">참가사</button>
+  </div>
+  <div class="view-toggle">
+    <button class="view-toggle-btn" onclick="setPreview('mobile')">Mobile</button>
+    <button class="view-toggle-btn active" onclick="setPreview('desktop')">Desktop</button>
+  </div>
+</div>
+
+<script>
+// ========== DATA ==========
+const DAYS = [
+  { date: '9/16', label: '9/16 화', key: '0916' },
+  { date: '9/17', label: '9/17 수', key: '0917' },
+  { date: '9/18', label: '9/18 목', key: '0918' },
+  { date: '9/19', label: '9/19 금', key: '0919' },
+];
+
+const SLOTS = [];
+for (let h = 9; h <= 17; h++) {
+  SLOTS.push(`${String(h).padStart(2,'0')}:00`);
+  SLOTS.push(`${String(h).padStart(2,'0')}:30`);
+}
+
+// 현재 시간(데모 mock) — now-bar의 "현재 09:15"와 일치. 오늘 날짜에만 현재선 표시.
+const NOW_DAY = '0917';
+const NOW_TIME = '09:15';
+const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+
+const MEETINGS = {
+  '0916': {
+    '10:00': {
+      company: '풍산', logo: 'PS', status: 'completed', direction: 'sent',
+      desc: '탄약, 방산소재, 동합금 전문 기업',
+      venue: 'B홀 2층 미팅존 2', members: '김재현',
+      tags: ['탄약', '방산소재'],
+      buyerNeeds: '155mm 정밀유도탄약 공동개발 타진',
+    },
+    '11:30': {
+      company: 'Hanwha Defense', logo: 'HD', status: 'noshow', direction: 'received',
+      desc: '자주포, 탄약운반차, 다연장로켓 시스템',
+      venue: 'A홀 1층 VIP룸 C', members: '박수진',
+      tags: ['자주포', '다연장'],
+      buyerNeeds: 'K9 자주포 해외 수출 물량 파트너 협의',
+    },
+  },
+  '0917': {
+    '09:30': {
+      company: '한화시스템', logo: 'HW', status: 'accepted', direction: 'received',
+      desc: '방산 전자전, C4ISR 체계, 위성통신 솔루션 전문',
+      venue: 'B홀 2층 VIP룸 A', members: '김재현, 박수진',
+      tags: ['전자전', 'C4ISR', '위성통신'],
+      buyerNeeds: '지상 전자전 장비 EW 체계 국산화 파트너 탐색 중',
+    },
+    '10:00': {
+      company: 'LIG넥스원', logo: 'LG', status: 'proposed', direction: 'received',
+      desc: '유도무기, 수중음향, 항공전자, AI 기반 자율방어 시스템',
+      venue: 'A홀 1층 미팅존 3', members: '이정우',
+      tags: ['유도무기', 'AI방어', '자율시스템'],
+      buyerNeeds: '함정용 소나 시스템 성능 개선 협력사 물색',
+    },
+    '11:00': {
+      company: '현대로템', logo: 'HR', status: 'proposed', direction: 'sent',
+      desc: 'K2 전차, 장갑차, 궤도차량 전문 방산 기업',
+      venue: 'B홀 1층 미팅존 1', members: '김재현',
+      tags: ['전차', '장갑차', '궤도차량'],
+      buyerNeeds: '차세대 보병전투차량(IFV) 복합장갑 공급업체 검토',
+    },
+    '13:00': {
+      company: '한국항공우주', logo: 'KA', status: 'accepted', direction: 'sent',
+      desc: '항공기, 위성, 우주발사체 개발 및 생산',
+      venue: 'A홀 2층 VIP룸 B', members: '김재현, 최민호',
+      tags: ['항공기', '위성', '우주'],
+      buyerNeeds: 'KF-21 전자장비 서브시스템 기술이전 논의',
+    },
+    '14:30': {
+      company: 'Elbit Systems', logo: 'EL', status: 'proposed', direction: 'received',
+      desc: 'UAV, 전자광학, C4I, 사이버 보안 글로벌 방산 기업',
+      venue: 'A홀 1층 미팅존 5', members: '이정우, 김재현',
+      tags: ['UAV', '전자광학', '사이버'],
+      buyerNeeds: '무인기 탑재 EO/IR 센서 기술 협력',
+    },
+    '11:30': {
+      company: '한화오션', logo: 'HO', status: 'accepted', direction: 'sent', span: 3,
+      desc: '함정, 잠수함, 해양플랜트 — 특수선 글로벌 기업',
+      venue: 'B홀 2층 VIP룸 B', members: '김재현, 박수진',
+      tags: ['함정', '잠수함', '해양방산'],
+      buyerNeeds: '차기 호위함 통합 마스트·전투체계 1시간 30분 심층 협의',
+    },
+  },
+  '0918': {
+    '14:00': {
+      company: 'Thales Korea', logo: 'TK', status: 'accepted', direction: 'sent',
+      desc: '레이더, 소나, 통신장비, 전투관리체계',
+      venue: 'B홀 1층 미팅존 4', members: '김재현, 이정우',
+      tags: ['레이더', '소나', '통신'],
+      buyerNeeds: '함정용 전투체계 소프트웨어 공동 개발',
+    },
+  },
+  '0919': {
+    '10:30': {
+      company: 'STX엔진', logo: 'SX', status: 'accepted', direction: 'received',
+      desc: '함정용 엔진, 발전기, 추진 시스템 전문',
+      venue: 'A홀 2층 미팅존 1', members: '최민호',
+      tags: ['엔진', '추진시스템'],
+      buyerNeeds: '차기 호위함 추진체계 기술제안 검토',
+    },
+  },
+};
+
+// ========== STATE ==========
+let currentDay = '0917';
+let currentVariant = 'A';
+let currentRole = 'buyer';
+let selectedSlot = null;
+
+// ========== RENDER ==========
+function getPendingCount(dayKey) {
+  const day = MEETINGS[dayKey] || {};
+  return Object.values(day).filter(m => m.status === 'proposed' && m.direction === 'received').length;
+}
+
+function getTotalPending() {
+  return DAYS.reduce((sum, d) => sum + getPendingCount(d.key), 0);
+}
+
+function renderDayTabs() {
+  const tabs = document.getElementById('dayTabs');
+  tabs.innerHTML = DAYS.map(d => {
+    const pending = getPendingCount(d.key);
+    const badge = pending > 0 ? `<span class="day-tab-badge">${pending}</span>` : '';
+    return `<button class="day-tab ${d.key === currentDay ? 'active' : ''}" onclick="selectDay('${d.key}')">${d.label}${badge}</button>`;
+  }).join('');
+}
+
+function renderTimeline() {
+  const scroll = document.getElementById('timelineScroll');
+  const day = MEETINGS[currentDay] || {};
+  const prevScroll = scroll.scrollLeft;   // 사용자의 현재 가로 스크롤 위치 보존
+
+  // 멀티슬롯(span) 미팅 커버리지 — 시작/중간/끝 칸 표시
+  const cover = {};
+  SLOTS.forEach((t, i) => {
+    const m = day[t];
+    const span = m && m.span > 1 ? m.span : 1;
+    if (span > 1) {
+      for (let k = 0; k < span && i + k < SLOTS.length; k++) {
+        cover[SLOTS[i + k]] = { m, start: t, pos: k === 0 ? 'start' : (k === span - 1 ? 'end' : 'mid') };
+      }
+    }
+  });
+
+  scroll.innerHTML = SLOTS.map(time => {
+    // 멀티슬롯 연결 블록
+    const c = cover[time];
+    if (c) {
+      const sel = selectedSlot === c.start ? 'selected' : '';
+      const inner = c.pos === 'start'
+        ? `<div class="slot-icon">${c.m.logo}</div><div class="slot-name">${c.m.company}</div><div class="slot-status">${statusText(c.m, true)}</div>`
+        : '';
+      return `<div class="slot span-cell ${sel}" onclick="selectSlot('${c.start}')">
+        <div class="slot-time">${time}</div>
+        <div class="slot-block ${c.m.status} span-${c.pos}">${inner}</div>
+      </div>`;
+    }
+    const meeting = day[time];
+    const sel = selectedSlot === time ? 'selected' : '';
+    if (meeting) {
+      return `<div class="slot ${sel}" onclick="selectSlot('${time}')">
+        <div class="slot-time">${time}</div>
+        <div class="slot-block ${meeting.status}">
+          <div class="slot-icon">${meeting.logo}</div>
+          <div class="slot-name">${meeting.company}</div>
+          <div class="slot-status">${statusText(meeting, true)}</div>
+        </div>
+      </div>`;
+    }
+    return `<div class="slot ${sel}" onclick="selectSlot('${time}')">
+      <div class="slot-time">${time}</div>
+      <div class="slot-block empty"></div>
+    </div>`;
+  }).join('');
+
+  // 재렌더 후 스크롤 위치 복원 — 슬롯 선택 시 자동으로 맨 앞/특정 위치로 튀지 않게.
+  // (자동 이동 제거: 직접 스크롤한 위치 그대로 유지)
+  scroll.scrollLeft = prevScroll;
+
+  renderNowLine(scroll);   // 현재 시간선
+}
+
+// 현재 시간선: 오늘 날짜일 때만, 현재 시각 위치에 세로선 표시(타임라인과 함께 스크롤)
+function renderNowLine(scroll) {
+  const old = scroll.querySelector('.now-line');
+  if (old) old.remove();
+  if (currentDay !== NOW_DAY) return;
+  const slots = scroll.querySelectorAll('.slot');
+  const firstMin = toMin(SLOTS[0]);
+  const idx = Math.floor((toMin(NOW_TIME) - firstMin) / 30);
+  if (idx < 0 || idx >= slots.length) return;
+  const el = slots[idx];
+  const frac = ((toMin(NOW_TIME) - firstMin) % 30) / 30;   // 슬롯 내 비율
+  const x = el.offsetLeft + frac * el.offsetWidth;
+  const line = document.createElement('div');
+  line.className = 'now-line';
+  line.style.left = x + 'px';
+  line.innerHTML = '<div class="now-line-dot"></div><div class="now-line-label">지금 ' + NOW_TIME + '</div>';
+  scroll.appendChild(line);
+}
+
+function renderBottomPanel() {
+  const panel = document.getElementById('bottomPanel');
+  const day = MEETINGS[currentDay] || {};
+  const meeting = selectedSlot ? day[selectedSlot] : null;
+
+  if (!meeting) {
+    panel.innerHTML = `<div class="panel-empty">
+      <div class="panel-empty-text">${selectedSlot ? '이 시간에 잡힌 미팅이 없습니다' : '슬롯을 선택하면 미팅 정보가 표시됩니다'}</div>
+      <button class="panel-empty-cta" onclick="location.href='prototype-discover.html'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        기업 탐색하기
+      </button>
+    </div>`;
+    return;
+  }
+
+  const actions = getActions(meeting);
+  panel.innerHTML = `<div class="panel-meeting">
+    <div class="panel-top">
+      <div class="panel-logo">${meeting.logo}</div>
+      <div class="panel-info">
+        <div class="panel-company">${meeting.company} <span class="panel-status-badge ${meeting.status}">${statusText(meeting, false)}</span></div>
+        <div class="panel-venue">${slotRange(selectedSlot, meeting)}${meeting.span > 1 ? ` · ${durText(mtgMinutes(meeting))}` : ''} · ${meeting.venue} · ${meeting.members}</div>
+      </div>
+    </div>
+    ${actions}
+  </div>`;
+}
+
+function renderCardList() {
+  const area = document.getElementById('cardListArea');
+  const day = MEETINGS[currentDay] || {};
+  const times = Object.keys(day).sort();
+
+  if (times.length === 0) {
+    area.innerHTML = `<div class="card-list-empty">
+      <div class="card-list-empty-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div class="card-list-empty-text">이 날은 잡힌 미팅이 없습니다<br>기업 탐색에서 미팅을 신청해보세요</div>
+    </div>`;
+    return;
+  }
+
+  area.innerHTML = times.map(time => {
+    const m = day[time];
+    const cardActions = getCardActions(m);
+    return `<div class="meeting-card" onclick="selectSlot('${time}')">
+      <div class="meeting-card-header">
+        <div class="meeting-card-time">${slotRange(time, m)}${m.span > 1 ? ` · ${durText(mtgMinutes(m))}` : ''}</div>
+        <div class="meeting-card-status ${m.status}">${statusText(m, false)}</div>
+      </div>
+      <div class="meeting-card-body">
+        <div class="meeting-card-logo">${m.logo}</div>
+        <div class="meeting-card-info">
+          <div class="meeting-card-name">${m.company}</div>
+          <div class="meeting-card-venue">${m.venue} | ${m.members}</div>
+        </div>
+      </div>
+      <div class="meeting-card-needs">
+        <strong>바이어 니즈:</strong> ${m.buyerNeeds}
+      </div>
+      ${cardActions}
+    </div>`;
+  }).join('');
+}
+
+function getActions(meeting) {
+  const { status, direction } = meeting;
+  if (status === 'proposed' && direction === 'received') {
+    return `<div class="panel-hint"><b>내 수락이 필요한 요청</b>이에요. 수락하면 미팅이 확정됩니다.</div>
+    <div class="panel-actions">
+      <button class="panel-btn panel-btn-reject" onclick="openModal('reject')">거절</button>
+      <button class="panel-btn panel-btn-accept" onclick="handleAccept()">수락</button>
+    </div>`;
+  }
+  if (status === 'proposed' && direction === 'sent') {
+    return `<div class="panel-hint">내가 보낸 요청 · <b>상대방의 수락을 기다리는 중</b>이에요.</div>
+    <div class="panel-actions">
+      <button class="panel-btn panel-btn-cancel" onclick="openModal('cancel')">요청 취소</button>
+    </div>`;
+  }
+  if (status === 'accepted') {
+    return `<div class="panel-actions">
+      <button class="panel-btn panel-btn-cancel" onclick="openModal('cancel')">취소</button>
+    </div>`;
+  }
+  if (status === 'completed' || status === 'noshow') {
+    return `<div class="panel-actions">
+      <button class="panel-btn panel-btn-review">리뷰 작성</button>
+    </div>`;
+  }
+  return '';
+}
+
+function getCardActions(meeting) {
+  const { status, direction } = meeting;
+  if (status === 'proposed' && direction === 'received') {
+    return `<div class="meeting-card-actions">
+      <button class="meeting-card-btn" style="background:var(--bg-secondary);color:var(--text-secondary);" onclick="event.stopPropagation();openModal('reject')">거절</button>
+      <button class="meeting-card-btn" style="background:var(--accent-green);color:white;" onclick="event.stopPropagation();handleAccept()">수락</button>
+    </div>`;
+  }
+  if (status === 'proposed' && direction === 'sent') {
+    return `<div class="meeting-card-actions">
+      <button class="meeting-card-btn" style="background:var(--bg-secondary);color:var(--accent-red);" onclick="event.stopPropagation();openModal('cancel')">취소</button>
+    </div>`;
+  }
+  if (status === 'accepted') {
+    return `<div class="meeting-card-actions">
+      <button class="meeting-card-btn" style="background:var(--bg-secondary);color:var(--accent-red);" onclick="event.stopPropagation();openModal('cancel')">취소</button>
+    </div>`;
+  }
+  if (status === 'completed' || status === 'noshow') {
+    return `<div class="meeting-card-actions">
+      <button class="meeting-card-btn" style="background:var(--accent-primary);color:white;" onclick="event.stopPropagation()">리뷰 작성</button>
+    </div>`;
+  }
+  return '';
+}
+
+function statusLabel(s) {
+  const map = {
+    proposed: '대기 중',
+    accepted: '확정',
+    completed: '완료',
+    noshow: '노쇼',
+    rejected: '거절됨',
+    cancelled: '취소됨',
+  };
+  return map[s] || s;
+}
+
+// 방향별 상태 라벨 — '대기 중'이 두 의미(내 수락 대기 / 상대 수락 대기)로 헷갈리던 것 분리.
+//  · proposed+received = 내가 수락/거절해야 함  · proposed+sent = 내가 보낸 요청, 상대 수락 대기
+//  short=true: 타임라인 슬롯용 짧은 라벨
+function statusText(m, short) {
+  // proposed: 방향 기준 라벨로 통일(타임라인·패널·카드 동일). 상태 뉘앙스는 패널 안내문이 보완.
+  if (m.status === 'proposed') {
+    return m.direction === 'sent' ? '보낸 요청' : '받은 요청';
+  }
+  return statusLabel(m.status);
+}
+
+function addMinutes(time, min) {
+  const [h, m] = time.split(':').map(Number);
+  const total = h * 60 + m + min;
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+// 미팅 길이(span: 30분 단위 칸 수, 기본 1=30분) → 시간 범위/소요시간 텍스트
+function mtgMinutes(m) { return (m && m.span > 1 ? m.span : 1) * 30; }
+function slotRange(time, m) { return `${time} – ${addMinutes(time, mtgMinutes(m))}`; }
+function durText(min) { const h = Math.floor(min / 60), mm = min % 60; return (h ? h + '시간' : '') + (h && mm ? ' ' : '') + (mm ? mm + '분' : ''); }
+
+// ========== INTERACTIONS ==========
+function selectDay(dayKey) {
+  currentDay = dayKey;
+  selectedSlot = null;
+  renderDayTabs();
+  renderTimeline();
+  renderBottomPanel();
+  renderCardList();
+  updateNowBar();
+}
+
+function selectSlot(time) {
+  selectedSlot = selectedSlot === time ? null : time;
+  renderTimeline();
+  renderBottomPanel();
+}
+
+function switchVariant(v) {
+  currentVariant = v;
+  document.querySelectorAll('.variant-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.variant === v);
+  });
+  // 변형 노출은 body 클래스로 제어 — 인라인 display 미사용(데스크톱 그리드 규칙이 적용되도록)
+  document.body.classList.toggle('variant-A', v === 'A');
+  document.body.classList.toggle('variant-B', v === 'B');
+  renderCardList();
+}
+
+function switchRole(role) {
+  currentRole = role;
+  document.querySelectorAll('.role-toggle-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.role === role);
+  });
+  document.body.classList.toggle('role-exhibitor', role === 'exhibitor');
+
+  // Update subtitle and empty state
+  const sub = document.getElementById('headerSubtitle');
+  const emptyTitle = document.getElementById('emptyTitle');
+  const emptyDesc = document.getElementById('emptyDesc');
+  if (role === 'exhibitor') {
+    sub.textContent = 'DX Korea 2026 | 일산 킨텍스 | 참가사 뷰';
+    emptyTitle.textContent = '아직 미팅이 없습니다';
+    emptyDesc.textContent = 'AI 추천 바이어를 확인해보세요';
+  } else {
+    sub.textContent = 'DX Korea 2026 | 일산 킨텍스';
+    emptyTitle.textContent = '아직 미팅이 없습니다';
+    emptyDesc.textContent = '관심 기업을 탐색해보세요';
+  }
+  renderBottomPanel();
+}
+
+// 개발용 미리보기 토글 — 별도 DOM/재렌더 없이 셸 폭만 제약(컨테이너 쿼리가 reflow)
+function setPreview(mode){
+  document.body.classList.toggle('preview-mobile', mode==='mobile');
+  document.querySelectorAll('.view-toggle-btn').forEach(function(b){ b.classList.toggle('active', b.textContent.trim().toLowerCase().indexOf(mode)!==-1); });
+}
+
+function openModal(type) {
+  document.getElementById('modalOverlay').classList.add('show');
+  if (type === 'reject') {
+    document.getElementById('rejectModal').classList.add('show');
+  } else {
+    document.getElementById('cancelModal').classList.add('show');
+  }
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  document.getElementById('rejectModal').classList.remove('show');
+  document.getElementById('cancelModal').classList.remove('show');
+  // Reset chips
+  document.querySelectorAll('.reason-chip').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.reason-input').forEach(i => i.value = '');
+}
+
+function handleAccept() {
+  if (!selectedSlot) return;
+  const day = MEETINGS[currentDay];
+  if (day && day[selectedSlot]) {
+    day[selectedSlot].status = 'accepted';
+    renderTimeline();
+    renderBottomPanel();
+    renderCardList();
+    renderDayTabs();
+    updateBadges();
+  }
+}
+
+function updateNowBar() {
+  const bar = document.getElementById('nowBar');
+  const day = MEETINGS[currentDay] || {};
+  const times = Object.keys(day).filter(t => day[t].status === 'accepted').sort();
+  if (currentDay === '0917' && times.length > 0) {
+    bar.style.display = 'flex';
+    const next = times[0];
+    bar.innerHTML = `<div class="now-dot"></div><span>현재 09:15 | 다음 미팅 ${next} ${day[next].company}</span>`;
+  } else if (currentDay === '0918') {
+    bar.style.display = 'flex';
+    bar.innerHTML = `<div class="now-dot"></div><span>전시 2일차</span>`;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function updateBadges() {
+  const total = getTotalPending();
+  document.getElementById('totalBadge').textContent = total > 0 ? `${total}건 대기` : '';
+  document.getElementById('totalBadge').style.display = total > 0 ? '' : 'none';
+  const navBadge = document.getElementById('navBadge');
+  if (navBadge) {
+    navBadge.textContent = total;
+    navBadge.style.display = total > 0 ? '' : 'none';
+  }
+}
+
+// Click overlay to close
+document.getElementById('modalOverlay').addEventListener('click', closeModal);
+
+// ========== INIT ==========
+document.body.classList.add('variant-A');   // 기본 변형 A 노출 (display는 body 클래스로 제어)
+renderDayTabs();
+renderTimeline();
+renderBottomPanel();
+renderCardList();
+updateNowBar();
+updateBadges();
+
+// Auto-select first meeting slot on 9/17
+const firstMeetingSlot = Object.keys(MEETINGS['0917'] || {}).sort()[0];
+if (firstMeetingSlot) {
+  selectedSlot = firstMeetingSlot;
+  renderTimeline();
+  renderBottomPanel();
+}
+
+// ── 데스크톱 가로 스크롤: 마우스 휠 → 가로, 드래그로 밀기 ──
+// (터치는 네이티브 스크롤 그대로. 마우스로는 휠/드래그로 스크롤)
+(function initTimelineScroll() {
+  const ts = document.getElementById('timelineScroll');
+  if (!ts) return;
+  // 세로 휠을 가로 스크롤로 변환 (양 끝에서는 페이지 세로 스크롤 허용)
+  ts.addEventListener('wheel', function (e) {
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // 가로 제스처는 네이티브
+    const max = ts.scrollWidth - ts.clientWidth;
+    if (max <= 0) return;
+    const next = Math.max(0, Math.min(max, ts.scrollLeft + e.deltaY));
+    if (next !== ts.scrollLeft) { ts.scrollLeft = next; e.preventDefault(); }
+  }, { passive: false });
+  // 드래그로 밀기 (마우스/펜만, 터치 제외)
+  let down = false, sx = 0, sl = 0, moved = false;
+  ts.addEventListener('pointerdown', function (e) {
+    if (e.pointerType === 'touch') return;
+    down = true; moved = false; sx = e.clientX; sl = ts.scrollLeft;
+    ts.classList.add('dragging');
+  });
+  window.addEventListener('pointermove', function (e) {
+    if (!down) return;
+    const dx = e.clientX - sx;
+    if (Math.abs(dx) > 4) moved = true;
+    ts.scrollLeft = sl - dx;
+  });
+  window.addEventListener('pointerup', function () {
+    if (!down) return;
+    down = false; ts.classList.remove('dragging');
+    if (moved) { ts._noClick = true; setTimeout(function () { ts._noClick = false; }, 0); }
+  });
+  // 드래그 직후의 클릭(슬롯 선택) 억제 — 캡처 단계에서 가로채기
+  ts.addEventListener('click', function (e) {
+    if (ts._noClick) { e.stopPropagation(); e.preventDefault(); }
+  }, true);
+})();
+</script>
+
+<script>
+  window.NABI_NAV_ACTIVE = 'meetings';
+  window.NABI_NAV_USER = { name: '김재현', avatar: 'KJ' };
+</script>
+<script src="nabi-nav.js?v=20260607"></script>
+
+<script>
+/* 기본 = 데스크톱(셸 전체폭). ?view=mobile 로 폰 프리뷰 시작 가능. */
+(function () {
+  if (new URLSearchParams(location.search).get('view') === 'mobile') setPreview('mobile');
+})();
+</script>
+</body>
+</html>

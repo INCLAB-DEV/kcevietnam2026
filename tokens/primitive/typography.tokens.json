@@ -1,0 +1,23 @@
+{
+  "$description": "NABI typography primitives. Font family is Pretendard (design system unconfirmed → Satoshi etc. not yet adopted). The Figma variable value is the bare family name; the full CSS fallback stack is carried in com.nabi.cssValue so the build emits it verbatim.",
+  "font": {
+    "family": {
+      "sans": {
+        "$type": "fontFamily",
+        "$value": "Pretendard",
+        "$extensions": {
+          "com.nabi.css": "--font-sans",
+          "com.nabi.cssValue": "'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif"
+        }
+      },
+      "num": {
+        "$type": "fontFamily",
+        "$value": "Pretendard",
+        "$extensions": {
+          "com.nabi.css": "--font-num",
+          "com.nabi.cssValue": "'Pretendard', -apple-system, sans-serif"
+        }
+      }
+    }
+  }
+}

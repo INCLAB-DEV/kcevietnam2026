@@ -1,0 +1,45 @@
+[project]
+name = "nabi-backend"
+version = "0.0.1"
+description = "NABI 비즈매칭 플랫폼 백엔드 — FastAPI가 모든 DB 접근·컴퓨트·AI를 소유 (ADR-0008 경계 B)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "sqlalchemy>=2.0.36",
+    "alembic>=1.14",
+    "psycopg[binary]>=3.2",
+    "pydantic-settings>=2.6",
+    # roster import(OP-002) — 엑셀 파싱·S3 원본 보관·multipart 업로드.
+    "openpyxl>=3.1.5",
+    "boto3>=1.43.34",
+    "python-multipart>=0.0.32",
+    # Cognito 발급 JWT의 JWKS/RS256 검증(F-AU-001 AC4). RS256은 RSA 키가 필요해 [crypto] extra 포함.
+    "pyjwt[crypto]>=2.10",
+    # MY-002 미팅 회의록 — OpenAI로 구조화 + 전사(Whisper) + PDF/DOCX 내보내기.
+    "openai>=1.40",
+    "python-docx>=1.1",
+    "reportlab>=4.2",
+    "bcrypt>=5.0.0",
+    "tzdata>=2026.2",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28",  # FastAPI TestClient(엔드포인트 테스트) 의존
+    "pytest>=8.3",
+    "ruff>=0.8",
+]
+
+# uv가 관리하는 파이썬 버전 고정 — 로컬 3.14 휠 부재 회피, AWS 런타임과 정합.
+[tool.uv]
+python-preference = "managed"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+# 순수 규칙 모듈은 app 패키지를 루트에서 임포트한다(설치 없이 테스트).
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

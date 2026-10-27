@@ -1,0 +1,12 @@
+{
+  "$description": "NABI motion primitives. Durations map to Physique 4-pattern (appear/connect/transform/ripple). Easings cannot be stored as Figma variables (cubic-bezier unsupported) — they live in CSS only.",
+  "duration": {
+    "fast": { "$type": "duration", "$value": "150ms", "$extensions": { "com.nabi.css": "--dur-fast" } },
+    "base": { "$type": "duration", "$value": "250ms", "$extensions": { "com.nabi.css": "--dur" } },
+    "slow": { "$type": "duration", "$value": "350ms", "$extensions": { "com.nabi.css": "--dur-slow" } }
+  },
+  "easing": {
+    "out":      { "$type": "cubicBezier", "$value": [0.32, 0.72, 0, 1],   "$extensions": { "com.nabi.css": "--ease-out", "com.nabi.figmaVariable": false } },
+    "standard": { "$type": "cubicBezier", "$value": [0.25, 0.1, 0.25, 1], "$extensions": { "com.nabi.css": "--ease", "com.nabi.cssValue": "ease", "com.nabi.figmaVariable": false } }
+  }
+}

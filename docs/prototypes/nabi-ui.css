@@ -1,0 +1,305 @@
+/* ============================================================================
+   NABI UI — 단일 소스 디자인 토큰 (prototypes)
+   ----------------------------------------------------------------------------
+   모든 프로토타입이 <link rel="stylesheet" href="nabi-ui.css"> 로 공유.
+   각 프로토타입은 로컬 :root 토큰 블록을 제거하고 이 파일을 상속한다.
+
+   ▸ 색상은 PLACEHOLDER다. NABI 컬러 시스템은 미확정(8개 시안 거절, 보라 금지,
+     RGB 빛 원색 컨셉 승인). 확정되면 아래 색 토큰 값만 교체하면 전체 반영.
+   ▸ 폰트는 Pretendard로 통일 (확정 디자인 시스템 미정 → Satoshi 등 미도입).
+   ▸ radius는 4/8/12 스케일 (xl=20 → lg=12 흡수).
+   ▸ 하단 "구버전 별칭"이 기존 프로토타입의 var() 참조를 통일 값으로 연결한다.
+   ============================================================================ */
+
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+
+:root {
+  /* ───────── Typography (Pretendard 통일) ───────── */
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif;
+  --font-num: 'Pretendard', -apple-system, sans-serif; /* 숫자 정렬용: font-feature-settings: 'tnum' 1 과 함께 사용 */
+
+  /* ───────── Color · Surface (PLACEHOLDER) ───────── */
+  --bg-primary: #fdfcfb;       /* 따뜻한 오프화이트 페이지 배경 */
+  --bg-secondary: #f5f3f0;     /* 보조 표면 */
+  --bg-elevated: #ffffff;      /* 카드 / 시트 표면 */
+  --border-default: #e5e2de;   /* 기본 보더 */
+
+  /* ───────── Text (PLACEHOLDER) ───────── */
+  --text-primary: #08090a;
+  --text-secondary: #4a4a4a;
+  --text-tertiary: #777169;
+  --text-inverse: #ffffff;   /* 강조/어두운 배경 위 텍스트 (버튼 primary 등) */
+
+  /* ───────── Accent (PLACEHOLDER — 확정 색 아님) ───────── */
+  --accent-primary: #2563eb;   /* 임시 블루. 컬러 확정 시 교체 */
+  --accent-subtle: #eff6ff;
+
+  /* ───────── Semantic (PLACEHOLDER) ───────── */
+  --color-success: #16a34a;  --color-success-subtle: #f0fdf4;
+  --color-danger:  #dc2626;  --color-danger-subtle:  #fef2f2;
+  --color-warning: #ea580c;  --color-warning-subtle: #fff7ed;
+  --color-gold:    #f59e0b;  /* 별점 */
+
+  /* ───────── 미팅 상태 (도메인 enum → UI) ─────────
+     CONTEXT.md Schedule Table / ADR-0003 기준.
+     accepted+completed=초록, proposed=빨강(액션필요), noshow=주황, empty/rejected/cancelled=회색 */
+  --status-accepted: var(--color-success);  --status-accepted-subtle: var(--color-success-subtle);
+  --status-proposed: var(--color-danger);   --status-proposed-subtle: var(--color-danger-subtle);
+  --status-noshow:   var(--color-warning);  --status-noshow-subtle:   var(--color-warning-subtle);
+  --status-empty:    var(--bg-secondary);   --status-empty-border:    var(--border-default);
+
+  /* ───────── Radius (4 / 8 / 12) ───────── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* ───────── Spacing (4px base) ───────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* ───────── Border weight ───────── */
+  --bw-thin: 1px;
+  --bw: 1.5px;
+  --bw-strong: 2px;
+
+  /* ───────── Motion (Physique 4패턴 매핑 자리) ─────────
+     등장(fast) / 연결(base) / 변환(slow) / 파급(spring) */
+  --dur-fast: 0.15s;
+  --dur: 0.25s;
+  --dur-slow: 0.35s;
+  --ease-out: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease: ease;
+
+  /* ════════════════════════════════════════════════════════════════════════
+     구버전 별칭 (BACK-COMPAT) — 기존 프로토타입의 var() 참조를 통일 값으로 연결.
+     정렬 시 프로토타입은 로컬 :root만 지우면 아래 별칭으로 자동 통일된다.
+     ⚠ 신규 작업은 위 캐노니컬 토큰을 직접 쓸 것.
+     ════════════════════════════════════════════════════════════════════════ */
+
+  /* 폰트 옛 이름 */
+  --font-stack: var(--font-sans);
+
+  /* radius xl(20) → lg(12) 흡수 */
+  --radius-xl: var(--radius-lg);
+
+  /* 상태색 — 신규 클러스터 이름 (--accent-green/red/amber) */
+  --accent-green: var(--color-success);   --accent-green-subtle: var(--color-success-subtle);
+  --accent-red: var(--color-danger);      --accent-red-subtle: var(--color-danger-subtle);
+  --accent-amber: var(--color-warning);   --accent-amber-subtle: var(--color-warning-subtle);
+  --accent-gold: var(--color-gold);
+
+  /* 상태색 — 구버전 클러스터 이름 (--status-success/warning/error) */
+  --status-success: var(--color-success);  --status-success-subtle: var(--color-success-subtle);
+  --status-warning: var(--color-warning);  --status-warning-subtle: var(--color-warning-subtle);
+  --status-error:   var(--color-danger);   --status-error-subtle:   var(--color-danger-subtle);
+}
+
+/* ───────── Base reset (프로토타입 공통) ───────── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* 숫자(점수/%/카운트) 정렬용 헬퍼 */
+.nb-num { font-family: var(--font-num); font-feature-settings: 'tnum' 1, 'cv03' 1; font-variant-numeric: tabular-nums; }
+
+/* ============================================================================
+   CHROME COMPONENTS (공유) — 캐노니컬 = MY-001 (prototype-my-meetings)
+   ----------------------------------------------------------------------------
+   phone-frame / dev variant-bar / desktop nav+card / bottom-nav.
+   각 프로토타입은 로컬 중복 정의를 지우고 이걸 상속한다.
+   레이아웃 규칙(체계):
+     · 루트 탭(discover·my-meetings·profile): bottom-nav O, 백버튼 X
+     · 상세/폼(company-detail·meeting-review·apply·apply-seller): top-bar+back O, bottom-nav X
+     · 모달(meeting): sheet, 크롬 X
+     · 모든 화면: 모바일 + 데스크톱(dk-nav+dk-card) 둘 다 렌더 (백지 금지)
+   ============================================================================ */
+
+/* Phone frame — dev 시뮬레이션 (프로덕션에서 제거) */
+.phone-frame {
+  width: 390px; min-width: 390px; height: 844px;
+  background: var(--bg-primary); border-radius: 40px;
+  border: 8px solid #222; overflow: hidden; position: relative;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+  margin-top: 8px; margin-bottom: 60px;
+}
+/* nav 주입 시 앱바+콘텐츠 세로 스택 (class라서 desktop-mode display:none이 우선) */
+.phone-frame.has-app-bar { display: flex; flex-direction: column; }
+/* 앱바 아래 콘텐츠(nav 제외)가 남은 높이를 채우고 자체 스크롤 */
+.phone-frame.has-app-bar > *:not(.app-bar):not(.nav-drawer):not(.nav-drawer-scrim) { flex: 1 1 0; min-height: 0; }
+
+/* Dev variant/role/view bar (프로덕션에서 제거) */
+.variant-bar { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; align-items: center; background: #1a1a1a; z-index: 9999; border-top: 1px solid #333; }
+.variant-btn { padding: 12px 20px; font-size: 13px; font-weight: 600; color: #888; cursor: pointer; border: none; background: none; font-family: var(--font-sans); white-space: nowrap; transition: all .15s; }
+.variant-btn:hover { color: #ccc; }
+.variant-btn.active { color: #fff; border-bottom: 2px solid var(--accent-primary); }
+.variant-sep { width: 1px; background: #333; margin: 8px 0; align-self: stretch; }
+.variant-label { padding: 12px 16px; font-size: 11px; color: #555; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; font-family: var(--font-sans); }
+.role-toggle, .view-toggle { display: flex; gap: 0; background: #333; border-radius: 6px; overflow: hidden; margin-right: 12px; }
+.role-toggle { margin-left: auto; }
+.role-toggle-btn, .view-toggle-btn { padding: 7px 14px; font-size: 12px; font-weight: 600; color: #888; cursor: pointer; border: none; background: none; font-family: var(--font-sans); transition: all .15s; }
+.role-toggle-btn:hover, .view-toggle-btn:hover { color: #ccc; }
+.role-toggle-btn.active, .view-toggle-btn.active { color: #fff; background: var(--accent-primary); }
+
+/* dev 바 레이아웃 통일 (로컬 .variant-bar/.selector-bar 정의보다 우선) —
+   라벨·변형 버튼은 좌측, 역할·뷰 토글은 우측. 역할 토글 유무와 무관하게 같은 모양. */
+.variant-bar, .selector-bar { justify-content: flex-start !important; }
+.variant-bar .role-toggle, .variant-bar .view-toggle,
+.selector-bar .role-toggle, .selector-bar .view-toggle { margin-left: auto !important; }
+.variant-bar .role-toggle ~ .view-toggle,
+.selector-bar .role-toggle ~ .view-toggle { margin-left: 0 !important; }
+
+/* Desktop nav + card */
+body.desktop-mode { background: #fff; padding: 0; min-height: 100vh; }
+body.desktop-mode .phone-frame { display: none; }
+.dk-nav { display: none; align-items: center; padding: 0 32px; height: 56px; width: 100%; background: var(--bg-elevated); border-bottom: 1px solid #d9d6d1; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+body.desktop-mode .dk-nav { display: flex; }
+.dk-nav-logo { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.dk-nav-logo-icon { width: 28px; height: 28px; background: var(--accent-primary); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 800; }
+.dk-nav-right { margin-left: auto; display: flex; align-items: center; gap: 20px; font-size: 13px; color: var(--text-secondary); }
+.dk-nav-link { cursor: pointer; }
+.dk-nav-link.active { color: var(--accent-primary); font-weight: 700; }
+.dk-nav-user { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.dk-nav-avatar { width: 28px; height: 28px; background: var(--bg-secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--text-tertiary); }
+.dk-container { display: none; flex: 1 1 0; flex-direction: column; align-items: center; width: 100%; padding: 28px 24px 100px; overflow-y: auto; min-height: 0; }
+body.desktop-mode .dk-container { display: flex; }
+.dk-card { width: 100%; max-width: 480px; background: var(--bg-elevated); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+
+/* Bottom navigation — 루트 탭 전용 (탐색/내 미팅/프로필) */
+.bottom-nav { display: flex; height: 52px; background: var(--bg-elevated); border-top: 1px solid var(--border-default); flex-shrink: 0; }
+body.desktop-mode .bottom-nav { display: none; }
+.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; border: none; background: none; font-family: var(--font-sans); transition: all .15s; position: relative; text-decoration: none; }
+.nav-icon { font-size: 18px; opacity: 0.4; line-height: 1; }
+.nav-label { font-size: 10px; font-weight: 600; color: var(--text-tertiary); }
+.nav-item.active .nav-icon { opacity: 1; }
+.nav-item.active .nav-label { color: var(--accent-primary); font-weight: 700; }
+.nav-badge { position: absolute; top: 4px; right: calc(50% - 16px); min-width: 14px; height: 14px; padding: 0 3px; background: var(--color-danger); color: #fff; border-radius: var(--radius-full); font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+/* ⚠ .bottom-nav 는 GLOBAL NAV(아래 .app-bar)로 대체됨 — 신규 사용 금지 */
+
+/* ============================================================================
+   GLOBAL NAV — 반응형 상단 앱바 + 햄버거 드로어  (표준 글로벌 네비게이션)
+   ----------------------------------------------------------------------------
+   · 넓은 컨테이너  → 상단 인라인 메뉴
+   · 좁은 컨테이너(모바일 프레임 포함) → 햄버거 → 드로어
+   컨테이너 쿼리(.app-bar 자체가 컨테이너) 기반이라 "좁아지면 햄버거"가 자동.
+   데스크톱 앱바는 .dk-only(전체폭), 모바일 앱바는 phone-frame 안에 배치.
+   메뉴 항목/순서/역할별 분기는 미확정(placeholder).
+   ============================================================================ */
+.app-bar { container-type: inline-size; width: 100%; display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 14px; background: var(--bg-elevated); border-bottom: 1px solid var(--border-default); flex-shrink: 0; position: sticky; top: 0; z-index: 50; box-sizing: border-box; }
+.app-bar-logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 16px; white-space: nowrap; }
+.app-bar-logo-icon { width: 26px; height: 26px; background: var(--accent-primary); border-radius: 6px; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; }
+.app-bar-menu { display: none; gap: 2px; margin-left: 18px; }
+.app-bar-link { padding: 8px 12px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; color: var(--text-secondary); cursor: pointer; text-decoration: none; white-space: nowrap; background: none; border: none; font-family: var(--font-sans); }
+.app-bar-link:hover { background: var(--bg-secondary); }
+.app-bar-link.active { color: var(--accent-primary); background: var(--accent-subtle); }
+.app-bar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.app-bar-user { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.app-bar-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--text-tertiary); flex-shrink: 0; }
+.hamburger { display: inline-flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; width: 36px; height: 36px; border: none; background: none; cursor: pointer; flex-shrink: 0; padding: 0; }
+.hamburger span { width: 18px; height: 2px; background: var(--text-primary); border-radius: 2px; }
+
+/* 드로어 (햄버거 메뉴) — phone-frame 또는 화면 기준 absolute */
+.nav-drawer-scrim { position: absolute; inset: 0; background: rgba(8,9,10,.42); z-index: 60; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.nav-drawer-scrim.open { opacity: 1; pointer-events: auto; }
+.nav-drawer { position: absolute; top: 0; left: 0; bottom: 0; width: 82%; max-width: 300px; background: var(--bg-elevated); z-index: 61; transform: translateX(-100%); transition: transform .28s var(--ease-out); display: flex; flex-direction: column; padding: 14px; box-shadow: 2px 0 24px rgba(0,0,0,.12); }
+.nav-drawer.open { transform: translateX(0); }
+.nav-drawer-head { display: flex; align-items: center; gap: 8px; padding: 6px 8px 14px; font-weight: 800; font-size: 16px; border-bottom: 1px solid var(--border-default); margin-bottom: 8px; }
+.nav-drawer-item { padding: 13px 12px; border-radius: var(--radius-md); font-size: 15px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 12px; cursor: pointer; text-decoration: none; background: none; border: none; font-family: var(--font-sans); text-align: left; width: 100%; }
+.nav-drawer-item:hover { background: var(--bg-secondary); }
+.nav-drawer-item.active { color: var(--accent-primary); background: var(--accent-subtle); }
+.nav-drawer-ico { width: 20px; text-align: center; flex-shrink: 0; }
+
+/* desktop 전용 표시 헬퍼 */
+.dk-only { display: none; }
+body.desktop-mode .dk-only { display: flex; }
+
+/* 컨테이너 쿼리: 앱바가 넓으면 인라인 메뉴, 좁으면 햄버거 */
+@container (min-width: 600px) {
+  .app-bar-menu { display: flex; }
+  .app-bar .hamburger { display: none; }
+}
+
+/* ============================================================================
+   RESPONSIVE SHELL — 단일 소스 반응형 (신규 표준)
+   ----------------------------------------------------------------------------
+   ⚠ 위의 .phone-frame / .dk-nav / .dk-container / .dk-card / body.desktop-mode
+     이중 렌더 시스템을 대체한다. (레거시는 미전환 페이지 호환 위해 남겨둠)
+
+   핵심: 페이지는 .app-shell 하나에 콘텐츠를 단 한 번만 렌더한다.
+     · .app-shell 이 inline-size 쿼리 컨테이너 → 콘텐츠는 "셸 폭"에 반응.
+     · 실제 데스크톱/모바일 뷰포트 + 개발용 폰 프리뷰가 동일 CSS로 reflow.
+     · 모든 레이아웃 분기는 @media 가 아니라 @container shell (min-width: …) 로.
+
+   페이지 골격:
+     <div class="app-shell">                ← nabi-nav.js 가 app-bar 주입
+       <main class="app-main">
+         <div class="app-content [content-narrow|content-form]"> … </div>
+       </main>
+     </div>
+
+   개발용 미리보기: body.preview-mobile 토글 → 셸 폭을 390px로 제약하면
+     동일 콘텐츠가 동일 @container 규칙으로 모바일 레이아웃으로 reflow.
+   ============================================================================ */
+
+.app-shell {
+  container: shell / inline-size;        /* THE 쿼리 컨테이너 */
+  position: relative;                      /* 절대위치 모달/드로어의 컨테이닝 블록
+                                              (container-type 만으로는 보장 안 됨 →
+                                               폰 프리뷰에서 모달이 베젤 밖으로 새는 것 방지) */
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+}
+.app-main {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+/* 유동 중앙 컨테이너 — 폭은 페이지 유형별 변수로 */
+.app-content {
+  width: 100%;
+  max-width: var(--content-max, 1040px);
+  margin-inline: auto;
+  padding: clamp(16px, 4cqi, 40px);
+}
+.content-narrow { --content-max: 560px; }   /* 상세 · 리뷰 · 폼 단계 */
+.content-form   { --content-max: 720px; }   /* apply · apply-seller 위저드 */
+/* 기본(클래스 없음) = 1040px : discover 그리드 · 대시보드 */
+
+/* 콘텐츠 유틸: 셸 폭 분기로 모바일↔데스크톱 노출 전환 (display:none 토글용) */
+.shell-wide-only   { display: none; }
+.shell-narrow-only { display: revert; }
+@container shell (min-width: 720px) {
+  .shell-wide-only   { display: revert; }
+  .shell-narrow-only { display: none; }
+}
+
+/* ── 개발용 폰 프리뷰: 셸 폭만 390px로 제약 (별도 DOM 아님) ── */
+body.preview-mobile { background: #ececec; }
+body.preview-mobile .app-shell {
+  max-width: 390px;
+  height: 844px;
+  min-height: 0;
+  margin: 12px auto 72px;
+  border: 8px solid #222;
+  border-radius: 40px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+}
+/* 프리뷰 모드에서 앱바 sticky 가 라운드 프레임 밖으로 안 새도록 */
+body.preview-mobile .app-shell > .app-bar { border-radius: 32px 32px 0 0; }

@@ -1,0 +1,242 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+/* 가이드 투어(coach marks) 기반 스타일 — 팝오버·오버레이 룩은 아래 .nabi-tour 오버라이드로 토큰에 맞춘다. */
+@import "driver.js/dist/driver.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: var(--font-sans);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    /* MY-001 타임라인 상태 액센트(슬림 시맨틱). 면은 모노 유지, 좌측 4px 틱에만 사용.
+       near-mono 레지스터 유지를 위해 저채도(0.12~0.13)로 절제. F-MY-001 D2 의미 보존. */
+    --color-status-confirmed: var(--status-confirmed);
+    --color-status-pending: var(--status-pending);
+    --color-status-review: var(--status-review);
+    --color-status-archived: var(--status-archived);
+    --color-status-muted: var(--status-muted);
+    /* "지금"(현재 시각) 전용 액센트 — status·선택(회색)과 구분되는 인디고. */
+    --color-now: var(--now);
+    --color-now-foreground: var(--now-foreground);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    /* 상태 틱 색(라이트) — 색=끝난 미팅의 "다음 할 일". 확정/예정=저채도 그린, 회의록 작성 필요=저채도 앰버,
+       응답대기=destructive, 회의록 완료(보관)=저채도 블루(hue 245, '지금' 인디고 hue 275와 구분),
+       노쇼/거절/취소/빈=border. */
+    --status-confirmed: oklch(0.55 0.12 155);
+    --status-pending: var(--destructive);
+    --status-review: oklch(0.67 0.13 65);
+    --status-archived: oklch(0.55 0.13 245);
+    /* muted 틱: 라이트에서 --border(oklch 0.922)는 흰 카드 위에서 1.26:1 — 사실상 안 보인다.
+       near-mono 디자인상 이 4px 틱이 노쇼/거절/취소의 유일한 표식이라 최소 가시성은 확보해야 한다.
+       다크에서 같은 이유로 --border를 떼어낸 아래 :131과 대칭(흰 배경 대비 ≈2.2:1). */
+    --status-muted: oklch(0.75 0 0);
+    /* "지금"(현재 시각) 액센트 — status 3색·선택 회색과 구분되는 인디고. 시간 지표로만 절제 사용. */
+    --now: oklch(0.52 0.18 275);
+    --now-foreground: oklch(0.985 0 0);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    /* 모노크롬 차트 램프(진함=chart-5 → 옅음=chart-1). 옅은 끝은 "면이 있다"는 것까지만 보이면 되지만,
+       라이트에서 0.87은 트랙(--muted 0.97)·카드(흰색) 대비 1.2~1.4:1이라 취소 세그먼트·범례 스와치가
+       통째로 사라졌다(운영 대시보드 분포 바). 램프 간격은 유지한 채 옅은 끝만 끌어올린다(≈2.3:1). */
+    --chart-1: oklch(0.72 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    /* 상태 틱 색(다크) — 어두운 배경에서 읽히도록 명도만 소폭 상향, 채도는 동일 절제. */
+    --status-confirmed: oklch(0.65 0.12 155);
+    --status-pending: var(--destructive);
+    --status-review: oklch(0.74 0.12 65);
+    --status-archived: oklch(0.66 0.13 245);
+    /* muted 틱: 다크에서 --border(white/10%)는 채운 행 틱이 거의 안 보임(codex P2).
+       de-emphasis는 유지하되 최소 가시성 확보를 위해 중간 회색으로 분리. */
+    --status-muted: oklch(0.45 0 0);
+    /* "지금" 인디고(다크) — 어두운 배경에서 읽히도록 명도 상향, 칩 텍스트는 어둡게(now-foreground). */
+    --now: oklch(0.70 0.15 275);
+    --now-foreground: oklch(0.205 0 0);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground;
+    /* 세로 스크롤바를 항상 예약 — 페이지 높이에 따라 스크롤바가 생겼다 사라지며
+       콘텐츠 폭이 흔들리는 것을 막는다(미팅 2컬럼이 미팅 클릭마다 폭이 변하던 문제).
+       html이 아닌 body에 둔다: html은 overflow:visible 유지 → body overflow가
+       뷰포트로 전파되어 거터를 예약하면서, Radix(react-remove-scroll)의 스크롤
+       락/보정이 body를 정상적으로 덮어쓸 수 있다(Sheet/Dialog 열 때 폭 틀어짐 방지).
+       오버레이 스크롤바(macOS 기본)에선 시각적 변화 없음. */
+    overflow-y: scroll;
+    }
+  html {
+    @apply font-sans;
+    }
+}
+
+/* ── 가이드 투어(driver.js) 팝오버 테마 ──────────────────────────────────────────
+   driver.css 기본 룩(흰 팝오버·검정 텍스트·파란 버튼)을 앱 디자인 토큰에 맞춘다. .nabi-tour 는
+   guided-tour.tsx 가 popoverClass 로 붙인다. 팝오버는 body 로 포털되지만 커스텀 프로퍼티는 html(:root/.dark)
+   에서 상속되므로 라이트/다크가 자동으로 따라온다(next-themes 의 .dark 클래스). */
+.driver-popover.nabi-tour {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 32px -12px rgb(0 0 0 / 0.45);
+  max-width: 21rem;
+}
+.driver-popover.nabi-tour .driver-popover-title {
+  color: var(--popover-foreground);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.driver-popover.nabi-tour .driver-popover-description {
+  color: var(--muted-foreground);
+  line-height: 1.5;
+}
+.driver-popover.nabi-tour .driver-popover-progress-text {
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.driver-popover.nabi-tour .driver-popover-close-btn {
+  color: var(--muted-foreground);
+}
+.driver-popover.nabi-tour .driver-popover-close-btn:hover {
+  color: var(--foreground);
+}
+.driver-popover.nabi-tour button.driver-popover-next-btn {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  text-shadow: none;
+}
+.driver-popover.nabi-tour button.driver-popover-next-btn:hover {
+  filter: brightness(1.08);
+}
+.driver-popover.nabi-tour button.driver-popover-prev-btn {
+  background-color: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  text-shadow: none;
+}
+.driver-popover.nabi-tour button.driver-popover-prev-btn:hover {
+  background-color: var(--accent);
+}
+/* 화살표 색을 팝오버 배경과 맞춘다(driver 기본은 흰색 고정 → 다크에서 튄다). */
+.driver-popover.nabi-tour .driver-popover-arrow-side-left.driver-popover-arrow {
+  border-left-color: var(--popover);
+}
+.driver-popover.nabi-tour .driver-popover-arrow-side-right.driver-popover-arrow {
+  border-right-color: var(--popover);
+}
+.driver-popover.nabi-tour .driver-popover-arrow-side-top.driver-popover-arrow {
+  border-top-color: var(--popover);
+}
+.driver-popover.nabi-tour .driver-popover-arrow-side-bottom.driver-popover-arrow {
+  border-bottom-color: var(--popover);
+}

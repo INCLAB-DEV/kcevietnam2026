@@ -1,0 +1,58 @@
+# 환경/비밀
+.env
+.env.local
+.env.production
+
+# Node
+node_modules/
+
+# Next.js (frontend 빌드 산출물·자동생성물)
+.next/
+out/
+next-env.d.ts
+
+# Python
+__pycache__/
+.venv/
+*.pyc
+
+# OS
+.DS_Store
+
+# 도구
+.gstack/
+.obsidian/
+.claude/settings.local.json
+/AGENTS.md
+
+# 내부 전용 문서 (외주사 공유 레포엔 넣지 않음 — 로컬/프라이빗 백업만)
+.claude/memory/
+.claude/handoffs/
+.claude/plans/
+docs/notes/
+
+# 임시 작업물
+draft-*.html
+moodboard.html
+design-proposals.html
+logo-story-*.html
+physique-audit.md
+
+# Vercel
+.vercel
+
+# QA 부산물 (playwright-mcp 스냅샷/콘솔 로그)
+.playwright-mcp/
+
+# 루트 작업 스크린샷
+/*.png
+
+# Office 임시 락파일
+~$*
+backups/
+
+# 로컬 비밀 설정(API 키 등) — 절대 커밋 금지
+secret.config
+
+# 라이브 E2E 테스트 산출물(테스트 계정 정보 포함) — 커밋 금지
+.e2e-artifacts/

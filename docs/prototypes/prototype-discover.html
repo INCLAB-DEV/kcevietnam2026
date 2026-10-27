@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NABI - 기업 탐색 프로토타입 (DV-001, THROWAWAY)</title>
+<link rel="stylesheet" href="nabi-ui.css?v=20260607"><!-- 단일 소스 토큰+크롬 -->
+<!-- PROTOTYPE: DV-001 AI 추천 카드 — 디자인 변주 A/B/C (인터랙션은 C 스와이프+버튼 고정) -->
+<!-- A: Quiet Paper(적합도 우상단 숫자) · B: Precision(가로 매치 바) · C: Bold Stat(상단 스탯 밴드) -->
+<!-- 모든 플로우(상세 DV-002·미팅 MT-001·전체기업/관심기업 탭·Desktop)는 원본 그대로 유지 -->
+<style>
+  /* 토큰·리셋·크롬은 nabi-ui.css(단일 소스)에서 상속 */
+  body { background: var(--bg-primary); }
+
+  /* ── 단일 셸 반응형 (nabi-ui.css .app-shell/.app-content 상속) ──
+     discover 는 #discover-root(=.app-content) 하나에만 렌더한다.
+     좁음(폰/프리뷰) = 스와이프 덱, 넓음(데스크톱) = 추천 카드 그리드. */
+
+  /* 좁음(< 720cqi): 기존 모바일 풀하이트 스와이프 경험 유지 */
+  @container shell (max-width: 719px) {
+    #discover-root { padding: 0; max-width: none; height: 100%; display: flex; flex-direction: column; min-height: 0; }
+    .discover-page { height: 100%; flex: 1 1 0; min-height: 0; }
+    .swipe-only { display: flex; }              /* 좁음: 스와이프 덱 노출 */
+    .rec-grid   { display: none; }              /* 좁음: 그리드 숨김 */
+  }
+
+  /* 덱/그리드 display 는 base 에 두지 않는다 — base vs @container 충돌 회피.
+     narrow(max 719)+wide(min 720)가 전 구간을 분할하므로 display는 두 쿼리에서만 정의. */
+  .swipe-only { flex-direction: column; flex: 1 1 0; min-height: 0; }
+
+  /* 데스크톱 추천 그리드 — 동일 카드 디자인(buildCardContent) 재사용 */
+  .rec-grid { grid-template-columns: 1fr; gap: 16px; padding: 16px 0 56px; }
+  .rec-card {
+    background: var(--bg-elevated); border: 1px solid var(--border-default);
+    border-radius: var(--radius-xl); box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .rec-card .card-body { overflow: visible; }
+
+  /* 넓음(≥ 720cqi): 자연 높이로 흐르고 그리드가 가로폭을 채움 */
+  @container shell (min-width: 720px) {
+    .discover-page { height: auto; overflow: visible; }
+    .discover-header { padding: 4px 0 0; background: none; border-bottom: 0; }
+    .discover-header .discover-tabs { border-bottom: 1px solid var(--border-default); }
+    .tab-content { overflow: visible; }
+    .tab-content.active { display: block; }
+    .company-list { padding: 16px 0 56px; }
+    .detail-body, .detail-actions, .detail-header { max-width: 760px; margin-inline: auto; width: 100%; }
+    .meeting-overlay { align-items: center; }
+    .meeting-sheet { max-width: 480px; max-height: 85%; border-radius: var(--radius-xl); }
+    .swipe-only { display: none; }              /* 넓음: 스와이프 덱 숨김 */
+    .rec-grid   { display: grid; grid-template-columns: repeat(2, 1fr); }
+  }
+  @container shell (min-width: 1040px) { .rec-grid { grid-template-columns: repeat(3, 1fr); } }
+
+  /* ========== DISCOVER PAGE ========== */
+  .discover-page {
+    display: flex; flex-direction: column; height: 100%;
+    overflow: hidden; background: var(--bg-primary);
+  }
+  .discover-header {
+    padding: 16px 20px 0; background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-default); flex-shrink: 0;
+  }
+  .discover-title {
+    font-size: 20px; font-weight: 800; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .discover-tabs { display: flex; }
+  .discover-tab {
+    flex: 1; padding: 12px 0; text-align: center; font-size: 14px; font-weight: 600;
+    color: var(--text-tertiary); cursor: pointer; border: none; background: none;
+    font-family: var(--font-stack); border-bottom: 2px solid transparent; transition: all 0.2s;
+  }
+  .discover-tab:hover { color: var(--text-secondary); }
+  .discover-tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+  .tab-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--accent-primary); color: white;
+    font-size: 11px; font-weight: 700; min-width: 18px; height: 18px;
+    border-radius: 9px; padding: 0 5px; margin-left: 4px;
+  }
+
+  .tab-content { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+  .tab-content.active { display: flex; }
+
+  /* ========== SWIPE CARD (Variant A/C) ========== */
+  .card-stack-area {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    position: relative; padding: 12px 16px; overflow: hidden; min-height: 0;
+  }
+  .swipe-card {
+    position: absolute; width: calc(100% - 32px);
+    background: var(--bg-elevated); border-radius: var(--radius-xl);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    cursor: grab; user-select: none; touch-action: none;
+    will-change: transform; display: flex; flex-direction: column;
+    max-height: calc(100% - 16px); overflow: hidden;
+  }
+  .swipe-card:active { cursor: grabbing; }
+  .swipe-card.behind { transform: scale(0.97) translateY(8px); opacity: 0.7; pointer-events: none; }
+  .swipe-card.far-behind { transform: scale(0.94) translateY(16px); opacity: 0.5; pointer-events: none; }
+
+  .swipe-overlay {
+    position: absolute; top: 16px; padding: 8px 16px;
+    border-radius: var(--radius-full); font-size: 14px; font-weight: 800;
+    opacity: 0; z-index: 10; pointer-events: none;
+  }
+  .swipe-overlay.left {
+    right: 16px; background: var(--accent-red-subtle);
+    color: var(--accent-red); border: 2px solid var(--accent-red);
+  }
+  .swipe-overlay.right {
+    left: 16px; background: var(--accent-green-subtle);
+    color: var(--accent-green); border: 2px solid var(--accent-green);
+  }
+
+  /* Card inner — clear hierarchy: name → reason → detail */
+  .card-header {
+    padding: 20px 20px 0; flex-shrink: 0;
+  }
+  .card-meta {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
+    font-size: 12px; color: var(--text-tertiary); font-weight: 600;
+  }
+  .card-match-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--accent-primary);
+  }
+  .card-company-name { font-size: 20px; font-weight: 800; line-height: 1.3; margin-bottom: 10px; }
+
+  /* AI reason — second in hierarchy, clear and readable */
+  .card-reason-hero {
+    margin: 0 20px 14px; padding: 0;
+  }
+  .card-reason-text {
+    font-size: 15px; color: var(--text-secondary); line-height: 1.65;
+  }
+
+  /* Card body — supporting info, visually lighter */
+  .card-body { flex: 1; overflow-y: auto; padding: 0 20px; min-height: 0; }
+  .card-keywords { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+  .card-keyword {
+    padding: 4px 10px; background: var(--bg-secondary); color: var(--text-tertiary);
+    border-radius: var(--radius-full); font-size: 11px; font-weight: 600;
+  }
+  .card-strength {
+    font-size: 13px; color: var(--text-tertiary); line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  /* Bookmark row */
+  .card-bookmark-row {
+    display: flex; align-items: center; gap: 8px; padding: 0 20px 6px;
+    flex-shrink: 0;
+  }
+  .card-bookmark-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: var(--radius-full);
+    border: 1.5px solid var(--border-default); background: var(--bg-elevated);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    color: var(--text-tertiary); transition: all 0.15s;
+    font-family: var(--font-stack);
+  }
+  .card-bookmark-btn:hover { border-color: var(--accent-green); color: var(--accent-green); }
+  .card-bookmark-btn.saved {
+    background: var(--accent-green-subtle); border-color: var(--accent-green);
+    color: var(--accent-green);
+  }
+
+  /* Card actions */
+  .card-actions {
+    display: flex; gap: 8px; padding: 10px 20px 16px;
+    flex-shrink: 0; border-top: 1px solid var(--border-default);
+  }
+  .card-action-btn {
+    flex: 1; padding: 13px 8px; border-radius: var(--radius-md);
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    font-family: var(--font-stack); border: none; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .card-action-btn:hover { opacity: 0.85; }
+  .card-action-btn.meeting {
+    background: var(--accent-primary); color: white; flex: 1.5;
+  }
+  .card-action-btn.detail {
+    background: var(--bg-secondary); color: var(--text-secondary);
+  }
+
+  /* Swipe hint */
+  .swipe-hint {
+    text-align: center; padding: 4px 20px 12px; font-size: 12px;
+    color: var(--text-tertiary); flex-shrink: 0;
+  }
+  .hint-row { display: flex; justify-content: center; align-items: center; gap: 6px; }
+  .hint-icon-sm {
+    width: 20px; height: 20px; border-radius: 50%; font-size: 10px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .hint-icon-sm.pass { background: var(--accent-red-subtle); color: var(--accent-red); }
+
+  /* Pass button (Variant C) */
+  .pass-btn-bottom {
+    display: flex; justify-content: center; gap: 10px; padding: 4px 20px 4px; flex-shrink: 0;
+  }
+  .pass-btn-circle {
+    padding: 10px 20px; border-radius: var(--radius-full);
+    background: var(--accent-red-subtle); color: var(--accent-red);
+    border: 1.5px solid #fecaca; font-size: 14px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; font-family: var(--font-stack);
+  }
+  .pass-btn-circle:hover { transform: scale(1.05); }
+
+  /* Card bottom row */
+  .card-bottom-row {
+    display: flex; align-items: center; justify-content: center;
+    padding: 6px 20px; flex-shrink: 0; gap: 12px;
+  }
+  .card-counter {
+    font-size: 12px; color: var(--text-tertiary); font-weight: 600;
+  }
+  .card-bookmark-btn-outer {
+    padding: 7px 14px; border-radius: var(--radius-full);
+    border: 1.5px solid var(--border-default); background: var(--bg-elevated);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    color: var(--text-tertiary); font-family: var(--font-stack);
+    transition: all 0.15s;
+  }
+  .card-bookmark-btn-outer:hover { border-color: var(--accent-green); color: var(--accent-green); }
+  .card-bookmark-btn-outer.saved {
+    background: var(--accent-green-subtle); border-color: var(--accent-green);
+    color: var(--accent-green);
+  }
+
+  /* ========== SCROLL CARD (Variant B) ========== */
+  .scroll-card-area {
+    flex: 1; overflow-y: auto; padding: 16px 20px 80px; display: flex;
+    flex-direction: column; gap: 16px; scroll-snap-type: y proximity;
+  }
+  .scroll-card {
+    background: var(--bg-elevated); border-radius: var(--radius-xl);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06); overflow: hidden;
+    scroll-snap-align: start; flex-shrink: 0;
+  }
+  .scroll-card .card-header { padding: 20px 20px 0; }
+  .scroll-card .card-reason-hero { margin: 0 20px 14px; }
+  .scroll-card .card-body { padding: 0 20px; overflow: visible; }
+  .scroll-card .card-bookmark-row { padding: 0 20px 8px; }
+  .scroll-card .card-actions { padding: 12px 20px 16px; }
+  .scroll-card.passed {
+    opacity: 0; max-height: 0; padding: 0; margin: 0; overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  /* ========== COMPLETE SCREEN ========== */
+  .swipe-complete {
+    display: none; flex-direction: column; align-items: center;
+    justify-content: center; padding: 40px 32px; text-align: center; flex: 1;
+  }
+  .swipe-complete.active { display: flex; }
+  .complete-icon { font-size: 56px; margin-bottom: 20px; width: 64px; height: 64px; border-radius: 50%; background: var(--accent-subtle); display: flex; align-items: center; justify-content: center; }
+  .complete-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+  .complete-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px; }
+  .complete-stats { display: flex; gap: 24px; margin-bottom: 28px; }
+  .complete-stat-num { font-size: 28px; font-weight: 800; color: var(--accent-primary); }
+  .complete-stat-label { font-size: 12px; color: var(--text-tertiary); font-weight: 600; }
+  .complete-cta {
+    padding: 14px 28px; background: var(--accent-primary); color: white;
+    border: none; border-radius: var(--radius-full); font-size: 15px;
+    font-weight: 700; cursor: pointer; font-family: var(--font-stack);
+  }
+
+  /* ========== ALL COMPANIES TAB ========== */
+  .search-bar { padding: 16px 20px 12px; flex-shrink: 0; }
+  .search-input-wrap {
+    display: flex; align-items: center; background: var(--bg-secondary);
+    border-radius: var(--radius-full); padding: 10px 16px; gap: 8px;
+  }
+  .search-input-wrap input {
+    flex: 1; border: none; background: none; font-size: 14px;
+    font-family: var(--font-stack); outline: none; color: var(--text-primary);
+  }
+  .filter-chips {
+    display: flex; gap: 8px; padding: 0 20px 12px; overflow-x: auto; flex-shrink: 0;
+  }
+  .filter-chip {
+    padding: 7px 14px; border-radius: var(--radius-full);
+    border: 1.5px solid var(--border-default); background: var(--bg-elevated);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: var(--font-stack); color: var(--text-secondary); white-space: nowrap;
+  }
+  .filter-chip:hover { border-color: var(--accent-primary); }
+  .filter-chip.active { background: var(--accent-subtle); border-color: var(--accent-primary); color: var(--accent-primary); }
+  .company-list { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
+  .company-item {
+    display: flex; gap: 14px; padding: 16px; background: var(--bg-elevated);
+    border-radius: var(--radius-lg); margin-bottom: 10px; cursor: pointer;
+    transition: all 0.15s; border: 1px solid transparent;
+  }
+  .company-item:hover { border-color: var(--border-default); }
+  .company-item-logo {
+    width: 48px; height: 48px; background: var(--bg-secondary); border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 800; color: var(--text-tertiary); flex-shrink: 0;
+  }
+  .company-item-info { flex: 1; min-width: 0; }
+  .company-item-name { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+  .company-item-desc { font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .company-item-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .company-item-tag { padding: 3px 8px; background: var(--bg-secondary); border-radius: var(--radius-full); font-size: 11px; font-weight: 600; color: var(--text-tertiary); }
+  .company-item-bookmark { display: flex; align-items: flex-start; padding-top: 4px; font-size: 18px; color: var(--border-default); cursor: pointer; flex-shrink: 0; }
+  .company-item-bookmark.saved { color: var(--accent-green); }
+
+  /* ========== BOOKMARKS TAB ========== */
+  .bookmarks-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; }
+  .bookmarks-empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .bookmarks-empty-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .bookmarks-empty-desc { font-size: 13px; color: var(--text-tertiary); line-height: 1.5; }
+
+  /* ========== DETAIL VIEW ========== */
+  .detail-view { display: none; flex-direction: column; height: 100%; overflow: hidden; background: var(--bg-primary); }
+  .detail-view.active { display: flex; }
+  .detail-header {
+    display: flex; align-items: center; padding: 16px 20px; gap: 12px;
+    flex-shrink: 0; background: var(--bg-elevated); border-bottom: 1px solid var(--border-default);
+  }
+  .detail-back {
+    width: 36px; height: 36px; border-radius: 50%; border: none;
+    background: var(--bg-secondary); cursor: pointer; font-size: 18px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .detail-header-title { font-size: 17px; font-weight: 700; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .detail-body { flex: 1; overflow-y: auto; padding: 20px; }
+  .detail-match-banner {
+    display: flex; align-items: center; gap: 12px; padding: 16px;
+    background: var(--accent-subtle); border-radius: var(--radius-lg); margin-bottom: 20px;
+  }
+  .detail-match-percent { font-size: 32px; font-weight: 800; color: var(--accent-primary); }
+  .detail-match-text { font-size: 13px; color: var(--accent-primary); font-weight: 600; line-height: 1.4; }
+  .detail-section { margin-bottom: 20px; }
+  .detail-section-title { font-size: 13px; font-weight: 700; color: var(--text-tertiary); margin-bottom: 10px; letter-spacing: 0.5px; }
+  .detail-section-body { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+  .detail-section-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .detail-section-tag { padding: 6px 12px; background: var(--accent-subtle); color: var(--accent-primary); border-radius: var(--radius-full); font-size: 13px; font-weight: 600; }
+  .detail-booth-info { display: flex; align-items: center; gap: 8px; padding: 14px; background: var(--bg-secondary); border-radius: var(--radius-md); font-size: 14px; font-weight: 600; }
+  .detail-actions {
+    display: flex; gap: 10px; padding: 16px 20px; flex-shrink: 0;
+    border-top: 1px solid var(--border-default); background: var(--bg-elevated);
+  }
+  .detail-btn {
+    flex: 1; padding: 14px; border-radius: var(--radius-md); font-size: 15px;
+    font-weight: 700; cursor: pointer; font-family: var(--font-stack); border: none;
+  }
+  .detail-btn.primary { background: var(--accent-primary); color: white; }
+  .detail-btn.secondary { background: var(--bg-secondary); color: var(--text-primary); }
+
+  /* ========== MEETING MODAL (MT-001) ========== */
+  .meeting-overlay {
+    display: none; position: absolute; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 100;
+    align-items: flex-end; justify-content: center;
+  }
+  .meeting-overlay.active { display: flex; }
+  .meeting-sheet {
+    width: 100%; max-height: 85%; background: var(--bg-elevated);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .meeting-handle {
+    width: 40px; height: 4px; background: var(--border-default);
+    border-radius: 2px; margin: 12px auto 0; flex-shrink: 0;
+  }
+  .meeting-header {
+    display: flex; align-items: center; padding: 16px 20px 12px; gap: 12px; flex-shrink: 0;
+  }
+  .meeting-header-title { font-size: 17px; font-weight: 700; }
+  .meeting-header-close {
+    margin-left: auto; width: 32px; height: 32px; border-radius: 50%;
+    border: none; background: var(--bg-secondary); cursor: pointer;
+    font-size: 16px; display: flex; align-items: center; justify-content: center;
+  }
+  .meeting-body { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
+  .meeting-company-card {
+    display: flex; align-items: center; gap: 14px; padding: 16px;
+    background: var(--accent-subtle); border-radius: var(--radius-lg); margin-bottom: 24px;
+  }
+  .meeting-company-logo {
+    width: 44px; height: 44px; background: var(--accent-primary); color: white;
+    border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 800; flex-shrink: 0;
+  }
+  .meeting-company-name { font-size: 15px; font-weight: 700; }
+  .meeting-company-sub { font-size: 12px; color: var(--accent-primary); margin-top: 2px; }
+  .meeting-section-title {
+    font-size: 15px; font-weight: 700; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .step-num {
+    width: 24px; height: 24px; border-radius: 50%; background: var(--accent-primary);
+    color: white; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .meeting-venue-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+  .meeting-venue {
+    display: flex; align-items: center; gap: 14px; padding: 16px;
+    border: 1.5px solid var(--border-default); border-radius: var(--radius-lg);
+    cursor: pointer; transition: all 0.15s; background: var(--bg-elevated);
+  }
+  .meeting-venue:hover { border-color: var(--accent-primary); }
+  .meeting-venue.selected { border-color: var(--accent-primary); background: var(--accent-subtle); }
+  .meeting-venue-icon { font-size: 28px; }
+  .meeting-venue-icon-text {
+    width: 44px; height: 44px; border-radius: var(--radius-md);
+    background: var(--bg-secondary); color: var(--text-tertiary);
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .meeting-venue-text { flex: 1; }
+  .meeting-venue-name { font-size: 15px; font-weight: 600; }
+  .meeting-venue-desc { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+  .meeting-venue-check {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border-default);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: transparent; flex-shrink: 0;
+  }
+  .meeting-venue.selected .meeting-venue-check { background: var(--accent-primary); border-color: var(--accent-primary); color: white; }
+  .meeting-slots { display: none; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .meeting-slots.active { display: flex; }
+  .meeting-slot-row { display: flex; gap: 8px; }
+  .meeting-slot {
+    flex: 1; padding: 12px 8px; border: 1.5px solid var(--border-default);
+    border-radius: var(--radius-md); text-align: center; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: var(--font-stack); background: var(--bg-elevated); color: var(--text-primary);
+  }
+  .meeting-slot:hover { border-color: var(--accent-primary); }
+  .meeting-slot.selected { border-color: var(--accent-primary); background: var(--accent-subtle); color: var(--accent-primary); }
+  .meeting-slot.disabled { opacity: 0.35; cursor: not-allowed; text-decoration: line-through; }
+  .meeting-slot-label { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; font-weight: 400; }
+  .meeting-footer {
+    padding: 16px 20px 24px; flex-shrink: 0; border-top: 1px solid var(--border-default);
+  }
+  .meeting-submit {
+    width: 100%; padding: 16px; background: var(--accent-primary); color: white;
+    border: none; border-radius: var(--radius-md); font-size: 16px; font-weight: 700;
+    cursor: pointer; font-family: var(--font-stack);
+  }
+  .meeting-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ========== TOAST ========== */
+  .toast {
+    position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-20px);
+    padding: 12px 24px; background: #1a1a1a; color: white;
+    border-radius: var(--radius-full); font-size: 14px; font-weight: 600;
+    z-index: 9998; opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ============================================================
+     3 CARD DESIGNS (디자인 변주 — nabi-ui 토큰/Pretendard 상속)
+     A·Quiet Paper / B·Precision / C·Bold Stat. 인터랙션은 동일(C).
+     ============================================================ */
+  /* A · Quiet Paper — 적합도 우상단 큰 숫자 */
+  .qp-top { display: flex; align-items: flex-start; gap: 12px; padding: 20px 20px 0; }
+  .qp-left { flex: 1; min-width: 0; }
+  .qp-booth { font-size: 11px; color: var(--text-tertiary); }
+  .qp-name { font-size: 22px; font-weight: 800; line-height: 1.2; letter-spacing: -0.02em; margin-top: 6px; }
+  .qp-score { text-align: right; flex-shrink: 0; }
+  .qp-lab { font-size: 10px; color: var(--text-tertiary); }
+  .qp-val { font-size: 36px; font-weight: 800; line-height: 0.9; color: var(--accent-primary); margin-top: 4px; }
+  .qp-val span { font-size: 17px; font-weight: 700; }
+  .qp-reason { padding: 16px 20px 0; }
+  .qp-rlab { font-size: 10px; letter-spacing: 0.04em; color: var(--text-tertiary); margin-bottom: 7px; }
+  .qp-rtxt { font-size: 15px; line-height: 1.6; color: var(--text-primary); }
+
+  /* B · Precision — 가로 매치 바 */
+  .pr-pad { padding: 20px 20px 0; }
+  .pr-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .pr-name { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
+  .pr-booth { font-size: 11px; color: var(--text-tertiary); flex-shrink: 0; }
+  .pr-matchrow { display: flex; align-items: center; gap: 9px; margin: 14px 0 2px; }
+  .pr-mlab { font-size: 10px; color: var(--text-tertiary); flex-shrink: 0; }
+  .pr-track { flex: 1; height: 7px; background: var(--bg-secondary); border-radius: var(--radius-full); overflow: hidden; }
+  .pr-fill { height: 100%; background: var(--accent-primary); border-radius: var(--radius-full); }
+  .pr-mval { font-size: 18px; font-weight: 800; color: var(--accent-primary); flex-shrink: 0; }
+  .pr-mval span { font-size: 12px; font-weight: 700; }
+  .pr-reason { margin-top: 16px; padding-left: 12px; border-left: 2px solid var(--accent-subtle); }
+  .pr-rmark { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: var(--accent-primary); display: block; margin-bottom: 5px; }
+  .pr-rtxt { font-size: 14.5px; line-height: 1.6; color: var(--text-primary); }
+  .pr-tags { font-size: 11.5px; font-weight: 600; color: var(--text-secondary); margin-top: 15px; }
+
+  /* C · Bold Stat — 상단 스탯 밴드 */
+  .bs-band { display: flex; align-items: flex-end; justify-content: space-between; padding: 18px 20px 14px; background: var(--accent-subtle); border-bottom: 1px solid var(--border-default); }
+  .bs-val { font-size: 42px; font-weight: 800; line-height: 0.85; color: var(--accent-primary); letter-spacing: -0.03em; }
+  .bs-val span { font-size: 19px; font-weight: 700; }
+  .bs-lab { font-size: 10px; color: var(--accent-primary); opacity: 0.8; margin-top: 5px; }
+  .bs-right { text-align: right; }
+  .bs-tag { display: inline-block; font-size: 10px; font-weight: 700; color: #fff; background: var(--accent-primary); border-radius: var(--radius-sm); padding: 4px 9px; }
+  .bs-booth { font-size: 11px; color: var(--text-tertiary); margin-top: 9px; }
+  .bs-name { font-size: 23px; font-weight: 800; line-height: 1.18; letter-spacing: -0.02em; padding: 15px 20px 0; }
+  .bs-reason { font-size: 14.5px; line-height: 1.6; color: var(--text-primary); padding: 11px 20px 0; }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- 글로벌 nav(app-bar + 드로어)는 nabi-nav.js가 .app-shell 상단에 주입 -->
+
+<div class="app-shell">
+  <main class="app-main">
+    <div class="app-content" id="discover-root"></div>
+  </main>
+</div>
+
+<div class="variant-bar">
+  <div class="variant-label">DV-001</div>
+  <div class="variant-sep"></div>
+  <button class="variant-btn active" data-v="a" onclick="switchVariant('a')">A · Quiet Paper</button>
+  <div class="variant-sep"></div>
+  <button class="variant-btn" data-v="b" onclick="switchVariant('b')">B · Precision</button>
+  <div class="variant-sep"></div>
+  <button class="variant-btn" data-v="c" onclick="switchVariant('c')">C · Bold Stat</button>
+  <div class="variant-sep"></div>
+  <div class="view-toggle">
+    <button class="view-toggle-btn" onclick="setPreview('mobile')">Mobile</button>
+    <button class="view-toggle-btn active" onclick="setPreview('desktop')">Desktop</button>
+  </div>
+</div>
+
+<script>
+// ==========================================
+// DATA
+// ==========================================
+const COMPANIES = [
+  { id:1, name:'한화에어로스페이스', booth:'A-101', logo:'한', matchScore:94, keywords:['항공 엔진','우주 발사체','방산 전자'], strength:'국내 유일 항공엔진 독자 개발·양산 체계를 갖추고, 우주 발사체 추진 시스템과 방산 전자 통합 솔루션을 제공합니다.', reason:'관심 분야 "항공 추진 시스템"과 전시 품목 "항공 엔진"이 직접 매칭. 예산 범위와 도입 시기도 부합합니다.', detail:'한화에어로스페이스는 1977년 설립된 대한민국 대표 항공우주·방산 기업입니다. 항공기 엔진, 우주 발사체, 감시정찰 시스템 등 첨단 방산 제품을 개발·양산하고 있습니다.', category:'항공우주', founded:'1977년', employees:'약 7,000명', exhibits:['T700 항공엔진 실물 모형','누리호 추진시스템 패널','차세대 감시정찰 드론'], achievements:['누리호 3차 발사 성공 기여 (2024)','폴란드 K9 자주포 엔진 수출','T700 엔진 국내 독자 정비 체계 구축'] },
+  { id:2, name:'LIG넥스원', booth:'B-205', logo:'L', matchScore:89, keywords:['유도무기','감시정찰','C4I'], strength:'정밀유도무기 분야 국내 1위. 천궁, 해궁 등 핵심 무기체계를 개발·납품하며, AI 기반 지휘통제시스템(C4I)을 선보입니다.', reason:'"감시정찰 시스템" 관심 키워드와 "감시정찰·C4I" 전시 품목 매칭. 도입 단계가 비교검토 단계로 적합합니다.', detail:'LIG넥스원은 정밀유도무기, 감시정찰, 항공전자, 수중음향 분야의 핵심 방산 기업입니다. 천궁 II 방공유도무기, 해궁 함대공유도탄 등을 개발했습니다.', category:'유도무기', founded:'1976년', employees:'약 4,500명', exhibits:['천궁 II 축소 모형','AI 기반 C4I 시연','차세대 대함유도탄 패널'], achievements:['천궁 II UAE 수출 계약 (2024)','해궁 Block-II 양산 착수','AI 표적 자동분류 시스템 실전 배치'] },
+  { id:3, name:'에어빌리티', booth:'C-312', logo:'에', matchScore:85, keywords:['밀폐공간 드론','산업용 UAV','비파괴검사'], strength:'세계 최초 밀폐공간 비행 가능 구형 드론(ELIOS) 국내 독점 공급. 위험 환경 무인 점검 솔루션 전문.', reason:'"무인체계·드론" 관심 키워드 매칭. 밀폐공간 점검이라는 특수 영역에서 독보적인 기술력 보유.', detail:'에어빌리티 주식회사는 스위스 Flyability사의 실내·밀폐공간 전용 드론 ELIOS 시리즈를 국내에 독점 공급합니다. 발전소, 선박, 탱크 등 위험 환경 점검에 활용됩니다.', category:'무인체계', founded:'2015년', employees:'약 50명', exhibits:['ELIOS 3 실기체 시연','밀폐공간 3D 매핑 데모','비파괴검사 AI 분석 시스템'], achievements:['국내 원전 밀폐공간 점검 독점 수행','해군 함정 내부 점검 시범 사업 수주','ELIOS 3 LiDAR 탑재 모델 국내 최초 도입'] },
+  { id:4, name:'한국항공우주산업(KAI)', booth:'A-110', logo:'K', matchScore:82, keywords:['전투기','헬기','위성'], strength:'FA-50, KF-21, 수리온 등 국산 항공기 개발. 차세대 전투기와 무인기 사업을 주도합니다.', reason:'"항공 추진 시스템" 관심 분야와 관련. 항공기 플랫폼 전체 통합 관점에서 시너지 가능.', detail:'한국항공우주산업(KAI)은 대한민국 유일의 완성 항공기 제조사입니다. KF-21 보라매, FA-50 경전투기, 수리온 헬기 등을 개발·양산합니다.', category:'항공우주', founded:'1999년', employees:'약 8,000명', exhibits:['KF-21 보라매 축소 모형','FA-50 Block 20 패널','무인 전투기 컨셉'], achievements:['KF-21 초도비행 성공 (2022)','FA-50 폴란드 48대 수출 계약','수리온 해병대형 양산 납품'] },
+  { id:5, name:'현대로템', booth:'B-301', logo:'현', matchScore:78, keywords:['전차','장갑차','자주포'], strength:'K2 흑표 전차 등 지상 기동 플랫폼 전문. 미래 전투차량과 무인 지상체계를 개발 중입니다.', reason:'예산 범위와 도입 시기가 부합. 지상 기동 플랫폼과 관심 분야 "방호 시스템"의 연관성.', detail:'현대로템은 K2 흑표 전차, K808/K806 차륜형장갑차, K9 자주포 차체 등 지상 무기체계 전문 기업입니다. 폴란드 수출 등 글로벌 방산 시장에서도 성과를 내고 있습니다.', category:'기동', founded:'1977년', employees:'약 5,500명', exhibits:['K2 흑표 전차 실물 전시','K808 차륜형장갑차','미래형 무인 전투차량 컨셉'], achievements:['폴란드 K2PL 1,000대 계약 (2022)','K808 차륜형장갑차 양산 개시','K2 파워팩 국산화 완료'] },
+  { id:6, name:'풍산', booth:'D-415', logo:'풍', matchScore:73, keywords:['탄약','정밀타격','추진체'], strength:'국내 유일 종합탄약 제조사. 스마트 탄약과 차세대 추진체 기술을 선보입니다.', reason:'"항공 추진 시스템"의 추진체 키워드 부분 매칭. 추진체 분야 기술 협력 가능성.', detail:'풍산은 1968년 설립된 국내 유일의 종합탄약 제조기업입니다. 소구경부터 대구경 탄약, 스마트 탄약, 추진체까지 전 품목을 개발·생산합니다.', category:'탄약', founded:'1968년', employees:'약 3,200명', exhibits:['스마트 탄약 라인업','차세대 추진체 샘플','155mm 정밀유도탄'], achievements:['미 육군 탄약 공급 계약 (2023)','155mm 정밀유도포탄 개발 완료','NATO 표준 탄약 인증 획득'] },
+  { id:7, name:'한컴인스페이스', booth:'C-202', logo:'한', matchScore:70, keywords:['위성통신','영상분석','우주감시'], strength:'초소형 위성 기반 영상 데이터 분석과 우주 상황 인식(SSA) 솔루션을 제공합니다.', reason:'"감시정찰 시스템" 관심 분야와 위성 기반 영상분석 기술 연관. 우주 도메인 확장 관점.', detail:'한컴인스페이스는 한글과컴퓨터 그룹의 우주산업 전문 기업입니다. 초소형 위성 개발, 위성 영상 분석, 우주 상황 인식 시스템을 운영합니다.', category:'우주', founded:'2021년', employees:'약 120명', exhibits:['세종 1호 위성 모형','위성 영상 AI 분석 데모','우주 상황 인식(SSA) 대시보드'], achievements:['세종 1호 발사 성공 (2024)','군 위성 영상 분석 서비스 수주','우주 상황 인식 시스템 시범 운영 개시'] }
+];
+const CATEGORIES = ['전체','항공우주','유도무기','무인체계','기동','탄약','우주'];
+
+let currentVariant = 'a';
+let cardIndex = 0;
+let bookmarks = [];
+let meetingRequests = 0;
+let passCount = 0;
+
+// ==========================================
+// RENDER
+// ==========================================
+function render() {
+  // 단일 소스: 항상 #discover-root(=.app-content) 한 곳에만 렌더.
+  // 모바일↔데스크톱 차이는 @container shell 규칙으로 reflow (덱↔그리드).
+  const root = document.getElementById('discover-root');
+  if (root) root.innerHTML = buildPage();
+  updateCardStack();
+}
+
+function buildPage() {
+  return `
+    <div class="discover-page" id="discover-main">
+      <div class="discover-header">
+        <div class="discover-title">기업 탐색</div>
+        <div class="discover-tabs">
+          <button class="discover-tab active" onclick="switchTab('ai')">AI 추천<span class="tab-badge">${Math.max(0, COMPANIES.length - cardIndex)}</span></button>
+          <button class="discover-tab" onclick="switchTab('all')">전체 기업</button>
+          <button class="discover-tab" onclick="switchTab('bookmarks')">관심기업${bookmarks.length ? '<span class="tab-badge" style="background:var(--accent-green)">'+bookmarks.length+'</span>' : ''}</button>
+        </div>
+      </div>
+
+      <div class="tab-content active" id="tab-ai">
+        ${buildSwipeTab()}
+      </div>
+
+      <div class="tab-content" id="tab-all">
+        <div class="search-bar"><div class="search-input-wrap"><span style="font-size:14px;color:var(--text-tertiary)">검색</span><input type="text" placeholder="기업명, 키워드로 검색" oninput="filterCompanies(this.value)"></div></div>
+        <div class="filter-chips">${CATEGORIES.map((c,i) => `<button class="filter-chip${i===0?' active':''}" onclick="filterCategory('${c}',this)">${c}</button>`).join('')}</div>
+        <div class="company-list" id="company-list">${COMPANIES.map(c => buildCompanyItem(c)).join('')}</div>
+      </div>
+
+      <div class="tab-content" id="tab-bookmarks">${buildBookmarksTab()}</div>
+
+      <div class="meeting-overlay" id="meeting-modal" onclick="if(event.target===this)closeMeeting()"></div>
+    </div>
+    <div class="detail-view" id="detail-view"></div>
+  `;
+}
+
+function buildSwipeTab() {
+  return `
+    <!-- 좁음(폰/프리뷰): 스와이프 덱 -->
+    <div class="swipe-only">
+      <div class="card-stack-area" id="card-stack"></div>
+      <div class="card-bottom-row" id="card-bottom-row">
+        <div class="card-counter nb-num" id="card-counter">${cardIndex + 1} / ${COMPANIES.length}</div>
+      </div>
+      <div class="pass-btn-bottom" id="swipe-hint"><button class="pass-btn-circle" onclick="doPass()">✕ 관심없음</button><button class="pass-btn-circle" onclick="doInterested()" style="background:var(--accent-green-subtle);color:var(--accent-green);border-color:#bbf7d0">★ 관심있음</button></div>
+      <div class="swipe-complete" id="swipe-complete">
+        <div class="complete-icon" style="font-size:32px;font-weight:800;color:var(--accent-primary)">✓</div>
+        <div class="complete-title">모든 AI 추천을 확인했습니다!</div>
+        <div class="complete-desc">관심기업에서 미팅을 신청하거나,<br>전체 기업에서 더 찾아보세요.</div>
+        <div class="complete-stats">
+          <div><div class="complete-stat-num" id="stat-bookmarks">${bookmarks.length}</div><div class="complete-stat-label">관심기업</div></div>
+          <div><div class="complete-stat-num" id="stat-meetings">${meetingRequests}</div><div class="complete-stat-label">미팅 신청</div></div>
+        </div>
+        <button class="complete-cta" onclick="switchTab('all')">전체 기업에서 더 찾아보기 →</button>
+      </div>
+    </div>
+    <!-- 넓음(데스크톱): 추천 카드 그리드 (스와이프 부적합 → 리스트/그리드) -->
+    <div class="rec-grid">
+      ${COMPANIES.map(c => `<div class="rec-card v-${currentVariant}">${buildCardContent(c)}</div>`).join('')}
+    </div>
+  `;
+}
+
+function buildScrollCards() {
+  return `
+    <div class="scroll-card-area" id="scroll-card-area">
+      ${COMPANIES.map(c => `
+        <div class="scroll-card" id="scroll-card-${c.id}" data-id="${c.id}">
+          ${buildCardContent(c, true)}
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function buildCardContent(c) {
+  if (currentVariant === 'b') return cardPrecision(c);
+  if (currentVariant === 'c') return cardBoldStat(c);
+  return cardQuiet(c);
+}
+function cardActions(c) {
+  return `<div class="card-actions">
+      <button class="card-action-btn detail" onclick="event.stopPropagation(); showDetail(${c.id})">상세보기</button>
+      <button class="card-action-btn meeting" onclick="event.stopPropagation(); openMeetingPage(${c.id})">미팅 신청</button>
+    </div>`;
+}
+function kwPills(c) { return c.keywords.map(k => `<span class="card-keyword">${k}</span>`).join(''); }
+// A · Quiet Paper — 적합도 우상단 큰 숫자, 추천이유 히어로
+function cardQuiet(c) {
+  return `
+    <div class="qp-top">
+      <div class="qp-left"><div class="qp-booth">부스 <span class="nb-num">${c.booth}</span></div><div class="qp-name">${c.name}</div></div>
+      <div class="qp-score"><div class="qp-lab">적합도</div><div class="qp-val nb-num">${c.matchScore}<span>%</span></div></div>
+    </div>
+    <div class="qp-reason"><div class="qp-rlab">AI 추천 이유</div><div class="qp-rtxt">${c.reason}</div></div>
+    <div class="card-body"><div class="card-keywords">${kwPills(c)}</div><div class="card-strength">${c.strength}</div></div>
+    ${cardActions(c)}`;
+}
+// B · Precision — 가로 매치 바로 적합도 측정 표현
+function cardPrecision(c) {
+  return `
+    <div class="pr-pad">
+      <div class="pr-head"><div class="pr-name">${c.name}</div><div class="pr-booth">부스 <span class="nb-num">${c.booth}</span></div></div>
+      <div class="pr-matchrow"><div class="pr-mlab">적합도</div><div class="pr-track"><div class="pr-fill" style="width:${c.matchScore}%"></div></div><div class="pr-mval nb-num">${c.matchScore}<span>%</span></div></div>
+      <div class="pr-reason"><span class="pr-rmark">AI 추천 이유</span><div class="pr-rtxt">${c.reason}</div></div>
+      <div class="pr-tags">${c.keywords.join('  ·  ')}</div>
+      <div class="card-strength" style="margin-top:8px">${c.strength}</div>
+    </div>
+    ${cardActions(c)}`;
+}
+// C · Bold Stat — 상단 스탯 밴드에 적합도 앵커 + 큰 헤드라인
+function cardBoldStat(c) {
+  return `
+    <div class="bs-band"><div><div class="bs-val nb-num">${c.matchScore}<span>%</span></div><div class="bs-lab">AI 적합도</div></div><div class="bs-right"><span class="bs-tag">AI 매칭</span><div class="bs-booth">부스 <span class="nb-num">${c.booth}</span></div></div></div>
+    <div class="bs-name">${c.name}</div>
+    <div class="bs-reason">${c.reason}</div>
+    <div class="card-body"><div class="card-keywords">${kwPills(c)}</div><div class="card-strength">${c.strength}</div></div>
+    ${cardActions(c)}`;
+}
+
+function buildCompanyItem(c) {
+  const saved = bookmarks.includes(c.id);
+  return `
+    <div class="company-item" onclick="showDetail(${c.id})" data-category="${c.category}" data-name="${c.name}">
+      <div class="company-item-logo">${c.logo}</div>
+      <div class="company-item-info">
+        <div class="company-item-name">${c.name}</div>
+        <div class="company-item-desc">${c.booth} · 적합도 ${c.matchScore}%</div>
+        <div class="company-item-tags">${c.keywords.map(k => `<span class="company-item-tag">${k}</span>`).join('')}</div>
+      </div>
+      <div class="company-item-bookmark ${saved?'saved':''}" onclick="event.stopPropagation(); toggleBookmark(${c.id})">${saved?'★':'☆'}</div>
+    </div>
+  `;
+}
+
+function buildBookmarksTab() {
+  if (!bookmarks.length) return `<div class="bookmarks-empty"><div class="bookmarks-empty-icon" style="font-size:28px;width:56px;height:56px;border-radius:50%;background:var(--bg-secondary);display:flex;align-items:center;justify-content:center;color:var(--text-tertiary)">☆</div><div class="bookmarks-empty-title">관심기업이 없습니다</div><div class="bookmarks-empty-desc">AI 추천이나 전체 기업에서<br>관심 있는 기업을 저장해보세요</div></div>`;
+  return `<div class="company-list" style="padding-top:16px">${bookmarks.map(id => { const c = COMPANIES.find(x=>x.id===id); return c ? buildCompanyItem(c) : ''; }).join('')}</div>`;
+}
+
+function buildDetailView(companyId) {
+  const c = COMPANIES.find(x => x.id === companyId);
+  if (!c) return '';
+  const saved = bookmarks.includes(c.id);
+  return `
+    <div class="detail-header">
+      <button class="detail-back" onclick="hideDetail()">←</button>
+      <div class="detail-header-title">${c.name}</div>
+    </div>
+    <div class="detail-body">
+      <div class="detail-match-banner">
+        <div class="detail-match-percent">${c.matchScore}%</div>
+        <div class="detail-match-text">AI 적합도<br>${c.reason.split('.')[0]}.</div>
+      </div>
+      <div class="detail-section"><div class="detail-section-title">AI 추천 이유</div><div class="detail-section-body" style="background:var(--accent-subtle);padding:14px;border-radius:var(--radius-md);color:var(--accent-primary)">${c.reason}</div></div>
+      <div class="detail-section"><div class="detail-section-title">부스 위치</div><div class="detail-booth-info">${c.booth}</div></div>
+      <div class="detail-section">
+        <div class="detail-section-title">전시 제품</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${(c.exhibits||[]).map(e=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-secondary);border-radius:var(--radius-md);font-size:13px;font-weight:600">${e}</div>`).join('')}
+        </div>
+      </div>
+      <div class="detail-section"><div class="detail-section-title">분야</div><div class="detail-section-tags">${c.keywords.map(k=>`<span class="detail-section-tag">${k}</span>`).join('')}</div></div>
+      <div class="detail-section"><div class="detail-section-title">강점</div><div class="detail-section-body">${c.strength}</div></div>
+      <div class="detail-section">
+        <div class="detail-section-title">주요 실적</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${(c.achievements||[]).map(a=>`<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;padding-left:12px;border-left:2px solid var(--border-default)">${a}</div>`).join('')}
+        </div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">기업 정보</div>
+        <div class="detail-section-body">${c.detail}</div>
+        <div style="display:flex;gap:16px;margin-top:10px;font-size:12px;color:var(--text-tertiary)">
+          <span>설립 ${c.founded||'-'}</span><span>규모 ${c.employees||'-'}</span>
+        </div>
+      </div>
+    </div>
+    <div class="detail-actions">
+      <button class="detail-btn secondary" onclick="toggleBookmarkFromDetail(${c.id})" id="detail-bookmark-btn">${saved ? '★ 저장됨' : '☆ 관심기업'}</button>
+      <button class="detail-btn primary" onclick="openMeetingPage(${c.id})">미팅 신청</button>
+    </div>
+  `;
+}
+
+// ==========================================
+// TABS
+// ==========================================
+function switchTab(tabId) {
+  document.querySelectorAll('.discover-tab').forEach((t,i) => t.classList.toggle('active', ['ai','all','bookmarks'][i]===tabId));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  const tab = document.getElementById('tab-'+tabId);
+  if (tab) tab.classList.add('active');
+  if (tabId === 'bookmarks') document.getElementById('tab-bookmarks').innerHTML = buildBookmarksTab();
+  if (tabId === 'all') {
+    const list = document.getElementById('company-list');
+    if (list) list.innerHTML = COMPANIES.map(c => buildCompanyItem(c)).join('');
+  }
+}
+
+// ==========================================
+// CARD STACK (Variant A/C)
+// ==========================================
+function updateCardStack() {
+  const stack = document.getElementById('card-stack');
+  if (!stack) return;
+
+  if (cardIndex >= COMPANIES.length) {
+    stack.innerHTML = '';
+    const complete = document.getElementById('swipe-complete');
+    if (complete) { complete.classList.add('active'); document.getElementById('stat-bookmarks').textContent = bookmarks.length; document.getElementById('stat-meetings').textContent = meetingRequests; }
+    const hint = document.getElementById('swipe-hint');
+    if (hint) hint.style.display = 'none';
+    const counter = document.getElementById('card-counter');
+    if (counter) counter.style.display = 'none';
+    return;
+  }
+
+  let html = '';
+  for (let i = Math.min(cardIndex+2, COMPANIES.length-1); i >= cardIndex; i--) {
+    const c = COMPANIES[i];
+    const pos = i - cardIndex;
+    const cls = pos === 0 ? '' : pos === 1 ? 'behind' : 'far-behind';
+    html += `<div class="swipe-card v-${currentVariant} ${cls}" id="card-${i}" data-index="${i}" style="z-index:${10-pos}">
+      <div class="swipe-overlay left">관심없음 ✕</div>
+      <div class="swipe-overlay right">관심있음 ★</div>
+      ${buildCardContent(c)}
+    </div>`;
+  }
+  stack.innerHTML = html;
+
+  const counter = document.getElementById('card-counter');
+  if (counter) counter.textContent = `${cardIndex+1} / ${COMPANIES.length}`;
+  updateBookmarkOuter();
+
+  const topCard = document.getElementById('card-'+cardIndex);
+  if (topCard) bindDrag(topCard);
+}
+
+let _dragCleanup = null;
+function bindDrag(el) {
+  if (_dragCleanup) _dragCleanup();
+  let startX, startY, dx, dy, dragging = false, moved = false;
+
+  function onStart(e) {
+    if (e.target.closest('.card-actions') || e.target.closest('.card-bookmark-btn')) return;
+    const ev = e.touches ? e.touches[0] : e;
+    startX = ev.clientX; startY = ev.clientY; dx = 0; dy = 0;
+    dragging = true; moved = false; el.style.transition = 'none';
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    const ev = e.touches ? e.touches[0] : e;
+    dx = ev.clientX - startX; dy = ev.clientY - startY;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moved = true;
+    el.style.transform = `translate(${dx}px, ${dy}px) rotate(${dx*0.06}deg)`;
+    const ovL = el.querySelector('.swipe-overlay.left');
+    if (ovL) ovL.style.opacity = Math.min(1, Math.max(0, -dx/80));
+    const ovR = el.querySelector('.swipe-overlay.right');
+    if (ovR) ovR.style.opacity = Math.min(1, Math.max(0, dx/80));
+  }
+  function cleanup() {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('mouseup', onEnd);
+    document.removeEventListener('touchend', onEnd);
+    _dragCleanup = null;
+  }
+  _dragCleanup = cleanup;
+  function onEnd() {
+    if (!dragging) return;
+    dragging = false;
+    if (dx < -80) {
+      cleanup();
+      animateOut(el, -500, 0, () => { passCount++; showToast('관심없음 처리됨'); cardIndex++; updateCardStack(); });
+      return;
+    }
+    if (dx > 80) {
+      cleanup();
+      const c = COMPANIES[cardIndex];
+      if (c && !bookmarks.includes(c.id)) bookmarks.push(c.id);
+      animateOut(el, 500, 0, () => { if (c) showToast(`${c.name} 관심기업 등록`); cardIndex++; updateCardStack(); });
+      return;
+    }
+    el.style.transition = 'transform 0.3s ease';
+    el.style.transform = 'translate(0,0) rotate(0deg)';
+    const ovL = el.querySelector('.swipe-overlay.left');
+    if (ovL) ovL.style.opacity = 0;
+    const ovR = el.querySelector('.swipe-overlay.right');
+    if (ovR) ovR.style.opacity = 0;
+  }
+  el.addEventListener('mousedown', onStart);
+  el.addEventListener('touchstart', onStart, {passive:true});
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, {passive:true});
+  document.addEventListener('mouseup', onEnd);
+  document.addEventListener('touchend', onEnd);
+}
+
+function animateOut(el, x, y, cb) {
+  el.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+  el.style.transform = `translate(${x}px,${y}px) rotate(${x*0.05}deg)`;
+  el.style.opacity = '0';
+  setTimeout(cb, 350);
+}
+
+// ==========================================
+// PASS ACTIONS
+// ==========================================
+function doPass() {
+  if (cardIndex >= COMPANIES.length) return;
+  const el = document.getElementById('card-'+cardIndex);
+  if (el) animateOut(el, -500, 0, () => { passCount++; showToast('관심없음 처리됨'); cardIndex++; updateCardStack(); });
+}
+
+function doInterested() {
+  if (cardIndex >= COMPANIES.length) return;
+  const c = COMPANIES[cardIndex];
+  const el = document.getElementById('card-'+cardIndex);
+  if (!bookmarks.includes(c.id)) bookmarks.push(c.id);
+  if (el) animateOut(el, 500, 0, () => { showToast(`${c.name} 관심기업 등록`); cardIndex++; updateCardStack(); });
+}
+
+function doPassScroll(companyId) {
+  const el = document.getElementById('scroll-card-'+companyId);
+  if (el) { el.classList.add('passed'); setTimeout(() => el.remove(), 350); }
+  passCount++;
+  showToast('관심없음 처리됨');
+}
+
+// ==========================================
+// BOOKMARK
+// ==========================================
+function toggleBookmarkCurrent() {
+  if (cardIndex >= COMPANIES.length) return;
+  const c = COMPANIES[cardIndex];
+  if (!bookmarks.includes(c.id)) {
+    bookmarks.push(c.id);
+    showToast(`${c.name} 관심기업 등록`);
+    const el = document.getElementById('card-'+cardIndex);
+    if (el) animateOut(el, 500, 0, () => { cardIndex++; updateCardStack(); });
+    else { cardIndex++; updateCardStack(); }
+  }
+}
+
+function updateBookmarkOuter() {
+  const btn = document.getElementById('bookmark-outer');
+  if (!btn || cardIndex >= COMPANIES.length) return;
+  const saved = bookmarks.includes(COMPANIES[cardIndex].id);
+  btn.className = 'card-bookmark-btn-outer' + (saved ? ' saved' : '');
+  btn.textContent = saved ? '★ 관심기업' : '☆ 관심기업';
+}
+
+function toggleBookmarkOnCard(id) {
+  const idx = bookmarks.indexOf(id);
+  if (idx >= 0) { bookmarks.splice(idx,1); showToast('관심기업 해제'); }
+  else { bookmarks.push(id); showToast(`${COMPANIES.find(x=>x.id===id).name} 관심기업 등록`); }
+  // Re-render bookmark button on current card
+  if (currentVariant === 'b') {
+    render();
+  } else {
+    const card = document.getElementById('card-'+cardIndex);
+    if (card) {
+      const btn = card.querySelector('.card-bookmark-btn');
+      if (btn) { const saved = bookmarks.includes(id); btn.className = 'card-bookmark-btn'+(saved?' saved':''); btn.innerHTML = saved?'★':'☆'; }
+    }
+  }
+}
+
+function toggleBookmark(id) {
+  const idx = bookmarks.indexOf(id);
+  if (idx >= 0) { bookmarks.splice(idx,1); showToast('관심기업 해제'); }
+  else { bookmarks.push(id); showToast(`${COMPANIES.find(x=>x.id===id).name} 관심기업 등록`); }
+  const list = document.getElementById('company-list');
+  if (list) list.innerHTML = COMPANIES.map(c => buildCompanyItem(c)).join('');
+}
+
+function toggleBookmarkFromDetail(id) {
+  toggleBookmark(id);
+  const btn = document.getElementById('detail-bookmark-btn');
+  if (btn) { const saved = bookmarks.includes(id); btn.textContent = saved ? '★ 저장됨' : '☆ 관심기업'; }
+}
+
+// ==========================================
+// DETAIL
+// ==========================================
+function showDetail(companyId) {
+  const dv = document.getElementById('detail-view'), mv = document.getElementById('discover-main');
+  if (dv && mv) { dv.innerHTML = buildDetailView(companyId); dv.classList.add('active'); mv.style.display = 'none'; }
+}
+function hideDetail() {
+  const dv = document.getElementById('detail-view'), mv = document.getElementById('discover-main');
+  if (dv && mv) { dv.classList.remove('active'); mv.style.display = 'flex'; }
+}
+
+// ==========================================
+// MEETING PAGE (MT-001)
+// ==========================================
+let pendingMeetingId = null, mtVenue = null, mtSlot = null;
+const SLOTS = [
+  {t:'09:00',l:'오전',d:false},{t:'10:00',l:'오전',d:false},{t:'11:00',l:'오전',d:true},
+  {t:'13:00',l:'오후',d:false},{t:'14:00',l:'오후',d:false},{t:'15:00',l:'오후',d:false},{t:'16:00',l:'오후',d:true}
+];
+
+// 미팅 신청 — 공유 컴포넌트(nabi-meeting.js) 호출. 시간→장소(서브룸)+선점 슬롯 풍부 플로.
+function openMeetingPage(companyId) {
+  const c = COMPANIES.find(x => x.id === companyId);
+  if (!c || !window.NABI_MEETING) return;
+  NABI_MEETING.open(
+    { name: c.name, booth: c.booth, matchScore: c.matchScore, logo: c.logo },
+    { onSubmit: function () {
+        meetingRequests++;
+        if (companyId === (COMPANIES[cardIndex] && COMPANIES[cardIndex].id)) cardIndex++;
+        showToast(`${c.name} 미팅 신청 완료`);
+        updateCardStack();
+      } }
+  );
+}
+
+function closeMeeting() {
+  const modal = document.getElementById('meeting-modal');
+  if (modal) modal.classList.remove('active');
+}
+
+function selVenue(el, venue) {
+  document.querySelectorAll('.meeting-venue').forEach(v=>v.classList.remove('selected'));
+  el.classList.add('selected'); mtVenue = venue;
+  const slots = document.getElementById('mt-slots');
+  if (slots) { slots.classList.add('active'); }
+  const body = document.getElementById('meeting-body');
+  if (body) setTimeout(() => body.scrollTop = body.scrollHeight, 100);
+  updMtBtn();
+}
+function selSlot(el, time) {
+  document.querySelectorAll('.meeting-slot').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected'); mtSlot = time; updMtBtn();
+}
+function updMtBtn() {
+  const btn = document.getElementById('mt-submit');
+  if (!btn) return;
+  if (mtVenue && mtSlot) { btn.disabled = false; btn.textContent = '미팅 신청하기'; }
+  else if (mtVenue) { btn.disabled = true; btn.textContent = '시간을 선택해주세요'; }
+  else { btn.disabled = true; btn.textContent = '장소와 시간을 선택해주세요'; }
+}
+function submitMeeting() {
+  meetingRequests++;
+  const c = COMPANIES.find(x=>x.id===pendingMeetingId);
+  if (pendingMeetingId === COMPANIES[cardIndex]?.id) cardIndex++;
+  showToast(`${c.name} 미팅 신청 완료`);
+  closeMeeting();
+  updateCardStack();
+}
+
+// ==========================================
+// SEARCH / FILTER
+// ==========================================
+let _filterQuery = '';
+let _filterCategory = '전체';
+function applyFilters() {
+  const q = _filterQuery.toLowerCase();
+  document.querySelectorAll('.company-item').forEach(item => {
+    const matchName = !q || item.dataset.name.toLowerCase().includes(q);
+    const matchCat = _filterCategory === '전체' || item.dataset.category === _filterCategory;
+    item.style.display = matchName && matchCat ? 'flex' : 'none';
+  });
+}
+function filterCompanies(q) {
+  _filterQuery = q;
+  applyFilters();
+}
+function filterCategory(cat, el) {
+  _filterCategory = cat;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  applyFilters();
+}
+
+// ==========================================
+// TOAST
+// ==========================================
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ==========================================
+// VARIANT / VIEW
+// ==========================================
+function switchVariant(v) {
+  currentVariant = v;
+  document.querySelectorAll('.variant-btn').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+  try { history.replaceState(null, '', '?variant=' + v); } catch (e) {}
+  cardIndex = 0; bookmarks = []; meetingRequests = 0; passCount = 0;
+  render();
+}
+// 개발용 미리보기 토글 — 별도 DOM/재렌더 없이 셸 폭만 제약(컨테이너 쿼리가 reflow)
+function setPreview(mode) {
+  document.body.classList.toggle('preview-mobile', mode === 'mobile');
+  document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.toggle('active', b.textContent.trim().toLowerCase() === mode));
+}
+
+// init: ?variant= (a/b/c) 반영, 기본 a — URL로 직접 진입/공유 가능
+(function initVariant(){
+  const pv = (new URLSearchParams(location.search).get('variant') || 'a').toLowerCase();
+  if (['a','b','c'].includes(pv)) currentVariant = pv;
+  document.querySelectorAll('.variant-btn').forEach(b => b.classList.toggle('active', b.dataset.v === currentVariant));
+})();
+render();
+</script>
+
+<script>
+  window.NABI_NAV_ACTIVE = 'discover';
+  window.NABI_NAV_USER = { name: '김재현', avatar: 'KJ' };
+</script>
+<script src="nabi-nav.js?v=20260607"></script>
+<script src="nabi-meeting.js?v=20260609"></script>
+<script>
+/* 기본 = 데스크톱(셸 전체폭). ?view=mobile 로 폰 프리뷰 시작 가능. */
+(function () {
+  if (new URLSearchParams(location.search).get('view') === 'mobile') setPreview('mobile');
+})();
+</script>
+</body>
+</html>
